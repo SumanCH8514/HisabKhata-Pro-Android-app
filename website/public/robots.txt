@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sumanch8514.github.io/HisabKhata-Pro-Android-app/sitemap.xml

@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sumanonline.hisabkhata.core.designsystem.components.BottomTab
+import com.sumanonline.hisabkhata.feature.about.AboutProjectScreen
 import com.sumanonline.hisabkhata.feature.auth.AuthViewModel
 import com.sumanonline.hisabkhata.feature.auth.ForgotPasswordScreen
 import com.sumanonline.hisabkhata.feature.auth.LoginScreen
@@ -179,7 +180,16 @@ fun AppNavigation(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onNavigateToAboutProject = {
+                    navController.navigate(Screen.AboutProject.route)
                 }
+            )
+        }
+
+        composable(Screen.AboutProject.route) {
+            AboutProjectScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
