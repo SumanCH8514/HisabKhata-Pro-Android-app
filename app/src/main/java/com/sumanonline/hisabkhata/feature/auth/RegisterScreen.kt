@@ -1,7 +1,11 @@
 package com.sumanonline.hisabkhata.feature.auth
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,8 +37,10 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -49,7 +55,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -57,6 +65,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
+import com.google.android.gms.common.api.ApiException
+import com.sumanonline.hisabkhata.R
+import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.common.Resource
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
@@ -83,6 +97,38 @@ fun RegisterScreen(
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account?.idToken
+                if (!idToken.isNullOrBlank()) {
+                    viewModel.signInWithGoogleIdToken(
+                        googleIdToken = idToken,
+                        fallbackDisplayName = account.displayName ?: name.ifBlank { null },
+                        fallbackEmail = account.email ?: email.ifBlank { null },
+                        fallbackPhotoUrl = account.photoUrl?.toString()
+                    )
+                } else {
+                    viewModel.onGoogleSignInError("Google account selected but ID token was missing. Please try again.")
+                }
+            } catch (e: ApiException) {
+                val errorMsg = when (e.statusCode) {
+                    GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> null
+                    10 -> "Google Sign-In configuration error (Code 10). Please ensure SHA-1 fingerprint is added in Firebase Console."
+                    7 -> "Network error during Google Sign-In. Please check your connection."
+                    else -> "Google Sign-In error (Code ${e.statusCode})"
+                }
+                if (errorMsg != null) {
+                    viewModel.onGoogleSignInError(errorMsg)
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
@@ -308,6 +354,80 @@ fun RegisterScreen(
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = SurfaceWhite
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            color = Color(0xFFE2E8F0),
+                            thickness = 1.dp
+                        )
+                        Text(
+                            text = "OR",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF94A3B8),
+                            letterSpacing = 1.sp,
+                            modifier = Modifier.padding(horizontal = 14.dp)
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            color = Color(0xFFE2E8F0),
+                            thickness = 1.dp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                    .requestIdToken(Constants.GOOGLE_WEB_CLIENT_ID)
+                                    .requestEmail()
+                                    .requestProfile()
+                                    .build()
+                                val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                                googleSignInClient.signOut().addOnCompleteListener {
+                                    googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                                }
+                            } catch (e: Exception) {
+                                viewModel.onGoogleSignInError(e.localizedMessage ?: "Failed to launch Google Sign-In")
+                            }
+                        },
+                        enabled = uiState !is Resource.Loading,
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.2.dp, Color(0xFFE2E8F0)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = SurfaceWhite,
+                            contentColor = Color(0xFF1E293B)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_google_logo),
+                                contentDescription = "Google Logo",
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Continue with Google",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF1E293B)
                             )
                         }
                     }

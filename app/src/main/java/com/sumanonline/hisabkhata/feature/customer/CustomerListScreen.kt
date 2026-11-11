@@ -1,5 +1,12 @@
 package com.sumanonline.hisabkhata.feature.customer
 
+import android.widget.Toast
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -21,13 +28,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -46,8 +53,7 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -66,6 +72,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -108,6 +116,7 @@ fun CustomerListScreen(
     val pendingCount by viewModel.pendingSyncCount.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val session by viewModel.sessionState.collectAsState()
+    val context = LocalContext.current
 
     val partiesCount by viewModel.partiesCount.collectAsState()
     val givePartiesCount by viewModel.givePartiesCount.collectAsState()
@@ -118,9 +127,10 @@ fun CustomerListScreen(
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
 
+    val listState = rememberLazyListState()
+
     Scaffold(
         topBar = {
-            // Blue status bar header that remains solid while content scrolls under
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -135,42 +145,56 @@ fun CustomerListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = NavyBluePrimary,
+                expanded = !listState.isScrollInProgress,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.PersonAdd,
+                        contentDescription = "Add Customer",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                text = {
+                    Text(
+                        text = "ADD CUSTOMER",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        letterSpacing = 0.5.sp,
+                        color = Color.White
+                    )
+                },
+                containerColor = Color(0xFF0052CC),
                 contentColor = Color.White,
                 shape = CircleShape,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
                 modifier = Modifier.padding(bottom = 6.dp, end = 2.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PersonAdd,
-                    contentDescription = "Add Customer",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+            )
         },
         containerColor = PageBackground
     ) { innerPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // 1. Scrollable Top Navy Section (HisabKhata PRO, business switcher, QR Code)
             item {
                 HomeHeaderBar(
                     businessName = session.businessName.ifBlank { "M/S Suman Enterprise" },
                     isSyncing = isSyncing,
                     pendingSyncCount = pendingCount,
-                    onSyncClick = { viewModel.triggerSync() },
+                    onSyncClick = {
+                        viewModel.triggerSync { _, msg ->
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     onLogoutClick = { showLogoutConfirm = true },
                     onQrClick = { onTabSelected(BottomTab.PAYMENTS) }
                 )
             }
 
-            // 2. Summary Balance Cards (YOU'LL GIVE & YOU'LL GET)
             item {
                 SummaryBalanceCards(
                     totalGet = totalGet,
@@ -182,7 +206,6 @@ fun CustomerListScreen(
                 )
             }
 
-            // 3. Net Receivable Balance Banner
             item {
                 NetReceivableBanner(
                     netBalance = netBalance,
@@ -190,7 +213,6 @@ fun CustomerListScreen(
                 )
             }
 
-            // 4. Sticky Search & Filters Card (Pins to top when scrolling down!)
             stickyHeader {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -204,10 +226,8 @@ fun CustomerListScreen(
                 }
             }
 
-            // 5. Filter Chips & Sort Header
             item {
                 Column {
-                    // Filter Chips Row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -308,7 +328,6 @@ fun CustomerListScreen(
                         }
                     }
 
-                    // List Header Bar (NAME and AMOUNT sort labels)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -368,7 +387,6 @@ fun CustomerListScreen(
                 }
             }
 
-            // 6. Customer Items
             if (customers.isEmpty()) {
                 item {
                     EmptyStateView(
@@ -394,39 +412,25 @@ fun CustomerListScreen(
     }
 
     if (showSortMenu) {
-        DropdownMenu(
-            expanded = showSortMenu,
-            onDismissRequest = { showSortMenu = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text("Recent Activity") },
-                onClick = {
-                    viewModel.setSort(CustomerSort.RECENT)
-                    showSortMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Name (A to Z)") },
-                onClick = {
-                    viewModel.setSort(CustomerSort.NAME)
-                    showSortMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Amount: High to Low") },
-                onClick = {
-                    viewModel.setSort(CustomerSort.AMOUNT_HIGH)
-                    showSortMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Amount: Low to High") },
-                onClick = {
-                    viewModel.setSort(CustomerSort.AMOUNT_LOW)
-                    showSortMenu = false
-                }
-            )
-        }
+        FilterSortBottomSheet(
+            currentSort = currentSort,
+            currentFilter = currentFilter,
+            totalCount = partiesCount,
+            getCount = getPartiesCount,
+            giveCount = givePartiesCount,
+            overdueCount = overduePartiesCount,
+            onSortSelected = { sort ->
+                viewModel.setSort(sort)
+            },
+            onFilterSelected = { filter ->
+                viewModel.setFilter(filter)
+            },
+            onReset = {
+                viewModel.setSort(CustomerSort.RECENT)
+                viewModel.setFilter(CustomerFilter.ALL)
+            },
+            onDismiss = { showSortMenu = false }
+        )
     }
 
     if (showAddDialog) {
@@ -478,7 +482,6 @@ private fun StickySearchAndFiltersCard(
             .padding(horizontal = 14.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left: Search Customer Card
         Card(
             modifier = Modifier
                 .weight(1f)
@@ -551,7 +554,6 @@ private fun StickySearchAndFiltersCard(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Right: FILTERS Card
         Card(
             modifier = Modifier
                 .height(44.dp)
@@ -602,7 +604,6 @@ private fun HomeHeaderBar(
             .background(NavyBluePrimary)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // Row 1: Logo, title, PRO badge, subtitle, sync and logout
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -660,6 +661,17 @@ private fun HomeHeaderBar(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val infiniteTransition = rememberInfiniteTransition(label = "syncRotation")
+                val syncRotation by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 360f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 800, easing = LinearEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "syncAngle"
+                )
+
                 IconButton(
                     onClick = onSyncClick,
                     modifier = Modifier.size(36.dp)
@@ -668,7 +680,11 @@ private fun HomeHeaderBar(
                         imageVector = Icons.Default.Sync,
                         contentDescription = "Sync",
                         tint = Color.White,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier
+                            .size(22.dp)
+                            .graphicsLayer {
+                                rotationZ = if (isSyncing) syncRotation else 0f
+                            }
                     )
                 }
                 Spacer(modifier = Modifier.width(4.dp))
@@ -688,7 +704,6 @@ private fun HomeHeaderBar(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Row 2: Enterprise pill on left, QR Code on right
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -879,7 +894,8 @@ fun CustomerListItem(
                         text = DateUtils.formatRelativeTime(customer.updatedAt).uppercase(),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF64748B)
+                        color = Color(0xFF64748B),
+                        maxLines = 1
                     )
 
                     if (isOverdue && isGet) {
@@ -888,22 +904,23 @@ fun CustomerListItem(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(Color(0xFFFEF2F2))
-                                .border(0.5.dp, Color(0xFFFCA5A5), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 6.dp, vertical = 1.5.dp),
+                                .border(0.5.dp, Color(0xFFFECACA), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 5.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.AccessTime,
-                                contentDescription = null,
-                                tint = Color(0xFFDC2626),
-                                modifier = Modifier.size(10.dp)
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .background(Color(0xFFDC2626), CircleShape)
                             )
-                            Spacer(modifier = Modifier.width(3.dp))
+                            Spacer(modifier = Modifier.width(3.5.dp))
                             Text(
                                 text = "${dueStatus.days}D OVERDUE",
                                 fontSize = 8.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFDC2626)
+                                color = Color(0xFFDC2626),
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -913,44 +930,24 @@ fun CustomerListItem(
             Spacer(modifier = Modifier.width(8.dp))
 
             Column(horizontalAlignment = Alignment.End) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (customer.name.contains("Rahul", ignoreCase = true) || isOverdue) {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFDCFCE7)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Chat,
-                                contentDescription = "Reminder",
-                                tint = Color(0xFF16A34A),
-                                modifier = Modifier.size(13.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-
-                    val amountText = when {
-                        isSettled -> "₹0"
-                        isGet -> CurrencyFormatter.formatInr(Math.abs(customer.balance)) + " ↘"
-                        isGive -> CurrencyFormatter.formatInr(Math.abs(customer.balance)) + " ↗"
-                        else -> "₹0"
-                    }
-                    val amountColor = when {
-                        isGet -> Color(0xFFDC2626)
-                        isGive -> Color(0xFF16A34A)
-                        else -> Color(0xFF64748B)
-                    }
-
-                    Text(
-                        text = amountText,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = amountColor
-                    )
+                val amountText = when {
+                    isSettled -> "₹0"
+                    isGet -> CurrencyFormatter.formatInr(Math.abs(customer.balance)) + " ↘"
+                    isGive -> CurrencyFormatter.formatInr(Math.abs(customer.balance)) + " ↗"
+                    else -> "₹0"
                 }
+                val amountColor = when {
+                    isGet -> Color(0xFFDC2626)
+                    isGive -> Color(0xFF16A34A)
+                    else -> Color(0xFF64748B)
+                }
+
+                Text(
+                    text = amountText,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = amountColor
+                )
 
                 Spacer(modifier = Modifier.height(3.dp))
 

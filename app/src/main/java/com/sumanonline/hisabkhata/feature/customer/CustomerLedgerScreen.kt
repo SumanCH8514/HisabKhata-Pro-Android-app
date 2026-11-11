@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -57,9 +59,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +84,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
@@ -106,6 +111,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun CustomerLedgerScreen(
     customerId: String,
@@ -122,10 +128,21 @@ fun CustomerLedgerScreen(
     var showAddGotSheet by remember { mutableStateOf(false) }
     var selectedTransaction by remember { mutableStateOf<TransactionEntity?>(null) }
     var fullScreenAttachmentUrl by remember { mutableStateOf<String?>(null) }
+    var showPartyProfileSheet by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showReminderDialog by remember { mutableStateOf(false) }
+
+    val listState = rememberLazyListState()
+    var savedScrollIndex by remember { mutableStateOf<Int?>(null) }
+    var savedScrollOffset by remember { mutableStateOf<Int?>(null) }
+
+    LaunchedEffect(fullScreenAttachmentUrl) {
+        if (fullScreenAttachmentUrl == null && savedScrollIndex != null) {
+            listState.scrollToItem(savedScrollIndex!!, savedScrollOffset ?: 0)
+        }
+    }
 
     if (customer == null) {
         Box(
@@ -137,17 +154,31 @@ fun CustomerLedgerScreen(
         return
     }
 
+    if (selectedTransaction != null) {
+        EntryDetailsScreen(
+            customer = customer,
+            transaction = selectedTransaction!!,
+            viewModel = viewModel,
+            onNavigateBack = { selectedTransaction = null },
+            onDelete = { txId, amount ->
+                viewModel.deleteTransaction(customer.id, txId, amount)
+                selectedTransaction = null
+            }
+        )
+        return
+    }
+
     val isGet = customer.balance < 0.0
     val isGive = customer.balance > 0.0
     val isSettled = customer.balance == 0.0
 
-    Scaffold(
-        topBar = {
-            // Navy status bar header that remains solid while content scrolls under
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(NavyBluePrimary)
+                    .background(BrandBlue)
                     .statusBarsPadding()
             )
         },
@@ -163,51 +194,33 @@ fun CustomerLedgerScreen(
                 Button(
                     onClick = { showAddGaveSheet = true },
                     colors = ButtonDefaults.buttonColors(containerColor = GiveRed),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp)
+                        .height(48.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "↗",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "YOU GAVE ₹",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color.White
-                        )
-                    }
+                    Text(
+                        text = "YOU GAVE ₹",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
 
                 Button(
                     onClick = { showAddGotSheet = true },
                     colors = ButtonDefaults.buttonColors(containerColor = GotGreen),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp)
+                        .height(48.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "↙",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "YOU GOT ₹",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color.White
-                        )
-                    }
+                    Text(
+                        text = "YOU GOT ₹",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
             }
         },
@@ -220,25 +233,26 @@ fun CustomerLedgerScreen(
         }
 
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Scrollable Customer Name Navy Header Bar
-            item {
-                Box(
+            item(key = "customer_header_and_balance_card") {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(NavyBluePrimary)
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .background(BrandBlue)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 6.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
                             onClick = onNavigateBack,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(38.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -247,301 +261,170 @@ fun CustomerLedgerScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
 
-                        CustomerAvatar(
-                            name = customer.name,
-                            photoUrl = customer.photoURL,
-                            size = 40.dp,
-                            showActiveBadge = true
-                        )
+                        Box(modifier = Modifier.size(42.dp)) {
+                            if (!customer.photoURL.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(context)
+                                        .data(ImageUtils.sanitizeImageSource(customer.photoURL))
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = customer.name,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .clip(CircleShape)
+                                )
+                            } else {
+                                CustomerAvatar(
+                                    name = customer.name,
+                                    photoUrl = customer.photoURL,
+                                    size = 42.dp,
+                                    showActiveBadge = false
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(11.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF22C55E))
+                                    .border(1.5.dp, Color.White, CircleShape)
+                                    .align(Alignment.BottomEnd)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.width(10.dp))
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = customer.name,
-                                    color = Color.White,
-                                    fontSize = 16.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { showPartyProfileSheet = true }
+                        ) {
+                            Text(
+                                text = customer.name,
+                                color = Color.White,
+                                fontSize = 16.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                             Spacer(modifier = Modifier.height(2.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.clickable { showEditDialog = true }
+                                modifier = Modifier.clickable { showPartyProfileSheet = true }
                             ) {
                                 Text(
-                                    text = "View settings & profile",
+                                    text = "View settings",
                                     color = Color.White.copy(alpha = 0.85f),
-                                    fontSize = 11.5.sp
+                                    fontSize = 12.sp
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = null,
-                                    tint = Color.White.copy(alpha = 0.85f),
-                                    modifier = Modifier.size(13.dp)
+                                Text(
+                                    text = ">",
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
 
-                        // Call Button
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.15f))
-                                .clickable {
-                                    if (customer.phone.isNotBlank()) {
-                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${customer.phone}"))
-                                        context.startActivity(intent)
-                                    } else {
-                                        Toast.makeText(context, "No phone number available", Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
+                        IconButton(
+                            onClick = {
+                                if (customer.phone.isNotBlank()) {
+                                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${customer.phone}"))
+                                    context.startActivity(intent)
+                                } else {
+                                    Toast.makeText(context, "No phone number available", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Call,
                                 contentDescription = "Call",
                                 tint = Color.White,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // More Options Button
-                        Box {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.15f))
-                                    .clickable { showMenu = true },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "Options",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("View Statement / Report") },
-                                    onClick = {
-                                        showMenu = false
-                                        onNavigateToReport(customer.id)
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Edit Party Details") },
-                                    onClick = {
-                                        showMenu = false
-                                        showEditDialog = true
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Delete Party", color = GiveRed) },
-                                    onClick = {
-                                        showMenu = false
-                                        showDeleteConfirm = true
-                                    }
-                                )
-                            }
-                        }
                     }
-                }
-            }
 
-            // Top Section 1: Net Due Balance Card
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                ) {
-                    Column(
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp)
+                            .padding(start = 14.dp, end = 14.dp, top = 6.dp, bottom = 14.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        // Row 1: Balance & QR Pay
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Net Due Balance",
-                                    fontSize = 12.5.sp,
-                                    color = Color(0xFF64748B),
-                                    fontWeight = FontWeight.Normal
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = CurrencyFormatter.formatInr(Math.abs(customer.balance)),
-                                        fontSize = 26.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = when {
-                                            isSettled -> Color(0xFF0F172A)
-                                            isGet -> GiveRed
-                                            else -> GotGreen
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    if (isSettled) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(Color(0xFFF0FDF4))
-                                                .border(1.dp, Color(0xFFBBF7D0), RoundedCornerShape(12.dp))
-                                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Check,
-                                                    contentDescription = null,
-                                                    tint = Color(0xFF16A34A),
-                                                    modifier = Modifier.size(11.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(3.dp))
-                                                Text(
-                                                    text = "Settled",
-                                                    color = Color(0xFF16A34A),
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                            }
-                                        }
-                                    } else if (isGet) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(Color(0xFFFEF2F2))
-                                                .border(1.dp, Color(0xFFFECACA), RoundedCornerShape(12.dp))
-                                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                                        ) {
-                                            Text(
-                                                text = "You'll Get",
-                                                color = GiveRed,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                        }
-                                    } else {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(Color(0xFFF0FDF4))
-                                                .border(1.dp, Color(0xFFBBF7D0), RoundedCornerShape(12.dp))
-                                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                                        ) {
-                                            Text(
-                                                text = "You'll Give",
-                                                color = GotGreen,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // QR Pay Box
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color(0xFFEFF6FF))
-                                    .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(10.dp))
-                                    .clickable {
-                                        val shareUrl = "${Constants.WEB_PORTAL_BASE_URL}customer/share/${customer.id}"
-                                        val sendIntent = Intent().apply {
-                                            action = Intent.ACTION_SEND
-                                            putExtra(
-                                                Intent.EXTRA_TEXT,
-                                                "Pay using QR or online link: $shareUrl"
-                                            )
-                                            type = "text/plain"
-                                        }
-                                        context.startActivity(Intent.createChooser(sendIntent, "Share QR Pay"))
-                                    }
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        imageVector = Icons.Default.QrCode,
-                                        contentDescription = "QR Pay",
-                                        tint = NavyBluePrimary,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = "QR Pay",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = NavyBluePrimary
-                                    )
+                                val statusLabel = when {
+                                    isSettled -> "Settled"
+                                    isGet -> "You will get"
+                                    else -> "You will give"
                                 }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Row 2: Set Collection Reminder
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Alarm,
-                                    contentDescription = null,
-                                    tint = NavyBluePrimary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "SET COLLECTION REMINDER",
-                                    fontSize = 11.5.sp,
+                                    text = statusLabel,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF334155)
+                                )
+                                Text(
+                                    text = CurrencyFormatter.formatInrClean(Math.abs(customer.balance), withSpace = false),
+                                    fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = NavyBluePrimary,
-                                    letterSpacing = 0.5.sp
+                                    color = when {
+                                        isSettled -> Color(0xFF0F172A)
+                                        isGet -> GiveRed
+                                        else -> GotGreen
+                                    }
                                 )
                             }
 
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(8.dp))
-                                    .clickable { showReminderDialog = true }
-                                    .padding(horizontal = 12.dp, vertical = 5.dp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { showReminderDialog = true }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_calendar_reminder),
+                                        contentDescription = null,
+                                        tint = BrandBlue,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "SET COLLECTION REMINDER",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = BrandBlue,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                }
+
                                 Text(
                                     text = if (customer.dueDate.isNullOrBlank()) "SET DATE" else customer.dueDate,
-                                    fontSize = 11.sp,
+                                    fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = NavyBluePrimary
+                                    color = BrandBlue,
+                                    modifier = Modifier.clickable { showReminderDialog = true }
                                 )
                             }
                         }
@@ -549,37 +432,28 @@ fun CustomerLedgerScreen(
                 }
             }
 
-            // Top Section 2: Quick Action Buttons Row (Report, WhatsApp, SMS, Email, Pay Link)
-            item {
-                Card(
+            stickyHeader(key = "sticky_action_and_table_header") {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 2.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        .background(SurfaceWhite)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 12.dp),
+                            .padding(horizontal = 8.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         QuickActionButton(
-                            icon = Icons.Default.Description,
+                            painter = painterResource(id = R.drawable.ic_action_pdf),
                             label = "Report",
-                            iconTint = Color(0xFF2563EB),
-                            circleBg = Color(0xFFEFF6FF),
                             onClick = { onNavigateToReport(customer.id) }
                         )
 
                         QuickActionButton(
                             painter = painterResource(id = R.drawable.ic_whatsapp),
                             label = "WhatsApp",
-                            iconTint = Color(0xFF16A34A),
-                            circleBg = Color(0xFFDCFCE7),
                             onClick = {
                                 if (customer.phone.isNotBlank()) {
                                     try {
@@ -602,10 +476,8 @@ fun CustomerLedgerScreen(
                         )
 
                         QuickActionButton(
-                            icon = Icons.Default.Sms,
+                            painter = painterResource(id = R.drawable.ic_quick_sms),
                             label = "SMS",
-                            iconTint = Color(0xFFD97706),
-                            circleBg = Color(0xFFFEF3C7),
                             onClick = {
                                 if (customer.phone.isNotBlank()) {
                                     val rawPhone = customer.phone.replace("+", "").replace(" ", "").replace("-", "").trim()
@@ -621,15 +493,7 @@ fun CustomerLedgerScreen(
                                     try {
                                         context.startActivity(smsIntent)
                                     } catch (_: Exception) {
-                                        try {
-                                            val fallbackIntent = Intent(Intent.ACTION_VIEW, Uri.parse("sms:$targetPhone")).apply {
-                                                putExtra("sms_body", msg)
-                                                putExtra(Intent.EXTRA_TEXT, msg)
-                                            }
-                                            context.startActivity(fallbackIntent)
-                                        } catch (_: Exception) {
-                                            Toast.makeText(context, "No SMS app found", Toast.LENGTH_SHORT).show()
-                                        }
+                                        Toast.makeText(context, "No SMS app found", Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
                                     Toast.makeText(context, "No phone number available", Toast.LENGTH_SHORT).show()
@@ -638,10 +502,8 @@ fun CustomerLedgerScreen(
                         )
 
                         QuickActionButton(
-                            icon = Icons.Default.Email,
+                            painter = painterResource(id = R.drawable.ic_quick_email),
                             label = "Email",
-                            iconTint = Color(0xFFDC2626),
-                            circleBg = Color(0xFFFEE2E2),
                             onClick = {
                                 if (customer.email.isNotBlank()) {
                                     Toast.makeText(context, "Sending reminder email to ${customer.email}…", Toast.LENGTH_SHORT).show()
@@ -656,71 +518,60 @@ fun CustomerLedgerScreen(
 
                         QuickActionButton(
                             icon = Icons.Default.Link,
-                            label = "Pay Link",
-                            iconTint = Color(0xFF7C3AED),
-                            circleBg = Color(0xFFF3E8FF),
+                            label = "Copy Link",
+                            iconTint = Color(0xFF2563EB),
                             onClick = {
                                 val shareUrl = "${Constants.WEB_PORTAL_BASE_URL}customer/share/${customer.id}"
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("HisabKhata Payment Link", shareUrl)
+                                val clip = ClipData.newPlainText("HisabKhata Share Link", shareUrl)
                                 clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, "Payment link copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Link copied to clipboard!", Toast.LENGTH_SHORT).show()
                             }
                         )
                     }
-                }
-            }
 
-            // Section 3: Entries Table Header Row
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
                     Row(
-                        modifier = Modifier.weight(1.35f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF8FAFC))
+                            .border(BorderStroke(1.dp, Color(0xFFE2E8F0)))
+                            .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = "ENTRIES",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF64748B),
-                            letterSpacing = 0.5.sp
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF8C9BAE),
+                            letterSpacing = 0.5.sp,
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .padding(start = 16.dp)
                         )
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Icon(
-                            imageVector = Icons.Default.SwapVert,
-                            contentDescription = "Sort entries",
-                            tint = Color(0xFF64748B),
-                            modifier = Modifier.size(13.dp)
+
+                        Text(
+                            text = "YOU GAVE",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF8C9BAE),
+                            textAlign = TextAlign.Center,
+                            letterSpacing = 0.5.sp,
+                            modifier = Modifier.weight(0.8f)
+                        )
+
+                        Text(
+                            text = "YOU GOT",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF8C9BAE),
+                            textAlign = TextAlign.Center,
+                            letterSpacing = 0.5.sp,
+                            modifier = Modifier.weight(0.8f)
                         )
                     }
-
-                    Text(
-                        text = "YOU GAVE",
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = GiveRed,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(0.85f)
-                    )
-
-                    Text(
-                        text = "YOU GOT",
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = GotGreen,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(0.85f)
-                    )
                 }
             }
 
-            // Section 4: Transactions List with Date Grouping & Table Layout
             if (transactions.isEmpty()) {
                 item {
                     EmptyStateView(
@@ -730,38 +581,38 @@ fun CustomerLedgerScreen(
                 }
             } else {
                 groupedTransactions.forEach { (dateKey, txList) ->
-                    // Date Pill Header
                     item(key = "date_header_$dateKey") {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 6.dp),
+                                .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .clip(RoundedCornerShape(50))
                                     .background(SurfaceWhite)
-                                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(16.dp))
-                                    .padding(horizontal = 14.dp, vertical = 4.dp)
+                                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(50))
+                                    .padding(horizontal = 16.dp, vertical = 6.dp)
                             ) {
                                 Text(
-                                    text = formatDatePill(dateKey, txList.firstOrNull()?.timestamp ?: System.currentTimeMillis()),
-                                    fontSize = 11.sp,
+                                    text = DateUtils.formatDatePill(dateKey, txList.firstOrNull()?.timestamp ?: System.currentTimeMillis()),
+                                    fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF334155),
+                                    color = Color(0xFF64748B),
                                     letterSpacing = 0.5.sp
                                 )
                             }
                         }
                     }
 
-                    // Table Transaction Rows
                     items(txList, key = { it.id }) { tx ->
                         LedgerTableRowItem(
                             tx = tx,
                             onClick = { selectedTransaction = tx },
                             onAttachmentClick = { attachmentUrl ->
+                                savedScrollIndex = listState.firstVisibleItemIndex
+                                savedScrollOffset = listState.firstVisibleItemScrollOffset
                                 fullScreenAttachmentUrl = attachmentUrl
                             }
                         )
@@ -775,7 +626,6 @@ fun CustomerLedgerScreen(
         }
     }
 
-    // Reminder Date Selection Dialog
     if (showReminderDialog) {
         AlertDialog(
             onDismissRequest = { showReminderDialog = false },
@@ -869,27 +719,17 @@ fun CustomerLedgerScreen(
         )
     }
 
-    selectedTransaction?.let { tx ->
-        TransactionDetailBottomSheet(
-            transaction = tx,
-            customerName = customer.name,
-            onDismiss = { selectedTransaction = null },
-            onDelete = { txId, amount ->
-                viewModel.deleteTransaction(customer.id, txId, amount)
-                selectedTransaction = null
-            }
-        )
-    }
 
-    fullScreenAttachmentUrl?.let { rawUrl ->
-        Dialog(
-            onDismissRequest = { fullScreenAttachmentUrl = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
+
+        fullScreenAttachmentUrl?.let { rawUrl ->
+            BackHandler {
+                fullScreenAttachmentUrl = null
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black)
+                    .zIndex(100f)
             ) {
                 val imageModel = remember(rawUrl) {
                     ImageUtils.sanitizeImageSource(rawUrl)
@@ -955,6 +795,24 @@ fun CustomerLedgerScreen(
         }
     }
 
+    if (showPartyProfileSheet) {
+        PartyProfileBottomSheet(
+            customer = customer,
+            onDismiss = { showPartyProfileSheet = false },
+            onEditProfile = {
+                showPartyProfileSheet = false
+                showEditDialog = true
+            },
+            onImportLedger = {
+                Toast.makeText(context, "Import ledger functionality coming soon", Toast.LENGTH_SHORT).show()
+            },
+            onDeleteParty = {
+                showPartyProfileSheet = false
+                showDeleteConfirm = true
+            }
+        )
+    }
+
     if (showEditDialog) {
         AddEditCustomerDialog(
             existingCustomer = customer,
@@ -985,28 +843,28 @@ fun CustomerLedgerScreen(
 }
 
 /**
- * 5 Quick Action circular buttons (Report, WhatsApp, SMS, Email, Pay Link)
+ * 5 Quick Action circular buttons (Report, WhatsApp, SMS, Email, Copy Link)
  */
 @Composable
 private fun QuickActionButton(
     label: String,
-    iconTint: Color,
-    circleBg: Color,
     icon: ImageVector? = null,
     painter: Painter? = null,
+    iconTint: Color = Color.Unspecified,
     onClick: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clickable(onClick = onClick)
-            .padding(4.dp)
+            .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(42.dp)
+                .size(44.dp)
                 .clip(CircleShape)
-                .background(circleBg),
+                .background(SurfaceWhite)
+                .border(1.dp, Color(0xFFE2E8F0), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             if (painter != null) {
@@ -1014,14 +872,14 @@ private fun QuickActionButton(
                     painter = painter,
                     contentDescription = label,
                     tint = iconTint,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             } else if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = label,
                     tint = iconTint,
-                    modifier = Modifier.size(19.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
@@ -1029,15 +887,15 @@ private fun QuickActionButton(
         Text(
             text = label,
             fontSize = 11.sp,
-            color = Color(0xFF475569),
+            color = Color(0xFF64748B),
             fontWeight = FontWeight.Medium
         )
     }
 }
 
 /**
- * Transaction Table Row: 3 columns matching the reference row layout
- * [ Details (Time, Note, Bal, Badges) | YOU GAVE | YOU GOT ]
+ * Transaction Table Row matching the uploaded designs:
+ * [ Left: Date & Time, Balance Pill, Note | Middle: YOU GAVE | Right: YOU GOT ]
  */
 @Composable
 private fun LedgerTableRowItem(
@@ -1047,214 +905,151 @@ private fun LedgerTableRowItem(
 ) {
     val isGave = tx.amount < 0 || tx.type == "GAVE"
 
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 2.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
-        border = BorderStroke(0.5.dp, Color(0xFFE2E8F0))
+        color = SurfaceWhite
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Column 1: Details (Time, Note, Badges)
-            Column(
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
                 modifier = Modifier
-                    .weight(1.35f)
-                    .padding(10.dp)
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Top line: Clock + Date & Time
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = null,
-                        tint = Color(0xFF94A3B8),
-                        modifier = Modifier.size(11.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
+                Column(
+                    modifier = Modifier
+                        .weight(1.4f)
+                        .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
+                ) {
                     Text(
-                        text = formatTxDateTime(tx.timestamp),
-                        fontSize = 11.sp,
+                        text = DateUtils.formatDisplayDateTime(tx.timestamp),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
                         color = Color(0xFF64748B)
                     )
-                }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                // Middle: Note / Description
-                Text(
-                    text = tx.description.ifBlank { if (isGave) "Credit given" else "Payment received" },
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF0F172A),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Bottom: Separate Balance Pill (Red for negative, Green for surplus) & Separate Attachment Icon
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Running Balance Pill
-                    val isNegative = tx.balance < 0
-                    val balFormatted = CurrencyFormatter.formatInr(Math.abs(tx.balance))
-                    val balText = if (isNegative) "Bal. -₹${balFormatted.removePrefix("₹")}" else "Bal. $balFormatted"
-                    val pillBg = if (isNegative) Color(0xFFFEF2F2) else Color(0xFFF0FDF4)
-                    val pillBorder = if (isNegative) Color(0xFFFECACA) else Color(0xFFBBF7D0)
-                    val pillText = if (isNegative) Color(0xFFDC2626) else Color(0xFF16A34A)
+                    val isZero = tx.balance == 0.0
+                    val isNegative = tx.balance < 0.0
+                    val absBal = Math.abs(tx.balance)
+                    val balFormattedClean = CurrencyFormatter.formatInrClean(absBal, withSpace = false).replace("₹", "")
+                    val balText = if (isZero) "Bal. ₹0" else if (isNegative) "Bal. ₹-$balFormattedClean" else "Bal. ₹$balFormattedClean"
+                    val pillBg = if (isZero || !isNegative) Color(0xFFDCFCE7) else Color(0xFFFEE2E2)
+                    val pillText = if (isZero || !isNegative) GotGreen else GiveRed
 
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
                             .background(pillBg)
-                            .border(1.dp, pillBorder, RoundedCornerShape(4.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = balText,
                             fontSize = 10.5.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                             color = pillText
                         )
                     }
 
-                    // Separate Attachment Icon (Blue outline photo icon matching uploaded reference)
-                    if (!tx.attachment.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { onAttachmentClick(tx.attachment) },
-                            contentAlignment = Alignment.Center
+                    if (tx.description.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = tx.description,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E293B),
+                            lineHeight = 18.sp,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp)
+                        .background(Color(0xFFF1F5F9))
+                )
+
+                Box(
+                    modifier = Modifier
+                        .weight(0.8f)
+                        .fillMaxHeight()
+                        .padding(horizontal = 4.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isGave) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_attachment_image),
-                                contentDescription = "View Attachment",
-                                tint = Color(0xFF2563EB),
-                                modifier = Modifier.size(17.dp)
+                            Text(
+                                text = CurrencyFormatter.formatInrClean(Math.abs(tx.amount), withSpace = false),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = GiveRed
                             )
+                            if (!tx.attachment.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_attachment_image),
+                                    contentDescription = "Attachment",
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clickable { onAttachmentClick(tx.attachment) }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp)
+                        .background(Color(0xFFF8FAFC))
+                )
+
+                Box(
+                    modifier = Modifier
+                        .weight(0.8f)
+                        .fillMaxHeight()
+                        .padding(horizontal = 4.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!isGave) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = CurrencyFormatter.formatInrClean(Math.abs(tx.amount), withSpace = false),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = GotGreen
+                            )
+                            if (!tx.attachment.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_attachment_image),
+                                    contentDescription = "Attachment",
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clickable { onAttachmentClick(tx.attachment) }
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // Vertical Divider 1
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(1.dp)
-                    .background(Color(0xFFF1F5F9))
-            )
-
-            // Column 2: YOU GAVE
-            Box(
-                modifier = Modifier
-                    .weight(0.85f)
-                    .fillMaxHeight()
-                    .padding(horizontal = 6.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isGave) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = CurrencyFormatter.formatInr(Math.abs(tx.amount)),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = GiveRed
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Credit given",
-                            fontSize = 10.sp,
-                            color = GiveRed.copy(alpha = 0.85f)
-                        )
-                    }
-                }
-            }
-
-            // Vertical Divider 2
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(1.dp)
-                    .background(Color(0xFFF1F5F9))
-            )
-
-            // Column 3: YOU GOT
-            Box(
-                modifier = Modifier
-                    .weight(0.85f)
-                    .fillMaxHeight()
-                    .padding(horizontal = 6.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (!isGave) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = CurrencyFormatter.formatInr(Math.abs(tx.amount)),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = GotGreen
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "✓ Received",
-                            fontSize = 10.sp,
-                            color = GotGreen.copy(alpha = 0.85f)
-                        )
-                    }
-                }
-            }
+            HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
         }
     }
-}
-
-private fun formatTxDateTime(timestamp: Long): String {
-    return SimpleDateFormat("dd MMM yyyy • hh:mm a", Locale.ENGLISH).format(Date(timestamp))
-}
-
-/**
- * Formats date pill header like "07 NOV 26 • 4 DAYS AGO"
- */
-private fun formatDatePill(dateIso: String, timestamp: Long): String {
-    val dateObj = DateUtils.parseIsoDate(dateIso) ?: Date(timestamp)
-    val datePart = SimpleDateFormat("dd MMM yy", Locale.ENGLISH).format(dateObj).uppercase()
-
-    val todayCal = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-    val targetCal = Calendar.getInstance().apply {
-        time = dateObj
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-    val diffDays = ((todayCal.timeInMillis - targetCal.timeInMillis) / (24 * 60 * 60 * 1000)).toInt()
-
-    val relativePart = when {
-        diffDays <= 0 -> "TODAY"
-        diffDays == 1 -> "YESTERDAY"
-        diffDays < 30 -> "$diffDays DAYS AGO"
-        diffDays < 365 -> "${diffDays / 30} MONTHS AGO"
-        else -> "${diffDays / 365} YEARS AGO"
-    }
-
-    return "$datePart • $relativePart"
 }

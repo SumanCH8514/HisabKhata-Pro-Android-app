@@ -232,70 +232,123 @@ class SyncEngine @Inject constructor(
         outboxDao.insertOperation(outboxOp)
     }
 
-    suspend fun synchronize(): Boolean = withContext(Dispatchers.IO) {
-        val token = sessionManager.getIdToken()
-        val userId = sessionManager.getUserId()
-        if (token.isBlank() || userId.isBlank()) return@withContext false
+    private data class ExecutionResult(
+        val isSuccess: Boolean,
+        val httpCode: Int = 200,
+        val errorMessage: String? = null
+    )
 
-        val pendingOps = outboxDao.getOperationsByStatus(Constants.SYNC_STATUS_PENDING)
+    private suspend fun refreshToken(): String? {
+        val refreshToken = sessionManager.getRefreshToken()
+        if (refreshToken.isBlank()) return null
+        return try {
+            val response = firebaseApi.refreshIdToken(
+                apiKey = Constants.FIREBASE_API_KEY,
+                refreshToken = refreshToken
+            )
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                val newIdToken = body.idToken
+                val newRefreshToken = body.refreshToken.ifBlank { refreshToken }
+                sessionManager.updateTokens(newIdToken, newRefreshToken)
+                newIdToken
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private suspend fun executeOperation(op: OutboxOperationEntity, token: String): ExecutionResult {
+        return when (op.operationType) {
+            Constants.OP_CREATE_CUSTOMER, Constants.OP_UPDATE_CUSTOMER -> {
+                val dto = json.decodeFromString(FirebaseCustomerDto.serializer(), op.payloadJson)
+                val res = firebaseApi.putCustomer(op.entityId, dto, token)
+                if (res.isSuccessful) {
+                    customerDao.getCustomerById(op.entityId)?.let {
+                        customerDao.update(it.copy(syncStatus = Constants.SYNC_STATUS_SYNCED))
+                    }
+                    ExecutionResult(isSuccess = true)
+                } else {
+                    ExecutionResult(isSuccess = false, httpCode = res.code(), errorMessage = res.message())
+                }
+            }
+            Constants.OP_DELETE_CUSTOMER -> {
+                val res = firebaseApi.deleteCustomer(op.entityId, token)
+                if (res.isSuccessful) {
+                    ExecutionResult(isSuccess = true)
+                } else {
+                    ExecutionResult(isSuccess = false, httpCode = res.code(), errorMessage = res.message())
+                }
+            }
+            Constants.OP_CREATE_TRANSACTION -> {
+                val dto = json.decodeFromString(FirebaseTransactionDto.serializer(), op.payloadJson)
+                val res = firebaseApi.putTransaction(op.entityId, dto, token)
+                if (res.isSuccessful) {
+                    transactionDao.getTransactionById(op.entityId)?.let {
+                        transactionDao.update(it.copy(syncStatus = Constants.SYNC_STATUS_SYNCED))
+                    }
+                    customerDao.getCustomerById(dto.customerId)?.let {
+                        val currentBal = it.balance
+                        val patchObj = kotlinx.serialization.json.buildJsonObject {
+                            put("balance", kotlinx.serialization.json.JsonPrimitive(currentBal))
+                            put("updatedAt", kotlinx.serialization.json.JsonPrimitive(System.currentTimeMillis()))
+                        }
+                        try {
+                            firebaseApi.patchCustomer(dto.customerId, patchObj, token)
+                        } catch (_: Exception) {
+                        }
+                    }
+                    ExecutionResult(isSuccess = true)
+                } else {
+                    ExecutionResult(isSuccess = false, httpCode = res.code(), errorMessage = res.message())
+                }
+            }
+            Constants.OP_DELETE_TRANSACTION -> {
+                val res = firebaseApi.deleteTransaction(op.entityId, token)
+                if (res.isSuccessful) {
+                    ExecutionResult(isSuccess = true)
+                } else {
+                    ExecutionResult(isSuccess = false, httpCode = res.code(), errorMessage = res.message())
+                }
+            }
+            else -> ExecutionResult(isSuccess = true)
+        }
+    }
+
+    suspend fun synchronize(): Boolean = withContext(Dispatchers.IO) {
+        var token = sessionManager.getIdToken()
+        val userId = sessionManager.getUserId()
+        if (userId.isBlank()) return@withContext false
+
+        if (token.isBlank()) {
+            token = refreshToken() ?: return@withContext false
+        }
+
+        // Fetch all unsynced operations (including PENDING_SYNC, FAILED, and SYNCING)
+        val pendingOps = outboxDao.getAllUnsyncedOperations()
         var allSucceeded = true
 
         for (op in pendingOps) {
             try {
                 outboxDao.updateStatus(op.operationId, Constants.SYNC_STATUS_SYNCING)
-                when (op.operationType) {
-                    Constants.OP_CREATE_CUSTOMER, Constants.OP_UPDATE_CUSTOMER -> {
-                        val dto = json.decodeFromString(FirebaseCustomerDto.serializer(), op.payloadJson)
-                        val res = firebaseApi.putCustomer(op.entityId, dto, token)
-                        if (res.isSuccessful) {
-                            customerDao.getCustomerById(op.entityId)?.let {
-                                customerDao.update(it.copy(syncStatus = Constants.SYNC_STATUS_SYNCED))
-                            }
-                            outboxDao.deleteOperation(op.operationId)
-                        } else {
-                            allSucceeded = false
-                            outboxDao.updateStatus(op.operationId, Constants.SYNC_STATUS_FAILED, res.message())
-                        }
+                var result = executeOperation(op, token)
+
+                // If unauthorized (token expired / 401), automatically refresh the token and retry once
+                if (!result.isSuccess && result.httpCode == 401) {
+                    val freshToken = refreshToken()
+                    if (!freshToken.isNullOrBlank()) {
+                        token = freshToken
+                        result = executeOperation(op, token)
                     }
-                    Constants.OP_DELETE_CUSTOMER -> {
-                        val res = firebaseApi.deleteCustomer(op.entityId, token)
-                        if (res.isSuccessful) {
-                            outboxDao.deleteOperation(op.operationId)
-                        } else {
-                            allSucceeded = false
-                            outboxDao.updateStatus(op.operationId, Constants.SYNC_STATUS_FAILED, res.message())
-                        }
-                    }
-                    Constants.OP_CREATE_TRANSACTION -> {
-                        val dto = json.decodeFromString(FirebaseTransactionDto.serializer(), op.payloadJson)
-                        val res = firebaseApi.putTransaction(op.entityId, dto, token)
-                        if (res.isSuccessful) {
-                            transactionDao.getTransactionById(op.entityId)?.let {
-                                transactionDao.update(it.copy(syncStatus = Constants.SYNC_STATUS_SYNCED))
-                            }
-                            customerDao.getCustomerById(dto.customerId)?.let {
-                                val currentBal = it.balance
-                                val patchObj = kotlinx.serialization.json.buildJsonObject {
-                                    put("balance", kotlinx.serialization.json.JsonPrimitive(currentBal))
-                                    put("updatedAt", kotlinx.serialization.json.JsonPrimitive(System.currentTimeMillis()))
-                                }
-                                firebaseApi.patchCustomer(dto.customerId, patchObj, token)
-                            }
-                            outboxDao.deleteOperation(op.operationId)
-                        } else {
-                            allSucceeded = false
-                            outboxDao.updateStatus(op.operationId, Constants.SYNC_STATUS_FAILED, res.message())
-                        }
-                    }
-                    Constants.OP_DELETE_TRANSACTION -> {
-                        val res = firebaseApi.deleteTransaction(op.entityId, token)
-                        if (res.isSuccessful) {
-                            outboxDao.deleteOperation(op.operationId)
-                        } else {
-                            allSucceeded = false
-                            outboxDao.updateStatus(op.operationId, Constants.SYNC_STATUS_FAILED, res.message())
-                        }
-                    }
+                }
+
+                if (result.isSuccess) {
+                    outboxDao.deleteOperation(op.operationId)
+                } else {
+                    allSucceeded = false
+                    outboxDao.updateStatus(op.operationId, Constants.SYNC_STATUS_FAILED, result.errorMessage)
                 }
             } catch (e: Exception) {
                 allSucceeded = false
@@ -303,17 +356,28 @@ class SyncEngine @Inject constructor(
             }
         }
 
-        refreshDataFromCloud()
+        refreshDataFromCloud(token)
         allSucceeded
     }
 
-    suspend fun refreshDataFromCloud() = withContext(Dispatchers.IO) {
-        val token = sessionManager.getIdToken()
+    suspend fun refreshDataFromCloud(passedToken: String? = null) = withContext(Dispatchers.IO) {
+        var token = passedToken ?: sessionManager.getIdToken()
         val userId = sessionManager.getUserId()
-        if (token.isBlank() || userId.isBlank()) return@withContext
+        if (userId.isBlank()) return@withContext
+
+        if (token.isBlank()) {
+            token = refreshToken() ?: return@withContext
+        }
 
         try {
-            val customersRes = firebaseApi.getCustomersByUser(equalTo = "\"$userId\"", auth = token)
+            var customersRes = firebaseApi.getCustomersByUser(equalTo = "\"$userId\"", auth = token)
+            if (customersRes.code() == 401) {
+                val fresh = refreshToken()
+                if (fresh != null) {
+                    token = fresh
+                    customersRes = firebaseApi.getCustomersByUser(equalTo = "\"$userId\"", auth = token)
+                }
+            }
             if (customersRes.isSuccessful && customersRes.body() != null) {
                 val cloudCustomers = customersRes.body()!!.map { (key, dto) ->
                     CustomerEntity(
@@ -335,7 +399,14 @@ class SyncEngine @Inject constructor(
                 customerDao.insertOrUpdateAll(cloudCustomers)
             }
 
-            val txRes = firebaseApi.getTransactionsByUser(equalTo = "\"$userId\"", auth = token)
+            var txRes = firebaseApi.getTransactionsByUser(equalTo = "\"$userId\"", auth = token)
+            if (txRes.code() == 401) {
+                val fresh = refreshToken()
+                if (fresh != null) {
+                    token = fresh
+                    txRes = firebaseApi.getTransactionsByUser(equalTo = "\"$userId\"", auth = token)
+                }
+            }
             if (txRes.isSuccessful && txRes.body() != null) {
                 val cloudTxs = txRes.body()!!.map { (key, dto) ->
                     TransactionEntity(

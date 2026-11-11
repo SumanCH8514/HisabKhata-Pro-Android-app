@@ -170,11 +170,15 @@ class CustomerViewModel @Inject constructor(
         _currentSort.value = sort
     }
 
-    fun triggerSync() {
+    fun triggerSync(onComplete: ((success: Boolean, message: String) -> Unit)? = null) {
         viewModelScope.launch {
             _isSyncing.value = true
-            syncEngine.synchronize()
+            val success = syncEngine.synchronize()
             _isSyncing.value = false
+            if (onComplete != null) {
+                val msg = if (success) "Sync complete. All entries up to date." else "Some entries could not sync. Will retry automatically."
+                onComplete(success, msg)
+            }
         }
     }
 
@@ -283,6 +287,36 @@ class CustomerViewModel @Inject constructor(
     fun deleteTransaction(customerId: String, txId: String, amount: Double) {
         viewModelScope.launch {
             syncEngine.deleteTransactionOffline(customerId, txId, amount)
+            triggerSync()
+        }
+    }
+
+    fun updateTransaction(
+        customerId: String,
+        txId: String,
+        oldAmount: Double,
+        newAmount: Double,
+        description: String,
+        date: String
+    ) {
+        viewModelScope.launch {
+            val delta = newAmount - oldAmount
+            if (delta != 0.0) {
+                val customer = customerDao.getCustomerById(customerId)
+                if (customer != null) {
+                    customerDao.updateBalance(customerId, customer.balance + delta, System.currentTimeMillis())
+                }
+            }
+            val existing = transactionDao.getTransactionById(txId)
+            if (existing != null) {
+                val updated = existing.copy(
+                    amount = newAmount,
+                    description = description,
+                    date = date,
+                    syncStatus = Constants.SYNC_STATUS_PENDING
+                )
+                transactionDao.update(updated)
+            }
             triggerSync()
         }
     }

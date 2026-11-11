@@ -6,11 +6,16 @@ import com.sumanonline.hisabkhata.core.network.model.FirebaseAuthSignUpRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebaseCustomerDto
 import com.sumanonline.hisabkhata.core.network.model.FirebasePasswordResetRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebasePasswordResetResponse
+import com.sumanonline.hisabkhata.core.network.model.FirebaseSignInWithIdpRequest
+import com.sumanonline.hisabkhata.core.network.model.FirebaseSignInWithIdpResponse
+import com.sumanonline.hisabkhata.core.network.model.FirebaseTokenRefreshResponse
 import com.sumanonline.hisabkhata.core.network.model.FirebaseTransactionDto
 import com.sumanonline.hisabkhata.core.network.model.FirebaseUserDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -37,6 +42,20 @@ interface FirebaseApiService {
         @Query("key") apiKey: String,
         @Body request: FirebasePasswordResetRequest
     ): Response<FirebasePasswordResetResponse>
+
+    @POST("https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp")
+    suspend fun signInWithIdp(
+        @Query("key") apiKey: String,
+        @Body request: FirebaseSignInWithIdpRequest
+    ): Response<FirebaseSignInWithIdpResponse>
+
+    @POST("https://securetoken.googleapis.com/v1/token")
+    @FormUrlEncoded
+    suspend fun refreshIdToken(
+        @Query("key") apiKey: String,
+        @Field("grant_type") grantType: String = "refresh_token",
+        @Field("refresh_token") refreshToken: String
+    ): Response<FirebaseTokenRefreshResponse>
 
     @GET("customers.json")
     suspend fun getCustomersByUser(

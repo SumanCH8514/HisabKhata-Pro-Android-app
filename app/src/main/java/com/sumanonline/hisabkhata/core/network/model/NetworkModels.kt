@@ -1,5 +1,6 @@
 package com.sumanonline.hisabkhata.core.network.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -128,4 +129,34 @@ data class FirebasePasswordResetRequest(
 @Serializable
 data class FirebasePasswordResetResponse(
     val email: String = ""
+)
+
+@Serializable
+data class FirebaseSignInWithIdpRequest(
+    val postBody: String,
+    val requestUri: String = "http://localhost",
+    val returnSecureToken: Boolean = true,
+    val returnIdpCredential: Boolean = true
+)
+
+@Serializable
+data class FirebaseSignInWithIdpResponse(
+    val idToken: String = "",
+    val email: String = "",
+    val refreshToken: String = "",
+    val expiresIn: String = "",
+    val localId: String = "",
+    val displayName: String = "",
+    val photoUrl: String = "",
+    val isNewUser: Boolean = false
+)
+
+@Serializable
+data class FirebaseTokenRefreshResponse(
+    @SerialName("expires_in") val expiresIn: String = "",
+    @SerialName("token_type") val tokenType: String = "",
+    @SerialName("refresh_token") val refreshToken: String = "",
+    @SerialName("id_token") val idToken: String = "",
+    @SerialName("user_id") val userId: String = "",
+    @SerialName("project_id") val projectId: String = ""
 )

@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,6 +9,15 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
 }
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+val firebaseApiKey: String = localProperties.getProperty("FIREBASE_API_KEY")
+    ?: System.getenv("FIREBASE_API_KEY")
+    ?: ""
 
 android {
     namespace = "com.sumanonline.hisabkhata"
@@ -22,6 +34,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        buildConfigField("String", "FIREBASE_API_KEY", "\"$firebaseApiKey\"")
     }
 
     buildTypes {
@@ -92,6 +106,7 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.coil.compose)
     implementation(libs.zxing.core)
+    implementation(libs.play.services.auth)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

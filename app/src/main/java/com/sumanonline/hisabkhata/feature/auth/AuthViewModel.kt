@@ -8,6 +8,7 @@ import com.sumanonline.hisabkhata.core.network.FirebaseApiService
 import com.sumanonline.hisabkhata.core.network.model.FirebaseAuthSignInRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebaseAuthSignUpRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebasePasswordResetRequest
+import com.sumanonline.hisabkhata.core.network.model.FirebaseSignInWithIdpRequest
 import com.sumanonline.hisabkhata.core.security.SecureSessionManager
 import com.sumanonline.hisabkhata.core.security.UserSession
 import com.sumanonline.hisabkhata.core.sync.SyncEngine
@@ -82,7 +83,6 @@ class AuthViewModel @Inject constructor(
                 if (response.isSuccessful && response.body() != null) {
                     val authData = response.body()!!
 
-                    // Safely attempt to fetch profile without failing login on profile read errors
                     val profile = try {
                         val profileRes = firebaseApi.getUserProfile(authData.localId, authData.idToken)
                         if (profileRes.isSuccessful) profileRes.body() else null
@@ -106,12 +106,10 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = Resource.Success(Unit)
                     _eventFlow.emit(AuthEvent.LoginSuccess)
 
-                    // Run initial sync asynchronously in background
                     viewModelScope.launch {
                         try {
                             syncEngine.synchronize()
                         } catch (_: Exception) {
-                            // Non-critical background sync
                         }
                     }
                 } else {
@@ -168,7 +166,6 @@ class AuthViewModel @Inject constructor(
                     try {
                         firebaseApi.patchUserProfile(authData.localId, updates, authData.idToken)
                     } catch (_: Exception) {
-                        // User was created in Auth; profile patch can sync later
                     }
 
                     val session = UserSession(
@@ -241,6 +238,98 @@ class AuthViewModel @Inject constructor(
 
     fun logout() {
         sessionManager.clearSession()
+    }
+
+    fun signInWithGoogleIdToken(
+        googleIdToken: String,
+        fallbackDisplayName: String? = null,
+        fallbackEmail: String? = null,
+        fallbackPhotoUrl: String? = null
+    ) {
+        viewModelScope.launch {
+            _uiState.value = Resource.Loading
+            try {
+                val apiKey = Constants.FIREBASE_API_KEY
+                val postBody = "id_token=$googleIdToken&providerId=google.com"
+                val request = FirebaseSignInWithIdpRequest(postBody = postBody)
+                val response = firebaseApi.signInWithIdp(apiKey, request)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val authData = response.body()!!
+                    val userId = authData.localId
+                    val resolvedEmail = authData.email.ifBlank { fallbackEmail ?: "" }
+                    val resolvedName = authData.displayName.ifBlank { fallbackDisplayName ?: resolvedEmail.substringBefore("@") }
+                    val resolvedPhoto = authData.photoUrl.ifBlank { fallbackPhotoUrl ?: "" }
+
+                    val existingProfile = try {
+                        val profileRes = firebaseApi.getUserProfile(userId, authData.idToken)
+                        if (profileRes.isSuccessful) profileRes.body() else null
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    if (existingProfile == null || authData.isNewUser) {
+                        val updates = buildJsonObject {
+                            put("name", JsonPrimitive(resolvedName))
+                            put("email", JsonPrimitive(resolvedEmail))
+                            put("photoURL", JsonPrimitive(resolvedPhoto))
+                            put("businessName", JsonPrimitive("My Shop"))
+                            put("role", JsonPrimitive("user"))
+                            put("createdAt", JsonPrimitive(System.currentTimeMillis()))
+                        }
+                        try {
+                            firebaseApi.patchUserProfile(userId, updates, authData.idToken)
+                        } catch (_: Exception) {
+                            // Non-fatal
+                        }
+                    }
+
+                    val session = UserSession(
+                        userId = userId,
+                        idToken = authData.idToken,
+                        refreshToken = authData.refreshToken,
+                        email = resolvedEmail,
+                        displayName = existingProfile?.name?.ifBlank { null } ?: resolvedName,
+                        businessName = existingProfile?.businessName?.ifBlank { null } ?: "My Shop",
+                        phone = existingProfile?.phone ?: "",
+                        upiId = existingProfile?.upiId ?: "",
+                        role = existingProfile?.role ?: "user",
+                        photoURL = existingProfile?.photoURL?.ifBlank { null } ?: resolvedPhoto
+                    )
+                    sessionManager.saveSession(session)
+                    _uiState.value = Resource.Success(Unit)
+                    _eventFlow.emit(AuthEvent.LoginSuccess)
+
+                    viewModelScope.launch {
+                        try {
+                            syncEngine.synchronize()
+                        } catch (_: Exception) {
+                            // Non-fatal background sync
+                        }
+                    }
+                } else {
+                    val rawError = response.errorBody()?.string()
+                    val errorMsg = parseFirebaseError(rawError)
+                    _uiState.value = Resource.Error(errorMsg)
+                    _eventFlow.emit(AuthEvent.Error(errorMsg))
+                }
+            } catch (e: Exception) {
+                val msg = when (e) {
+                    is UnknownHostException -> "No internet connection. Please check your network."
+                    is SocketTimeoutException -> "Connection timed out. Please try again."
+                    else -> e.localizedMessage ?: "Failed to sign in with Google"
+                }
+                _uiState.value = Resource.Error(msg)
+                _eventFlow.emit(AuthEvent.Error(msg))
+            }
+        }
+    }
+
+    fun onGoogleSignInError(message: String) {
+        viewModelScope.launch {
+            _uiState.value = Resource.Error(message)
+            _eventFlow.emit(AuthEvent.Error(message))
+        }
     }
 
     private fun parseFirebaseError(rawJson: String?): String {

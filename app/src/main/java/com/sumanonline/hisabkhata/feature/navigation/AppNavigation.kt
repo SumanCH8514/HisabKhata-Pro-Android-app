@@ -25,22 +25,34 @@ import com.sumanonline.hisabkhata.feature.reminders.RemindersViewModel
 import com.sumanonline.hisabkhata.feature.reports.CustomerReportScreen
 import com.sumanonline.hisabkhata.feature.reports.ReportsScreen
 import com.sumanonline.hisabkhata.feature.reports.ReportsViewModel
+import com.sumanonline.hisabkhata.feature.splash.SplashScreen
 
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    isBiometricAuthenticated: Boolean = true
 ) {
-    val startDestination = if (authViewModel.isUserLoggedIn()) {
-        Screen.Customers.route
-    } else {
-        Screen.Login.route
-    }
-
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = Screen.Splash.route
     ) {
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                isBiometricAuthenticated = isBiometricAuthenticated,
+                onSplashFinished = {
+                    val nextRoute = if (authViewModel.isUserLoggedIn()) {
+                        Screen.Customers.route
+                    } else {
+                        Screen.Login.route
+                    }
+                    navController.navigate(nextRoute) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Login.route) {
             LoginScreen(
                 viewModel = authViewModel,

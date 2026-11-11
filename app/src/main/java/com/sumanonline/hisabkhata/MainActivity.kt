@@ -6,6 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
 import com.sumanonline.hisabkhata.core.designsystem.HisabKhataTheme
 import com.sumanonline.hisabkhata.core.security.SecureSessionManager
@@ -25,6 +28,8 @@ class MainActivity : FragmentActivity() {
     private lateinit var biometricPrompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
 
+    private var isBiometricAuthenticated by mutableStateOf(true)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -33,10 +38,13 @@ class MainActivity : FragmentActivity() {
         SyncWorker.enqueueOneTimeSync(this)
 
         val session = sessionManager.sessionState.value
-        if (session.biometricEnabled && sessionManager.isLoggedIn()) {
+        val needsBiometric = session.biometricEnabled && sessionManager.isLoggedIn()
+        isBiometricAuthenticated = !needsBiometric
+
+        renderContent()
+
+        if (needsBiometric) {
             promptBiometricAuthentication()
-        } else {
-            renderContent()
         }
     }
 
@@ -46,7 +54,7 @@ class MainActivity : FragmentActivity() {
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    renderContent()
+                    isBiometricAuthenticated = true
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
@@ -67,7 +75,9 @@ class MainActivity : FragmentActivity() {
     private fun renderContent() {
         setContent {
             HisabKhataTheme {
-                AppNavigation()
+                AppNavigation(
+                    isBiometricAuthenticated = isBiometricAuthenticated
+                )
             }
         }
     }

@@ -15,6 +15,9 @@ interface OutboxDao {
     @Query("SELECT * FROM outbox_operations WHERE status = :status ORDER BY createdAt ASC")
     suspend fun getOperationsByStatus(status: String = Constants.SYNC_STATUS_PENDING): List<OutboxOperationEntity>
 
+    @Query("SELECT * FROM outbox_operations WHERE status != :syncedStatus ORDER BY createdAt ASC")
+    suspend fun getAllUnsyncedOperations(syncedStatus: String = Constants.SYNC_STATUS_SYNCED): List<OutboxOperationEntity>
+
     @Query("SELECT COUNT(*) FROM outbox_operations WHERE status != :syncedStatus")
     fun observePendingCount(syncedStatus: String = Constants.SYNC_STATUS_SYNCED): Flow<Int>
 

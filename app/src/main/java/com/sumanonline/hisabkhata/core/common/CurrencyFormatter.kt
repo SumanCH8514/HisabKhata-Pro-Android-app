@@ -22,6 +22,21 @@ object CurrencyFormatter {
         return formatInr(BigDecimal.valueOf(amount), includeSymbol)
     }
 
+    fun formatInrClean(amount: Double, withSpace: Boolean = true): String {
+        val formatter = NumberFormat.getNumberInstance(indianLocale)
+        val absAmount = Math.abs(amount)
+        val hasFractions = absAmount % 1.0 != 0.0
+        if (hasFractions) {
+            formatter.minimumFractionDigits = 2
+            formatter.maximumFractionDigits = 2
+        } else {
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 0
+        }
+        val symbol = if (withSpace) "₹ " else "₹"
+        return "$symbol${formatter.format(absAmount)}"
+    }
+
     fun formatInrCompact(amount: BigDecimal): String {
         val absVal = amount.abs()
         val sign = if (amount < BigDecimal.ZERO) "-" else ""

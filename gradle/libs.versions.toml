@@ -22,6 +22,7 @@ securityCrypto = "1.1.0-alpha06"
 biometric = "1.2.0-alpha05"
 coil = "2.7.0"
 zxing = "3.5.3"
+playServicesAuth = "21.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -61,6 +62,7 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

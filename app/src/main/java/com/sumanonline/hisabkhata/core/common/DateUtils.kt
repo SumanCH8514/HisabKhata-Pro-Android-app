@@ -28,6 +28,19 @@ object DateUtils {
         return displayDateTimeFormat.format(Date(timestamp))
     }
 
+    fun formatEntryDetailsDateTime(timestamp: Long): String {
+        val sdf = SimpleDateFormat("dd MMM yy • hh:mm a", Locale.getDefault())
+        return sdf.format(Date(timestamp))
+    }
+
+    fun formatDatePill(dateIso: String, timestamp: Long): String {
+        val date = parseIsoDate(dateIso) ?: Date(timestamp)
+        val sdf = SimpleDateFormat("dd MMM yy", Locale.getDefault())
+        val formattedDate = sdf.format(date).uppercase()
+        val relTime = formatRelativeTime(date.time).uppercase()
+        return "$formattedDate • $relTime"
+    }
+
     fun formatTime(timestamp: Long): String {
         return timeOnlyFormat.format(Date(timestamp))
     }
