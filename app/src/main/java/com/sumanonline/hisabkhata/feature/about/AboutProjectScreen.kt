@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sumanonline.hisabkhata.R
+import com.sumanonline.hisabkhata.core.common.CertificateUtils
 import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.NavyBlueDark
@@ -243,6 +244,92 @@ fun AboutProjectScreen(
                         InfoRow(label = "Platform", value = "Android 8.0+ (API 26–35)")
                         InfoRow(label = "Architecture", value = "MVI / MVVM + Clean Outbox")
                         InfoRow(label = "Sync Engine", value = "Firebase RTDB + Cloudflare R2")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Certificate & OAuth Setup Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Security,
+                                contentDescription = null,
+                                tint = BrandBlue,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Firebase & Google Auth Setup",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "To enable Google Sign-In, add this package name and SHA-1 fingerprint under your Android App in Firebase Console:",
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val sha1 = CertificateUtils.getSigningSha1(context)
+                        val pkg = context.packageName
+
+                        InfoRow(label = "Package Name", value = pkg)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Active Signing SHA-1:",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            color = Color(0xFFF8FAFC),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = sha1,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF0F172A),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "COPY",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandBlue,
+                                    modifier = Modifier
+                                        .clickable {
+                                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                            val clip = android.content.ClipData.newPlainText("SHA-1", sha1)
+                                            clipboard.setPrimaryClip(clip)
+                                            android.widget.Toast.makeText(context, "SHA-1 copied!", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                        .padding(4.dp)
+                                )
+                            }
+                        }
                     }
                 }
 

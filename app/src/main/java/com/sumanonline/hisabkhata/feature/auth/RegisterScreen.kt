@@ -57,6 +57,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -70,6 +75,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
 import com.sumanonline.hisabkhata.R
+import com.sumanonline.hisabkhata.core.common.CertificateUtils
 import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.common.Resource
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
@@ -98,11 +104,17 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
 
+    var showConfigHelpDialog by remember { mutableStateOf(false) }
+    var configHelpTitle by remember { mutableStateOf("") }
+    var configHelpMessage by remember { mutableStateOf("") }
+    var configHelpSha1 by remember { mutableStateOf("") }
+
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        val data = result.data
+        if (data != null) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = task.getResult(ApiException::class.java)
                 val idToken = account?.idToken
@@ -117,16 +129,51 @@ fun RegisterScreen(
                     viewModel.onGoogleSignInError("Google account selected but ID token was missing. Please try again.")
                 }
             } catch (e: ApiException) {
-                val errorMsg = when (e.statusCode) {
-                    GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> null
-                    10 -> "Google Sign-In configuration error (Code 10). Please ensure SHA-1 fingerprint is added in Firebase Console."
-                    7 -> "Network error during Google Sign-In. Please check your connection."
-                    else -> "Google Sign-In error (Code ${e.statusCode})"
+                when (e.statusCode) {
+                    GoogleSignInStatusCodes.SIGN_IN_CANCELLED, 16 -> {
+                        // User dismissed or tapped outside/back; do nothing
+                    }
+                    10 -> {
+                        val sha1 = CertificateUtils.getSigningSha1(context)
+                        val pkg = context.packageName
+                        configHelpTitle = "Google Sign-In Setup Required (Code 10)"
+                        configHelpSha1 = sha1
+                        configHelpMessage = "Google Sign-In rejected the request with DEVELOPER_ERROR (Code 10).\n\n" +
+                                "This occurs when the signing certificate SHA-1 fingerprint is not added to Firebase Console under your Android app ($pkg).\n\n" +
+                                "• Package Name: $pkg\n" +
+                                "• SHA-1 Fingerprint:\n$sha1\n\n" +
+                                "How to resolve:\n" +
+                                "1. Open Firebase Console → Project Settings → General\n" +
+                                "2. Select your Android app ($pkg)\n" +
+                                "3. Click 'Add fingerprint' and paste this SHA-1"
+                        showConfigHelpDialog = true
+                        viewModel.onGoogleSignInError("Google Sign-In Code 10: SHA-1 fingerprint must be added to Firebase Console.")
+                    }
+                    12500 -> {
+                        val sha1 = CertificateUtils.getSigningSha1(context)
+                        val pkg = context.packageName
+                        configHelpTitle = "Google Sign-In Failed (Code 12500)"
+                        configHelpSha1 = sha1
+                        configHelpMessage = "Google Sign-In returned SIGN_IN_FAILED (Code 12500).\n\n" +
+                                "Please ensure your Firebase Console has Google Sign-In provider enabled and this SHA-1 added:\n\n" +
+                                "• Package Name: $pkg\n" +
+                                "• SHA-1 Fingerprint:\n$sha1"
+                        showConfigHelpDialog = true
+                        viewModel.onGoogleSignInError("Google Sign-In Code 12500: Check Firebase Console Google Sign-In provider & SHA-1.")
+                    }
+                    7 -> {
+                        viewModel.onGoogleSignInError("Network error during Google Sign-In. Please check your internet connection.")
+                    }
+                    else -> {
+                        val msg = e.localizedMessage ?: "Status ${e.statusCode}"
+                        viewModel.onGoogleSignInError("Google Sign-In error (Code ${e.statusCode}): $msg")
+                    }
                 }
-                if (errorMsg != null) {
-                    viewModel.onGoogleSignInError(errorMsg)
-                }
+            } catch (e: Exception) {
+                viewModel.onGoogleSignInError(e.localizedMessage ?: "Failed to sign in with Google")
             }
+        } else if (result.resultCode != Activity.RESULT_CANCELED) {
+            viewModel.onGoogleSignInError("Google Sign-In returned with no data (Result: ${result.resultCode})")
         }
     }
 
@@ -138,6 +185,51 @@ fun RegisterScreen(
                 else -> Unit
             }
         }
+    }
+
+    if (showConfigHelpDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfigHelpDialog = false },
+            title = {
+                Text(
+                    text = configHelpTitle,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = Color(0xFF0F172A)
+                )
+            },
+            text = {
+                Text(
+                    text = configHelpMessage,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = Color(0xFF334155)
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("SHA-1 Fingerprint", configHelpSha1)
+                        clipboard.setPrimaryClip(clip)
+                        Toast.makeText(context, "SHA-1 fingerprint copied to clipboard!", Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Text(
+                        text = "Copy SHA-1",
+                        fontWeight = FontWeight.Bold,
+                        color = BrandBlue
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfigHelpDialog = false }) {
+                    Text(text = "Close", color = TextSecondary)
+                }
+            },
+            shape = RoundedCornerShape(20.dp),
+            containerColor = SurfaceWhite
+        )
     }
 
     Box(
