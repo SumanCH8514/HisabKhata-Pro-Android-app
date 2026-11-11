@@ -42,8 +42,11 @@
 
 ## 📦 Download APK
 
-A ready-to-test debug APK is bundled directly in the repository:
-- **Location**: [`apk/app-debug.apk`](apk/app-debug.apk)
+Click the button below to download the latest APK directly to your device:
+
+[![Download APK](https://img.shields.io/badge/⬇️%20Direct%20Download-app--debug.apk-2563EB?style=for-the-badge&logo=android&logoColor=white)](https://github.com/SumanCH8514/HisabKhata-Pro-Android-app/raw/main/apk/app-debug.apk)
+
+> 🔗 **Direct Download Link**: [**Click here to download `app-debug.apk`**](https://github.com/SumanCH8514/HisabKhata-Pro-Android-app/raw/main/apk/app-debug.apk)
 
 ### Installation
 ```bash
