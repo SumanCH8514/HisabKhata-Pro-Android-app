@@ -9,15 +9,9 @@
 .cxx
 *.hprof
 *.orig
-
-# Build outputs
 **/build/
-
-# Keep apk directory
 !/apk/
 !/apk/*.apk
-
-# Node / Web dependencies
 node_modules/
 website/node_modules/
 website/dist/

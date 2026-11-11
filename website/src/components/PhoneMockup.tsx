@@ -195,7 +195,7 @@ export const PhoneMockup: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 bg-brand-50 dark:bg-brand-950/40 border-b border-brand-100 dark:border-brand-900/40 flex items-center justify-between">
+              <div className="p-3 bg-brand-50 dark:bg-slate-800/60 border-b border-brand-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-brand-700 dark:text-brand-300 font-medium">Net Pending Balance</span>
                   <div className="text-base font-bold text-brand-600 dark:text-brand-400">
@@ -244,7 +244,7 @@ export const PhoneMockup: React.FC = () => {
 
           {activeScreen === 'upi' && (
             <div className="flex-1 flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 text-center">
-              <div className="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-950 flex items-center justify-center text-brand-500 mb-2">
+              <div className="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-slate-800 flex items-center justify-center text-brand-500 mb-2">
                 <IndianRupee className="w-5 h-5" />
               </div>
               <h4 className="text-xs font-bold text-slate-900 dark:text-white">Sharma Electronics</h4>

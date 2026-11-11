@@ -1,5 +1,5 @@
 import React from 'react'
-import { Sparkles, CheckCircle2, Zap, Shield, Smartphone } from 'lucide-react'
+import { Sparkles, CheckCircle2 } from 'lucide-react'
 import { APP_CONFIG } from '../config/downloadConfig'
 
 export const WhatsNewSection: React.FC = () => {
@@ -32,7 +32,7 @@ export const WhatsNewSection: React.FC = () => {
         
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 mb-3">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-slate-800 dark:text-brand-300 dark:border dark:border-slate-700 mb-3 shadow-xs">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Release Notes</span>
             </div>
@@ -52,7 +52,7 @@ export const WhatsNewSection: React.FC = () => {
                 </span>
                 <span className="text-xs text-slate-500 ml-2">Stable Milestone</span>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 dark:bg-slate-800 dark:text-brand-300 border border-brand-200 dark:border-slate-700">
                 {APP_CONFIG.releaseDate}
               </span>
             </div>

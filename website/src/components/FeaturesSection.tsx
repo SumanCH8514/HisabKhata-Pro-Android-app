@@ -22,8 +22,8 @@ export const FeaturesSection: React.FC = () => {
         "Instant transaction searching, filtering, and sorting"
       ],
       color: "text-brand-500",
-      bg: "bg-brand-50 dark:bg-brand-950/50",
-      border: "border-brand-200 dark:border-brand-900"
+      bg: "bg-brand-50 dark:bg-slate-800",
+      border: "border-brand-200 dark:border-slate-800"
     },
     {
       icon: WifiOff,
@@ -36,7 +36,7 @@ export const FeaturesSection: React.FC = () => {
         "Deterministic conflict resolution between client & server"
       ],
       color: "text-emerald-500",
-      bg: "bg-emerald-50 dark:bg-emerald-950/50",
+      bg: "bg-emerald-50 dark:bg-emerald-950/60",
       border: "border-emerald-200 dark:border-emerald-900"
     },
     {
@@ -50,7 +50,7 @@ export const FeaturesSection: React.FC = () => {
         "Save and share high-resolution QR codes via messaging"
       ],
       color: "text-indigo-500",
-      bg: "bg-indigo-50 dark:bg-indigo-950/50",
+      bg: "bg-indigo-50 dark:bg-indigo-950/60",
       border: "border-indigo-200 dark:border-indigo-900"
     },
     {
@@ -64,7 +64,7 @@ export const FeaturesSection: React.FC = () => {
         "Increases collection recovery speed by over 3x"
       ],
       color: "text-teal-500",
-      bg: "bg-teal-50 dark:bg-teal-950/50",
+      bg: "bg-teal-50 dark:bg-teal-950/60",
       border: "border-teal-200 dark:border-teal-900"
     },
     {
@@ -78,7 +78,7 @@ export const FeaturesSection: React.FC = () => {
         "One-click print, share via email or save to device storage"
       ],
       color: "text-amber-500",
-      bg: "bg-amber-50 dark:bg-amber-950/50",
+      bg: "bg-amber-50 dark:bg-amber-950/60",
       border: "border-amber-200 dark:border-amber-900"
     },
     {
@@ -92,7 +92,7 @@ export const FeaturesSection: React.FC = () => {
         "Zero plain-text credential storage on device or memory"
       ],
       color: "text-rose-500",
-      bg: "bg-rose-50 dark:bg-rose-950/50",
+      bg: "bg-rose-50 dark:bg-rose-950/60",
       border: "border-rose-200 dark:border-rose-900"
     }
   ]
@@ -102,7 +102,7 @@ export const FeaturesSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-slate-800 dark:text-brand-300 dark:border dark:border-slate-700 mb-3 shadow-xs">
             <Layers className="w-3.5 h-3.5" />
             <span>Engineered For Reliability</span>
           </div>

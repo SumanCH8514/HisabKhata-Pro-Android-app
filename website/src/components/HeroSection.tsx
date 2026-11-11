@@ -13,11 +13,11 @@ export const HeroSection: React.FC = () => {
           
           <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
             
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/60 shadow-xs">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-200/80 dark:bg-slate-900/90 dark:text-brand-300 dark:border-brand-500/30 shadow-xs transition-colors">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>v{APP_CONFIG.version} Release Live</span>
-              <span className="text-slate-300 dark:text-slate-700">•</span>
-              <span className="text-slate-600 dark:text-slate-400">Universal Android APK</span>
+              <span className="text-slate-300 dark:text-slate-600">•</span>
+              <span className="text-slate-600 dark:text-slate-300">Universal Android APK</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">

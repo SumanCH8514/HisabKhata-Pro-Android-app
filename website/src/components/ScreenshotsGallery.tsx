@@ -1,17 +1,9 @@
 import React, { useState } from 'react'
 import { 
   Smartphone, 
-  Layers, 
-  ArrowRight, 
   Check, 
   IndianRupee, 
-  QrCode, 
-  Receipt, 
-  ShieldAlert,
-  Calendar,
-  Clock,
-  Send,
-  UserCheck
+  QrCode 
 } from 'lucide-react'
 
 export const ScreenshotsGallery: React.FC = () => {
@@ -103,11 +95,11 @@ export const ScreenshotsGallery: React.FC = () => {
         header: "Collect Payment • UPI QR",
         content: (
           <div className="text-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-300 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-50 dark:bg-slate-800 text-brand-600 dark:text-brand-300 rounded-full text-xs font-bold border border-brand-200 dark:border-slate-700">
               <IndianRupee className="w-3.5 h-3.5" />
               <span>Amount: ₹ 12,450.00</span>
             </div>
-            <div className="w-28 h-28 mx-auto bg-slate-900 rounded-xl p-2 flex items-center justify-center text-white">
+            <div className="w-28 h-28 mx-auto bg-slate-900 rounded-xl p-2 flex items-center justify-center text-white border border-slate-800">
               <QrCode className="w-20 h-20 text-white" />
             </div>
             <div className="text-[11px] text-slate-500 font-medium">
@@ -151,7 +143,7 @@ export const ScreenshotsGallery: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-slate-800 dark:text-brand-300 dark:border dark:border-slate-700 mb-3 shadow-xs">
             <Smartphone className="w-3.5 h-3.5" />
             <span>Interactive Gallery</span>
           </div>
@@ -172,7 +164,7 @@ export const ScreenshotsGallery: React.FC = () => {
                 onClick={() => setSelectedScreen(idx)}
                 className={`w-full text-left p-4 rounded-2xl transition-all duration-200 border flex items-start gap-3.5 ${
                   selectedScreen === idx
-                    ? 'bg-brand-50/70 dark:bg-brand-950/40 border-brand-500 shadow-xs'
+                    ? 'bg-brand-50/70 dark:bg-slate-800/90 border-brand-500 dark:border-brand-500/60 shadow-xs'
                     : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
@@ -210,7 +202,7 @@ export const ScreenshotsGallery: React.FC = () => {
                       {screens[selectedScreen].preview.header}
                     </span>
                   </div>
-                  <span className="text-[10px] bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 px-2 py-0.5 rounded-full font-semibold">
+                  <span className="text-[10px] bg-brand-50 text-brand-600 dark:bg-slate-800 dark:text-brand-300 px-2.5 py-0.5 rounded-full font-semibold border border-brand-200 dark:border-slate-700">
                     Live View
                   </span>
                 </div>
