@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HisabKhata</string>
+    <string name="tagline">Digital Ledger &amp; Khata</string>
+    <string name="you_get">You\'ll Get</string>
+    <string name="you_give">You\'ll Give</string>
+    <string name="settled">Settled</string>
+    <string name="net_balance">Net Balance</string>
+    <string name="search_customer">Search by customer name or phone…</string>
+    <string name="add_customer">Add Customer</string>
+    <string name="you_gave_entry">You Gave ₹</string>
+    <string name="you_got_entry">You Got ₹</string>
+    <string name="sync_status_synced">Synced with Cloud</string>
+    <string name="sync_status_pending">Pending Offline Sync</string>
+    <string name="sync_status_syncing">Syncing…</string>
+    <string name="sync_status_failed">Sync Failed</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="reports">Reports</string>
+    <string name="payments">Payments</string>
+    <string name="reminders">Reminders</string>
+    <string name="profile">Profile</string>
+    <string name="settings">Settings</string>
+    <string name="logout">Logout</string>
+</resources>

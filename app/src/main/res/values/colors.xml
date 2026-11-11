@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary">#0057BB</color>
+    <color name="brand_primary_dark">#004494</color>
+    <color name="brand_accent">#FFA500</color>
+    <color name="give_red">#DC2626</color>
+    <color name="give_red_light">#FEF2F2</color>
+    <color name="give_red_stroke">#F4C7C3</color>
+    <color name="got_green">#16A34A</color>
+    <color name="got_green_light">#F0FDF4</color>
+    <color name="got_green_stroke">#B7E1CD</color>
+    <color name="background_light">#F5F7F9</color>
+    <color name="surface_white">#FFFFFF</color>
+    <color name="text_primary">#1E293B</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_tertiary">#94A3B8</color>
+    <color name="divider_color">#E2E8F0</color>
+</resources>
