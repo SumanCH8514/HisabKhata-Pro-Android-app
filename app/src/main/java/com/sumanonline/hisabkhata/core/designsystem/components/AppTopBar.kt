@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sumanonline.hisabkhata.core.designsystem.BrandAccentOrange
@@ -91,7 +92,9 @@ fun AppTopBar(
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                     if (!subtitle.isNullOrBlank()) {
@@ -100,7 +103,9 @@ fun AppTopBar(
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 12.sp
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }

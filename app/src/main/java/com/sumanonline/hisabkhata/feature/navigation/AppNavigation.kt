@@ -258,6 +258,9 @@ fun AppNavigation(
             val autoReminderViewModel: AutoReminderViewModel = hiltViewModel()
             AutoReminderScreen(
                 viewModel = autoReminderViewModel,
+                onTabSelected = { tab ->
+                    handleBottomNavigation(navController, tab)
+                },
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLedger = { customerId ->
                     navController.navigate(Screen.CustomerLedger.createRoute(customerId))

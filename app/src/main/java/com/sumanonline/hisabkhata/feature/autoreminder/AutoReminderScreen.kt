@@ -3,12 +3,14 @@ package com.sumanonline.hisabkhata.feature.autoreminder
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,12 +74,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sumanonline.hisabkhata.R
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
@@ -94,6 +98,9 @@ import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.WarningAmber
+import com.sumanonline.hisabkhata.core.designsystem.components.AppBottomBar
+import com.sumanonline.hisabkhata.core.designsystem.components.AppTopBar
+import com.sumanonline.hisabkhata.core.designsystem.components.BottomTab
 import com.sumanonline.hisabkhata.core.designsystem.isAppDark
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -103,7 +110,8 @@ import java.util.Locale
 @Composable
 fun AutoReminderScreen(
     viewModel: AutoReminderViewModel,
-    onNavigateBack: () -> Unit,
+    onTabSelected: (BottomTab) -> Unit = {},
+    onNavigateBack: () -> Unit = {},
     onNavigateToLedger: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -118,25 +126,83 @@ fun AutoReminderScreen(
 
     Scaffold(
         topBar = {
-            TopPaymentRemindersBar(
-                onNavigateBack = onNavigateBack,
-                awaitingCount = stats.awaitingCount,
-                isRunningBatch = isRunningBatch,
-                onRunBatchClick = {
-                    viewModel.runBatchNow { successes, failures ->
-                        if (successes > 0) {
-                            Toast.makeText(
-                                context,
-                                "Batch run complete! $successes reminder emails dispatched successfully.",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        } else if (failures > 0) {
-                            Toast.makeText(context, "Failed to send batch reminder emails.", Toast.LENGTH_SHORT).show()
+            AppTopBar(
+                title = "Payment Reminders",
+                subtitle = "Automated customer dues & reports",
+                leadingContent = {
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo_round),
+                        contentDescription = "HisabKhata Logo",
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .clickable { onNavigateBack() }
+                    )
+                },
+                actions = {
+                    Button(
+                        onClick = {
+                            viewModel.runBatchNow { successes, failures ->
+                                if (successes > 0) {
+                                    Toast.makeText(
+                                        context,
+                                        "Batch run complete! $successes reminder emails dispatched successfully.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                } else if (failures > 0) {
+                                    Toast.makeText(context, "Failed to send batch reminder emails.", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "No customers awaiting email reminders.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        enabled = stats.awaitingCount > 0 && !isRunningBatch,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = BrandBlue,
+                            disabledContainerColor = Color.White.copy(alpha = 0.5f),
+                            disabledContentColor = BrandBlue.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.height(34.dp)
+                    ) {
+                        if (isRunningBatch) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                strokeWidth = 2.dp,
+                                color = BrandBlue
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Running…",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandBlue
+                            )
                         } else {
-                            Toast.makeText(context, "No customers awaiting email reminders.", Toast.LENGTH_SHORT).show()
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = BrandBlue,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Run Now (${stats.awaitingCount})",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandBlue
+                            )
                         }
                     }
                 }
+            )
+        },
+        bottomBar = {
+            AppBottomBar(
+                currentTab = BottomTab.MORE,
+                onTabSelected = onTabSelected
             )
         },
         containerColor = PageBackground
@@ -585,106 +651,6 @@ fun AutoReminderScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun TopPaymentRemindersBar(
-    onNavigateBack: () -> Unit,
-    awaitingCount: Int,
-    isRunningBatch: Boolean,
-    onRunBatchClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f, fill = false)
-        ) {
-            IconButton(
-                onClick = onNavigateBack,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = TextPrimary,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            Icon(
-                imageVector = Icons.Default.NotificationsActive,
-                contentDescription = null,
-                tint = BrandBlue,
-                modifier = Modifier.size(24.dp)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Column {
-                Text(
-                    text = "Payment Reminders",
-                    fontSize = 17.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = "Automated customer dues collection & reports",
-                    fontSize = 11.5.sp,
-                    color = TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // "▶ Run Now (8)" primary action button
-        Button(
-            onClick = onRunBatchClick,
-            enabled = awaitingCount > 0 && !isRunningBatch,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = BrandBlue,
-                contentColor = Color.White,
-                disabledContainerColor = BrandBlue.copy(alpha = 0.5f)
-            ),
-            shape = RoundedCornerShape(22.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 7.dp),
-            modifier = Modifier.height(38.dp)
-        ) {
-            if (isRunningBatch) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Running…", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
-            } else {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Run Now ($awaitingCount)",
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Bold
-                )
             }
         }
     }
