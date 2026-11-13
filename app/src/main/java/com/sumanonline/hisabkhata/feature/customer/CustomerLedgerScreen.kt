@@ -708,6 +708,7 @@ fun CustomerLedgerScreen(
     if (showAddGaveSheet) {
         AddTransactionBottomSheet(
             customerName = customer.name,
+            customerPhotoUrl = customer.photoURL,
             isGave = true,
             onDismiss = { showAddGaveSheet = false },
             onSave = { amount, description, date, attachment ->
@@ -720,6 +721,7 @@ fun CustomerLedgerScreen(
     if (showAddGotSheet) {
         AddTransactionBottomSheet(
             customerName = customer.name,
+            customerPhotoUrl = customer.photoURL,
             isGave = false,
             onDismiss = { showAddGotSheet = false },
             onSave = { amount, description, date, attachment ->

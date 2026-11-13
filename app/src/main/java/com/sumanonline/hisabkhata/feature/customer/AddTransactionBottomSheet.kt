@@ -51,6 +51,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -63,6 +64,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -71,8 +73,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.sumanonline.hisabkhata.core.common.ImageUtils
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -81,6 +85,7 @@ import java.util.Locale
 @Composable
 fun AddTransactionBottomSheet(
     customerName: String,
+    customerPhotoUrl: String? = null,
     isGave: Boolean,
     onDismiss: () -> Unit,
     onSave: (amount: Double, description: String, date: String, attachment: String?) -> Unit
@@ -147,7 +152,7 @@ fun AddTransactionBottomSheet(
 
     val currentAmount = amountText.toDoubleOrNull() ?: 0.0
     val isAmountValid = currentAmount > 0.0
-    val dynamicTitleAmount = if (amountText.isNotBlank()) amountText else "0"
+    val dynamicTitleAmount = amountText.ifBlank { "0" }
     val dynamicTitle = if (isGave) {
         "You gave ₹ $dynamicTitleAmount to $customerName"
     } else {
@@ -163,12 +168,18 @@ fun AddTransactionBottomSheet(
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        BackHandler { onDismiss() }
+    val sanitizedPhoto = remember(customerPhotoUrl) { ImageUtils.sanitizeImageSource(customerPhotoUrl) }
+    var photoLoadFailed by remember(sanitizedPhoto) { mutableStateOf(false) }
 
+    // Intercept back navigation
+    BackHandler { onDismiss() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(pageBgColor)
+            .zIndex(100f)
+    ) {
         Scaffold(
             containerColor = pageBgColor,
             topBar = {
@@ -192,7 +203,7 @@ fun AddTransactionBottomSheet(
 
                     Spacer(modifier = Modifier.width(4.dp))
 
-                    // Circular Avatar with Initials
+                    // Circular Avatar with Profile Picture or Initials
                     Box(
                         modifier = Modifier
                             .size(38.dp)
@@ -200,12 +211,27 @@ fun AddTransactionBottomSheet(
                             .background(avatarBg),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = customerInitials,
-                            color = avatarText,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        if (sanitizedPhoto != null && !photoLoadFailed) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(sanitizedPhoto)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = customerName,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                onError = { photoLoadFailed = true }
+                            )
+                        } else {
+                            Text(
+                                text = customerInitials,
+                                color = avatarText,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(10.dp))
@@ -213,46 +239,53 @@ fun AddTransactionBottomSheet(
                     Text(
                         text = dynamicTitle,
                         color = headerTint,
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1,
+                        maxLines = 2,
+                        lineHeight = 21.sp,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
                 }
             },
             bottomBar = {
-                Box(
+                Surface(
+                    color = pageBgColor,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
                         .navigationBarsPadding()
                         .imePadding()
                 ) {
-                    Button(
-                        onClick = {
-                            if (isAmountValid) {
-                                onSave(currentAmount, description.trim(), dateIso, attachmentBase64)
-                            }
-                        },
-                        enabled = isAmountValid,
-                        shape = RoundedCornerShape(28.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = saveButtonActiveBg,
-                            disabledContainerColor = saveButtonDisabledBg,
-                            contentColor = Color.White,
-                            disabledContentColor = Color.White.copy(alpha = 0.95f)
-                        ),
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
                     ) {
-                        Text(
-                            text = "SAVE",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
+                        Button(
+                            onClick = {
+                                if (isAmountValid) {
+                                    onSave(currentAmount, description.trim(), dateIso, attachmentBase64)
+                                }
+                            },
+                            enabled = isAmountValid,
+                            shape = RoundedCornerShape(28.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = saveButtonActiveBg,
+                                disabledContainerColor = saveButtonDisabledBg,
+                                contentColor = Color.White,
+                                disabledContentColor = Color.White.copy(alpha = 0.95f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                        ) {
+                            Text(
+                                text = "SAVE",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                        }
                     }
                 }
             }
@@ -343,25 +376,48 @@ fun AddTransactionBottomSheet(
                             .fillMaxWidth()
                             .padding(14.dp)
                     ) {
+                        // Header row without overlap - clean, modern, and stylish
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Transaction Details (Optional)",
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF111827)
-                            )
-                            Text(
-                                text = "Supports multi-line & formats",
-                                fontSize = 11.sp,
-                                color = Color(0xFF6B7280)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f, fill = false)
+                            ) {
+                                Text(
+                                    text = "Transaction Details",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF111827)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "(Optional)",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF6B7280)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFF3F4F6))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = "Multi-line formats",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF4B5563)
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         // Inner outlined text area
                         Box(
