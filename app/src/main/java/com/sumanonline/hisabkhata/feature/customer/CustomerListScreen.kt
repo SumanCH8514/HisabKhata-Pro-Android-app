@@ -129,7 +129,6 @@ fun CustomerListScreen(
     val currentSort by viewModel.currentSort.collectAsState()
     val pendingCount by viewModel.pendingSyncCount.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
-    val session by viewModel.sessionState.collectAsState()
     val context = LocalContext.current
 
     val partiesCount by viewModel.partiesCount.collectAsState()
@@ -199,7 +198,6 @@ fun CustomerListScreen(
         ) {
             item(contentType = "home_header") {
                 HomeHeaderBar(
-                    businessName = session.businessName.ifBlank { "M/S Suman Enterprise" },
                     isSyncing = isSyncing,
                     pendingSyncCount = pendingCount,
                     onSyncClick = {
@@ -612,14 +610,13 @@ private fun StickySearchAndFiltersCard(
 
 @Composable
 private fun HomeHeaderBar(
-    businessName: String,
     isSyncing: Boolean,
     pendingSyncCount: Int,
     onSyncClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onQrClick: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(NavyBluePrimary)
@@ -694,6 +691,18 @@ private fun HomeHeaderBar(
                 )
 
                 IconButton(
+                    onClick = onQrClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.QrCode,
+                        contentDescription = "QR Code",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(2.dp))
+                IconButton(
                     onClick = onSyncClick,
                     modifier = Modifier.size(36.dp)
                 ) {
@@ -708,7 +717,7 @@ private fun HomeHeaderBar(
                             }
                     )
                 }
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(2.dp))
                 IconButton(
                     onClick = onLogoutClick,
                     modifier = Modifier.size(36.dp)
@@ -720,64 +729,6 @@ private fun HomeHeaderBar(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(NavyBlueDark)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Storefront,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(15.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = businessName,
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .clickable(onClick = onQrClick)
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.QrCode,
-                    contentDescription = "QR Code",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = "QR Code",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
             }
         }
     }
