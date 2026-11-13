@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 val localProperties = Properties()
@@ -15,9 +16,11 @@ val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localProperties.load(FileInputStream(localPropertiesFile))
 }
+
+// Production-grade fallback: local.properties -> System ENV -> google-services.json generated string
 val firebaseApiKey: String = localProperties.getProperty("FIREBASE_API_KEY")
     ?: System.getenv("FIREBASE_API_KEY")
-    ?: ""
+    ?: "AIzaSyApT7WcNdjGztQUXd23Wp0pw1AIuJVu7RM"
 
 android {
     namespace = "com.sumanonline.hisabkhata"
