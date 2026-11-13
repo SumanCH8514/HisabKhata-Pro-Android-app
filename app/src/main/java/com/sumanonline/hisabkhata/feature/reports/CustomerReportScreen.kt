@@ -72,11 +72,14 @@ import androidx.core.content.FileProvider
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.database.entity.TransactionEntity
+import androidx.compose.material3.MaterialTheme
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
+import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
+import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
@@ -657,7 +660,7 @@ fun CustomerReportScreen(
                 )
             }
 
-            HorizontalDivider(thickness = 0.8.dp, color = Color(0xFFF1F5F9))
+            HorizontalDivider(thickness = 0.8.dp, color = BorderLight)
 
             // 3-Column Summary Bar
             Row(
@@ -672,7 +675,7 @@ fun CustomerReportScreen(
                         text = "TOTAL",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF94A3B8)
+                        color = TextTertiary
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -691,7 +694,7 @@ fun CustomerReportScreen(
                         text = "YOU GAVE",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF94A3B8)
+                        color = TextTertiary
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -710,7 +713,7 @@ fun CustomerReportScreen(
                         text = "YOU GOT",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF94A3B8)
+                        color = TextTertiary
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -722,7 +725,7 @@ fun CustomerReportScreen(
                 }
             }
 
-            HorizontalDivider(thickness = 0.8.dp, color = Color(0xFFF1F5F9))
+            HorizontalDivider(thickness = 0.8.dp, color = BorderLight)
 
             // Transaction List
             if (filteredTransactions.isEmpty()) {
@@ -774,14 +777,14 @@ fun CustomerReportScreen(
                                 // Balance Pill
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFFF1F5F9), RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
                                         text = "Bal. ${CurrencyFormatter.formatInrClean(tx.balance, withSpace = true)}",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF64748B)
+                                        color = TextSecondary
                                     )
                                 }
 
@@ -793,7 +796,7 @@ fun CustomerReportScreen(
                                 Text(
                                     text = "• $cleanDesc",
                                     fontSize = 12.sp,
-                                    color = Color(0xFF64748B),
+                                    color = TextSecondary,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -805,7 +808,7 @@ fun CustomerReportScreen(
                                     .width(116.dp)
                                     .height(60.dp)
                                     .background(
-                                        color = if (isDebit) Color(0xFFFFF5F5) else Color(0xFFF0FDF4),
+                                        color = if (isDebit) RedPillBg else GreenPillBg,
                                         shape = RoundedCornerShape(8.dp)
                                     ),
                                 contentAlignment = Alignment.Center
@@ -819,7 +822,7 @@ fun CustomerReportScreen(
                             }
                         }
 
-                        HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFF1F5F9))
+                        HorizontalDivider(thickness = 0.5.dp, color = BorderLight)
                     }
 
                     item {

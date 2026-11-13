@@ -151,7 +151,7 @@ fun PaymentsScreen(
                             .size(230.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
-                            .background(SurfaceWhite)
+                            .background(androidx.compose.ui.graphics.Color.White)
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -425,7 +425,7 @@ fun PaymentsScreen(
                     Icon(
                         Icons.Default.Close,
                         contentDescription = "Close Fullscreen",
-                        tint = SurfaceWhite
+                        tint = androidx.compose.ui.graphics.Color.White
                     )
                 }
             }

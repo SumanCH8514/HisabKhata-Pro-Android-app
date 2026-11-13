@@ -80,17 +80,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.common.DueStatus
 import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.GiveRed
+import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
+import com.sumanonline.hisabkhata.core.designsystem.GotGreen
+import com.sumanonline.hisabkhata.core.designsystem.GrayPillBg
+import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
 import com.sumanonline.hisabkhata.core.designsystem.NavyBlueDark
 import com.sumanonline.hisabkhata.core.designsystem.NavyBluePrimary
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
+import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
+import com.sumanonline.hisabkhata.core.designsystem.isAppDark
 import com.sumanonline.hisabkhata.core.designsystem.components.AppBottomBar
 import com.sumanonline.hisabkhata.core.designsystem.components.BottomTab
 import com.sumanonline.hisabkhata.core.designsystem.components.ConfirmDialog
@@ -172,7 +182,7 @@ fun CustomerListScreen(
                         color = Color.White
                     )
                 },
-                containerColor = Color(0xFF0052CC),
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
                 shape = CircleShape,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
@@ -246,8 +256,8 @@ fun CustomerListScreen(
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(if (isAll) NavyBluePrimary else SurfaceWhite)
-                                .then(if (!isAll) Modifier.border(1.dp, Color(0xFFCBD5E1), CircleShape) else Modifier)
+                                .background(if (isAll) MaterialTheme.colorScheme.primary else SurfaceWhite)
+                                .then(if (!isAll) Modifier.border(1.dp, BorderLight, CircleShape) else Modifier)
                                 .clickable { viewModel.setFilter(CustomerFilter.ALL) }
                                 .padding(horizontal = 14.dp, vertical = 7.dp)
                         ) {
@@ -255,7 +265,7 @@ fun CustomerListScreen(
                                 text = "All ($partiesCount)",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isAll) Color.White else Color(0xFF334155)
+                                color = if (isAll) Color.White else TextPrimary
                             )
                         }
 
@@ -263,8 +273,8 @@ fun CustomerListScreen(
                         Row(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(if (isGet) Color(0xFFDC2626) else SurfaceWhite)
-                                .then(if (!isGet) Modifier.border(1.dp, Color(0xFFCBD5E1), CircleShape) else Modifier)
+                                .background(if (isGet) GiveRed else SurfaceWhite)
+                                .then(if (!isGet) Modifier.border(1.dp, BorderLight, CircleShape) else Modifier)
                                 .clickable { viewModel.setFilter(CustomerFilter.YOULL_GET) }
                                 .padding(horizontal = 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -273,14 +283,14 @@ fun CustomerListScreen(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(if (isGet) Color.White else Color(0xFFDC2626))
+                                    .background(if (isGet) Color.White else GiveRed)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "You'll Get ($getPartiesCount)",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = if (isGet) Color.White else Color(0xFF334155)
+                                color = if (isGet) Color.White else TextPrimary
                             )
                         }
 
@@ -288,8 +298,8 @@ fun CustomerListScreen(
                         Row(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(if (isGive) Color(0xFF16A34A) else SurfaceWhite)
-                                .then(if (!isGive) Modifier.border(1.dp, Color(0xFFCBD5E1), CircleShape) else Modifier)
+                                .background(if (isGive) GotGreen else SurfaceWhite)
+                                .then(if (!isGive) Modifier.border(1.dp, BorderLight, CircleShape) else Modifier)
                                 .clickable { viewModel.setFilter(CustomerFilter.YOULL_GIVE) }
                                 .padding(horizontal = 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -298,14 +308,14 @@ fun CustomerListScreen(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(if (isGive) Color.White else Color(0xFF16A34A))
+                                    .background(if (isGive) Color.White else GotGreen)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "You'll Give ($givePartiesCount)",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = if (isGive) Color.White else Color(0xFF334155)
+                                color = if (isGive) Color.White else TextPrimary
                             )
                         }
 
@@ -313,8 +323,8 @@ fun CustomerListScreen(
                         Row(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(if (isOverdue) Color(0xFFDC2626) else SurfaceWhite)
-                                .then(if (!isOverdue) Modifier.border(1.dp, Color(0xFFCBD5E1), CircleShape) else Modifier)
+                                .background(if (isOverdue) GiveRed else SurfaceWhite)
+                                .then(if (!isOverdue) Modifier.border(1.dp, BorderLight, CircleShape) else Modifier)
                                 .clickable { viewModel.setFilter(CustomerFilter.OVERDUE) }
                                 .padding(horizontal = 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -322,7 +332,7 @@ fun CustomerListScreen(
                             Icon(
                                 imageVector = Icons.Default.AccessTime,
                                 contentDescription = null,
-                                tint = if (isOverdue) Color.White else Color(0xFFDC2626),
+                                tint = if (isOverdue) Color.White else GiveRed,
                                 modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(5.dp))
@@ -330,7 +340,7 @@ fun CustomerListScreen(
                                 text = "Overdue ($overduePartiesCount)",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = if (isOverdue) Color.White else Color(0xFF334155)
+                                color = if (isOverdue) Color.White else TextPrimary
                             )
                         }
                     }
@@ -354,14 +364,14 @@ fun CustomerListScreen(
                                 text = "NAME",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF64748B),
+                                color = TextSecondary,
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.width(3.dp))
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Sort,
                                 contentDescription = "Sort by name",
-                                tint = Color(0xFF64748B),
+                                tint = TextSecondary,
                                 modifier = Modifier.size(13.dp)
                             )
                         }
@@ -378,19 +388,19 @@ fun CustomerListScreen(
                                 text = "AMOUNT",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF64748B),
+                                color = TextSecondary,
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.width(3.dp))
                             Icon(
                                 imageVector = Icons.Default.SwapVert,
                                 contentDescription = "Sort by amount",
-                                tint = Color(0xFF64748B),
+                                tint = TextSecondary,
                                 modifier = Modifier.size(13.dp)
                             )
                         }
                     }
-                    HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 0.5.dp)
+                    HorizontalDivider(color = BorderLight, thickness = 0.5.dp)
                 }
             }
 
@@ -500,7 +510,7 @@ private fun StickySearchAndFiltersCard(
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+            border = BorderStroke(1.dp, BorderLight)
         ) {
             Row(
                 modifier = Modifier
@@ -511,7 +521,7 @@ private fun StickySearchAndFiltersCard(
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = "Search",
-                    tint = Color(0xFF64748B),
+                    tint = TextTertiary,
                     modifier = Modifier.size(19.dp)
                 )
 
@@ -522,7 +532,7 @@ private fun StickySearchAndFiltersCard(
                         Text(
                             text = "Search Customer by nam…",
                             fontSize = 13.sp,
-                            color = Color(0xFF64748B),
+                            color = TextTertiary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -533,7 +543,7 @@ private fun StickySearchAndFiltersCard(
                         singleLine = true,
                         textStyle = TextStyle(
                             fontSize = 13.sp,
-                            color = Color(0xFF0F172A),
+                            color = TextPrimary,
                             fontWeight = FontWeight.Normal
                         ),
                         modifier = Modifier.fillMaxWidth()
@@ -548,7 +558,7 @@ private fun StickySearchAndFiltersCard(
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear",
-                            tint = Color(0xFF64748B),
+                            tint = TextTertiary,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -556,7 +566,7 @@ private fun StickySearchAndFiltersCard(
                     Icon(
                         imageVector = Icons.Default.Mic,
                         contentDescription = "Voice Search",
-                        tint = Color(0xFF64748B),
+                        tint = TextTertiary,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -572,7 +582,7 @@ private fun StickySearchAndFiltersCard(
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+            border = BorderStroke(1.dp, BorderLight)
         ) {
             Row(
                 modifier = Modifier
@@ -584,7 +594,7 @@ private fun StickySearchAndFiltersCard(
                 Icon(
                     imageVector = Icons.Default.FilterList,
                     contentDescription = "Filters",
-                    tint = NavyBluePrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
@@ -592,7 +602,7 @@ private fun StickySearchAndFiltersCard(
                     text = "FILTERS",
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = NavyBluePrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     letterSpacing = 0.5.sp
                 )
             }
@@ -784,8 +794,8 @@ private fun NetReceivableBanner(
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clickable(onClick = onViewClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+        border = BorderStroke(1.dp, BorderLight),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Row(
@@ -797,20 +807,20 @@ private fun NetReceivableBanner(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                 contentDescription = null,
-                tint = NavyBluePrimary,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Net Receivable Balance: ",
                 fontSize = 12.sp,
-                color = Color(0xFF475569)
+                color = TextSecondary
             )
             Text(
                 text = CurrencyFormatter.formatInr(netBalance),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                color = NavyBluePrimary
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.weight(1f))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -818,13 +828,13 @@ private fun NetReceivableBanner(
                     text = "VIEW",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = NavyBluePrimary
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(3.dp))
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
-                    tint = NavyBluePrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(12.dp)
                 )
             }
@@ -845,14 +855,14 @@ fun CustomerListItem(
     val isOverdue = dueStatus is DueStatus.Overdue
 
     val avatarBg = when {
-        isGet -> Color(0xFFFEE2E2)
-        isGive -> Color(0xFFDCFCE7)
-        else -> Color(0xFFF1F5F9)
+        isGet -> RedPillBg
+        isGive -> GreenPillBg
+        else -> GrayPillBg
     }
     val avatarTextColor = when {
-        isGet -> Color(0xFFDC2626)
-        isGive -> Color(0xFF16A34A)
-        else -> Color(0xFF64748B)
+        isGet -> GiveRed
+        isGive -> GotGreen
+        else -> TextSecondary
     }
 
     val showActive = customer.name.contains("Supratik", ignoreCase = true)
@@ -886,7 +896,7 @@ fun CustomerListItem(
                     text = customer.name,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A),
+                    color = TextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -897,7 +907,7 @@ fun CustomerListItem(
                     Icon(
                         imageVector = Icons.Default.AccessTime,
                         contentDescription = null,
-                        tint = Color(0xFF94A3B8),
+                        tint = TextTertiary,
                         modifier = Modifier.size(12.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -905,7 +915,7 @@ fun CustomerListItem(
                         text = DateUtils.formatRelativeTime(customer.updatedAt).uppercase(),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF64748B),
+                        color = TextSecondary,
                         maxLines = 1
                     )
 
@@ -914,22 +924,22 @@ fun CustomerListItem(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(Color(0xFFFEF2F2))
-                                .border(0.5.dp, Color(0xFFFECACA), RoundedCornerShape(4.dp))
+                                .background(RedPillBg)
+                                .border(0.5.dp, GiveRedStroke, RoundedCornerShape(4.dp))
                                 .padding(horizontal = 5.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(5.dp)
-                                    .background(Color(0xFFDC2626), CircleShape)
+                                    .background(GiveRed, CircleShape)
                             )
                             Spacer(modifier = Modifier.width(3.5.dp))
                             Text(
                                 text = "${dueStatus.days}D OVERDUE",
                                 fontSize = 8.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFDC2626),
+                                color = GiveRed,
                                 maxLines = 1,
                                 softWrap = false
                             )
@@ -948,9 +958,9 @@ fun CustomerListItem(
                     else -> "₹0"
                 }
                 val amountColor = when {
-                    isGet -> Color(0xFFDC2626)
-                    isGive -> Color(0xFF16A34A)
-                    else -> Color(0xFF64748B)
+                    isGet -> GiveRed
+                    isGive -> GotGreen
+                    else -> TextSecondary
                 }
 
                 Text(
@@ -962,8 +972,8 @@ fun CustomerListItem(
 
                 Spacer(modifier = Modifier.height(3.dp))
 
-                val badgeBg = if (isGet) Color(0xFFFEE2E2) else if (isGive) Color(0xFFDCFCE7) else Color(0xFFF1F5F9)
-                val badgeText = if (isGet) Color(0xFFDC2626) else if (isGive) Color(0xFF16A34A) else Color(0xFF64748B)
+                val badgeBg = if (isGet) RedPillBg else if (isGive) GreenPillBg else GrayPillBg
+                val badgeText = if (isGet) GiveRed else if (isGive) GotGreen else TextSecondary
                 val badgeLabel = if (isGet) "YOU'LL GET" else if (isGive) "YOU'LL GIVE" else "SETTLED"
 
                 if (!isSettled) {
@@ -984,6 +994,6 @@ fun CustomerListItem(
                 }
             }
         }
-        HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 0.5.dp)
+        HorizontalDivider(color = BorderLight, thickness = 0.5.dp)
     }
 }

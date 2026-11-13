@@ -56,9 +56,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
 import com.sumanonline.hisabkhata.R
 import com.sumanonline.hisabkhata.core.common.CertificateUtils
 import com.sumanonline.hisabkhata.core.common.Constants
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.NavyBlueDark
 import com.sumanonline.hisabkhata.core.designsystem.NavyBluePrimary
@@ -185,9 +187,9 @@ fun AboutProjectScreen(
 
                         // Version Pill
                         Surface(
-                            color = Color(0xFFF1F5F9),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
                             shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                            border = BorderStroke(1.dp, BorderLight)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -204,7 +206,7 @@ fun AboutProjectScreen(
                                     text = "Version 1.1.0 (Build 2) • Stable",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF334155)
+                                    color = TextSecondary
                                 )
                             }
                         }
@@ -218,7 +220,7 @@ fun AboutProjectScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    border = BorderStroke(1.dp, BorderLight)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(
@@ -236,7 +238,7 @@ fun AboutProjectScreen(
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
+                        HorizontalDivider(color = BorderLight)
                         Spacer(modifier = Modifier.height(14.dp))
 
                         InfoRow(label = "Maintained By", value = "SumanOnline.Com")
@@ -254,14 +256,14 @@ fun AboutProjectScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    border = BorderStroke(1.dp, BorderLight)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Security,
                                 contentDescription = null,
-                                tint = BrandBlue,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -294,9 +296,9 @@ fun AboutProjectScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Surface(
-                            color = Color(0xFFF8FAFC),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
                             shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            border = BorderStroke(1.dp, BorderLight),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -310,7 +312,7 @@ fun AboutProjectScreen(
                                     text = sha1,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF0F172A),
+                                    color = TextPrimary,
                                     modifier = Modifier.weight(1f)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -318,7 +320,7 @@ fun AboutProjectScreen(
                                     text = "COPY",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = BrandBlue,
+                                    color = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier
                                         .clickable {
                                             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
@@ -340,14 +342,14 @@ fun AboutProjectScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    border = BorderStroke(1.dp, BorderLight)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.NewReleases,
                                 contentDescription = null,
-                                tint = BrandBlue,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -400,7 +402,7 @@ fun AboutProjectScreen(
                             try { context.startActivity(intent) } catch (_: Exception) {}
                         },
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.2.dp, Color(0xFFCBD5E1)),
+                        border = BorderStroke(1.2.dp, BorderLight),
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp)

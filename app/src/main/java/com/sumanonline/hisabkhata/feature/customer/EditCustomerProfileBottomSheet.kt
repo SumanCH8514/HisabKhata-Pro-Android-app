@@ -47,8 +47,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -76,6 +78,7 @@ import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
+import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
@@ -155,7 +158,7 @@ fun EditCustomerProfileBottomSheet(
                 modifier = Modifier
                     .padding(top = 10.dp, bottom = 4.dp)
                     .size(width = 44.dp, height = 4.dp)
-                    .background(Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
+                    .background(BorderLight, RoundedCornerShape(2.dp))
             )
         }
     ) {
@@ -179,13 +182,13 @@ fun EditCustomerProfileBottomSheet(
                         modifier = Modifier
                             .size(38.dp)
                             .background(BrandBlueLight, RoundedCornerShape(10.dp))
-                            .border(1.dp, Color(0xFFDBEAFE), RoundedCornerShape(10.dp)),
+                            .border(1.dp, BorderLight, RoundedCornerShape(10.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Edit Profile",
-                            tint = BrandBlue,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -219,13 +222,13 @@ fun EditCustomerProfileBottomSheet(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Color(0xFF64748B),
+                        tint = TextSecondary,
                         modifier = Modifier.size(22.dp)
                     )
                 }
             }
 
-            HorizontalDivider(thickness = 0.8.dp, color = Color(0xFFF1F5F9))
+            HorizontalDivider(thickness = 0.8.dp, color = BorderLight)
 
             // Scrollable Form Body
             Column(
@@ -235,6 +238,7 @@ fun EditCustomerProfileBottomSheet(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                val primaryColor = MaterialTheme.colorScheme.primary
                 // Profile Photo Section with dashed blue circle border
                 Box(
                     modifier = Modifier
@@ -242,7 +246,7 @@ fun EditCustomerProfileBottomSheet(
                         .clickable { showPhotoOptionsDialog = true }
                         .drawBehind {
                             drawCircle(
-                                color = Color(0xFF93C5FD),
+                                color = primaryColor.copy(alpha = 0.5f),
                                 style = Stroke(
                                     width = 2.dp.toPx(),
                                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f), 0f)
@@ -266,7 +270,7 @@ fun EditCustomerProfileBottomSheet(
                     text = "Tap photo to upload Profile image",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF64748B),
+                    color = TextSecondary,
                     modifier = Modifier.clickable { showPhotoOptionsDialog = true }
                 )
 
@@ -278,7 +282,7 @@ fun EditCustomerProfileBottomSheet(
                         text = "CUSTOMER NAME *",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF475569)
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Box(
@@ -297,7 +301,7 @@ fun EditCustomerProfileBottomSheet(
                             Icon(
                                 imageVector = Icons.Default.PersonOutline,
                                 contentDescription = null,
-                                tint = Color(0xFF94A3B8),
+                                tint = TextTertiary,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -310,7 +314,7 @@ fun EditCustomerProfileBottomSheet(
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextPrimary
                                 ),
-                                cursorBrush = SolidColor(BrandBlue),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                 modifier = Modifier.fillMaxWidth(),
                                 decorationBox = { innerTextField ->
                                     if (name.isEmpty()) {
@@ -335,7 +339,7 @@ fun EditCustomerProfileBottomSheet(
                         text = "PHONE NUMBER",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF475569)
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Box(
@@ -355,7 +359,7 @@ fun EditCustomerProfileBottomSheet(
                                 text = "+91",
                                 fontSize = 14.5.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF64748B)
+                                color = TextSecondary
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             BasicTextField(
@@ -368,7 +372,7 @@ fun EditCustomerProfileBottomSheet(
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextPrimary
                                 ),
-                                cursorBrush = SolidColor(BrandBlue),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                 modifier = Modifier.fillMaxWidth(),
                                 decorationBox = { innerTextField ->
                                     if (phone.isEmpty()) {
@@ -393,7 +397,7 @@ fun EditCustomerProfileBottomSheet(
                         text = "EMAIL ADDRESS",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF475569)
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Box(
@@ -412,7 +416,7 @@ fun EditCustomerProfileBottomSheet(
                             Icon(
                                 imageVector = Icons.Default.MailOutline,
                                 contentDescription = null,
-                                tint = Color(0xFF94A3B8),
+                                tint = TextTertiary,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -426,7 +430,7 @@ fun EditCustomerProfileBottomSheet(
                                     fontWeight = FontWeight.Medium,
                                     color = TextPrimary
                                 ),
-                                cursorBrush = SolidColor(BrandBlue),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                 modifier = Modifier.fillMaxWidth(),
                                 decorationBox = { innerTextField ->
                                     if (email.isEmpty()) {
@@ -451,7 +455,7 @@ fun EditCustomerProfileBottomSheet(
                         text = "GSTIN NUMBER",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF475569)
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Box(
@@ -470,7 +474,7 @@ fun EditCustomerProfileBottomSheet(
                             Icon(
                                 imageVector = Icons.Default.Storefront,
                                 contentDescription = null,
-                                tint = Color(0xFF94A3B8),
+                                tint = TextTertiary,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -488,7 +492,7 @@ fun EditCustomerProfileBottomSheet(
                                     fontWeight = FontWeight.Medium,
                                     color = TextPrimary
                                 ),
-                                cursorBrush = SolidColor(BrandBlue),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                 modifier = Modifier.fillMaxWidth(),
                                 decorationBox = { innerTextField ->
                                     if (gst.isEmpty()) {
@@ -525,7 +529,7 @@ fun EditCustomerProfileBottomSheet(
                             .weight(1f)
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                        border = BorderStroke(1.dp, BorderLight),
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceWhite)
                     ) {
                         Text(
@@ -566,7 +570,10 @@ fun EditCustomerProfileBottomSheet(
                             .weight(1f)
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text(
                             text = "Save Changes",
@@ -601,7 +608,7 @@ fun EditCustomerProfileBottomSheet(
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Image, contentDescription = null, tint = BrandBlue)
+                        Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text("Upload from Gallery", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     }
@@ -617,7 +624,7 @@ fun EditCustomerProfileBottomSheet(
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Link, contentDescription = null, tint = BrandBlue)
+                        Icon(Icons.Default.Link, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text("Paste Image URL", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     }
@@ -634,9 +641,9 @@ fun EditCustomerProfileBottomSheet(
                                 .padding(vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Outlined.Delete, contentDescription = null, tint = Color(0xFFDC2626))
+                            Icon(Icons.Outlined.Delete, contentDescription = null, tint = GiveRed)
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text("Remove Photo", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFFDC2626))
+                            Text("Remove Photo", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = GiveRed)
                         }
                     }
                 }
@@ -669,7 +676,13 @@ fun EditCustomerProfileBottomSheet(
                         onValueChange = { pastedUrlInput = it },
                         placeholder = { Text("https://example.com/photo.jpg") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = BorderLight,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        )
                     )
                 }
             },
@@ -682,14 +695,17 @@ fun EditCustomerProfileBottomSheet(
                             Toast.makeText(context, "Image URL set", Toast.LENGTH_SHORT).show()
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Text("Apply")
+                    Text("Apply", color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPasteUrlDialog = false }) {
-                    Text("Cancel")
+                    Text("Cancel", color = TextSecondary)
                 }
             }
         )

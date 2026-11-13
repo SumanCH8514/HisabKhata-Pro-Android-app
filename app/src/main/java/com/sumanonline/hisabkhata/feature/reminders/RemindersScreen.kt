@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.common.DueStatus
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
@@ -104,8 +108,9 @@ fun RemindersScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, BorderLight),
                             colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
@@ -175,7 +180,7 @@ fun RemindersScreen(
                                                     .background(BrandBlueLight)
                                                     .padding(horizontal = 8.dp, vertical = 3.dp)
                                             ) {
-                                                Text("Due in ${dueStatus.days} days", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandBlue)
+                                                Text("Due in ${dueStatus.days} days", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                             }
                                         }
                                         else -> Unit
@@ -190,26 +195,27 @@ fun RemindersScreen(
                                 ) {
                                     Button(
                                         onClick = { viewModel.sendWhatsAppReminder(context, customer) },
-                                        colors = ButtonDefaults.buttonColors(containerColor = GotGreen),
+                                        colors = ButtonDefaults.buttonColors(containerColor = GotGreen, contentColor = Color.White),
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier
                                             .weight(1f)
                                             .height(40.dp)
                                     ) {
-                                        Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(14.dp))
+                                        Icon(Icons.Default.Send, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Text("WhatsApp Reminder", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Text("WhatsApp Reminder", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                     }
 
                                     if (customer.email.isNotBlank()) {
                                         OutlinedButton(
                                             onClick = { viewModel.sendEmailReminder(context, customer) },
                                             shape = RoundedCornerShape(10.dp),
+                                            border = BorderStroke(1.dp, BorderLight),
                                             modifier = Modifier.height(40.dp)
                                         ) {
-                                            Icon(Icons.Default.Email, contentDescription = null, tint = BrandBlue, modifier = Modifier.size(14.dp))
+                                            Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Email", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandBlue)
+                                            Text("Email", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                         }
                                     }
                                 }

@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -44,7 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.material3.MaterialTheme
 import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
@@ -114,8 +117,16 @@ fun AddEditCustomerDialog(
                         onClick = { partyType = "Customer" },
                         label = { Text("Customer") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = BrandBlue,
-                            selectedLabelColor = SurfaceWhite
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = Color.White,
+                            containerColor = SurfaceWhite,
+                            labelColor = TextPrimary
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = partyType == "Customer",
+                            borderColor = BorderLight,
+                            selectedBorderColor = MaterialTheme.colorScheme.primary
                         )
                     )
                     FilterChip(
@@ -123,8 +134,16 @@ fun AddEditCustomerDialog(
                         onClick = { partyType = "Supplier" },
                         label = { Text("Supplier") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = BrandBlue,
-                            selectedLabelColor = SurfaceWhite
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = Color.White,
+                            containerColor = SurfaceWhite,
+                            labelColor = TextPrimary
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = partyType == "Supplier",
+                            borderColor = BorderLight,
+                            selectedBorderColor = MaterialTheme.colorScheme.primary
                         )
                     )
                 }
@@ -214,7 +233,15 @@ fun AddEditCustomerDialog(
                             label = { Text("You'll Get (Due)") },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = GiveRed,
-                                selectedLabelColor = SurfaceWhite
+                                selectedLabelColor = Color.White,
+                                containerColor = SurfaceWhite,
+                                labelColor = TextPrimary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = balanceType == "get",
+                                borderColor = BorderLight,
+                                selectedBorderColor = GiveRed
                             ),
                             modifier = Modifier.weight(1f)
                         )
@@ -224,7 +251,15 @@ fun AddEditCustomerDialog(
                             label = { Text("You'll Give (Adv)") },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = GotGreen,
-                                selectedLabelColor = SurfaceWhite
+                                selectedLabelColor = Color.White,
+                                containerColor = SurfaceWhite,
+                                labelColor = TextPrimary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = balanceType == "give",
+                                borderColor = BorderLight,
+                                selectedBorderColor = GotGreen
                             ),
                             modifier = Modifier.weight(1f)
                         )
@@ -246,7 +281,7 @@ fun AddEditCustomerDialog(
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BrandBlue,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = TextTertiary.copy(alpha = 0.5f)
                         ),
                         modifier = Modifier.fillMaxWidth()
@@ -264,7 +299,10 @@ fun AddEditCustomerDialog(
                     },
                     enabled = name.isNotBlank(),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
@@ -273,7 +311,7 @@ fun AddEditCustomerDialog(
                         text = if (existingCustomer != null) "Save Changes" else "Add Party",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = SurfaceWhite
+                        color = Color.White
                     )
                 }
             }

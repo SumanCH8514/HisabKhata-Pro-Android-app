@@ -79,6 +79,7 @@ import com.sumanonline.hisabkhata.R
 import com.sumanonline.hisabkhata.core.common.CertificateUtils
 import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.common.Resource
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GiveRedLight
@@ -88,6 +89,7 @@ import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun LoginScreen(
@@ -196,7 +198,7 @@ fun LoginScreen(
                     text = configHelpTitle,
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
-                    color = Color(0xFF0F172A)
+                    color = TextPrimary
                 )
             },
             text = {
@@ -204,7 +206,7 @@ fun LoginScreen(
                     text = configHelpMessage,
                     fontSize = 13.sp,
                     lineHeight = 18.sp,
-                    color = Color(0xFF334155)
+                    color = TextSecondary
                 )
             },
             confirmButton = {
@@ -393,7 +395,7 @@ fun LoginScreen(
                             text = "Forgot Password?",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = BrandBlue,
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable(onClick = onNavigateToForgotPassword)
                         )
                     }
@@ -404,19 +406,22 @@ fun LoginScreen(
                         onClick = { viewModel.login(email, password) },
                         enabled = uiState !is Resource.Loading,
                         shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
                     ) {
                         if (uiState is Resource.Loading) {
-                            CircularProgressIndicator(color = SurfaceWhite, modifier = Modifier.size(24.dp))
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {
                             Text(
                                 text = "Sign In",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = SurfaceWhite
+                                color = Color.White
                             )
                         }
                     }
@@ -429,20 +434,20 @@ fun LoginScreen(
                     ) {
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
-                            color = Color(0xFFE2E8F0),
+                            color = BorderLight,
                             thickness = 1.dp
                         )
                         Text(
                             text = "OR",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF94A3B8),
+                            color = TextSecondary,
                             letterSpacing = 1.sp,
                             modifier = Modifier.padding(horizontal = 14.dp)
                         )
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
-                            color = Color(0xFFE2E8F0),
+                            color = BorderLight,
                             thickness = 1.dp
                         )
                     }
@@ -467,10 +472,10 @@ fun LoginScreen(
                         },
                         enabled = uiState !is Resource.Loading,
                         shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.2.dp, Color(0xFFE2E8F0)),
+                        border = BorderStroke(1.2.dp, BorderLight),
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = SurfaceWhite,
-                            contentColor = Color(0xFF1E293B)
+                            contentColor = TextPrimary
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -490,7 +495,7 @@ fun LoginScreen(
                                 text = "Continue with Google",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF1E293B)
+                                color = TextPrimary
                             )
                         }
                     }
@@ -509,7 +514,7 @@ fun LoginScreen(
                     text = "Create Account",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BrandBlue,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable(onClick = onNavigateToRegister)
                 )
             }

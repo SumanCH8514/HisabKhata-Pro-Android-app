@@ -47,12 +47,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
+import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
+import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
+import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
+import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,14 +80,14 @@ fun FilterSortBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color.White,
+        containerColor = SurfaceWhite,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         dragHandle = {
             Box(
                 modifier = Modifier
                     .padding(top = 10.dp, bottom = 4.dp)
                     .size(width = 44.dp, height = 4.dp)
-                    .background(Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
+                    .background(BorderLight, RoundedCornerShape(2.dp))
             )
         }
     ) {
@@ -98,8 +105,8 @@ fun FilterSortBottomSheet(
                 Box(
                     modifier = Modifier
                         .size(38.dp)
-                        .background(Color(0xFFEFF6FF), CircleShape)
-                        .border(1.dp, Color(0xFFDBEAFE), CircleShape),
+                        .background(BrandBlueLight, CircleShape)
+                        .border(1.dp, BorderLight, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -117,12 +124,12 @@ fun FilterSortBottomSheet(
                         text = "Filters & Sorting",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E293B)
+                        color = TextPrimary
                     )
                     Text(
                         text = "Order and filter your party ledger",
                         fontSize = 12.5.sp,
-                        color = Color(0xFF64748B)
+                        color = TextSecondary
                     )
                 }
 
@@ -133,14 +140,14 @@ fun FilterSortBottomSheet(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Color(0xFF64748B),
+                        tint = TextSecondary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
             HorizontalDivider(
-                color = Color(0xFFF1F5F9),
+                color = BorderLight,
                 thickness = 1.dp,
                 modifier = Modifier.padding(top = 6.dp)
             )
@@ -155,7 +162,7 @@ fun FilterSortBottomSheet(
                     text = "SORT BY",
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B),
+                    color = TextSecondary,
                     letterSpacing = 0.5.sp
                 )
 
@@ -205,7 +212,7 @@ fun FilterSortBottomSheet(
                     text = "FILTER BY STATUS",
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B),
+                    color = TextSecondary,
                     letterSpacing = 0.5.sp
                 )
 
@@ -260,7 +267,7 @@ fun FilterSortBottomSheet(
                 FilterStatusChip(
                     label = "Settled (₹0 Balance)",
                     isSelected = currentFilter == CustomerFilter.SETTLED,
-                    indicatorColor = Color(0xFF64748B),
+                    indicatorColor = TextSecondary,
                     modifier = Modifier.fillMaxWidth(0.5f),
                     onClick = { onFilterSelected(CustomerFilter.SETTLED) }
                 )
@@ -277,13 +284,13 @@ fun FilterSortBottomSheet(
                             .weight(1f)
                             .height(46.dp),
                         shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+                        border = BorderStroke(1.dp, BorderLight),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceWhite)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.RestartAlt,
                             contentDescription = null,
-                            tint = Color(0xFF64748B),
+                            tint = TextSecondary,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -291,7 +298,7 @@ fun FilterSortBottomSheet(
                             text = "Reset",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF64748B)
+                            color = TextSecondary
                         )
                     }
 
@@ -339,11 +346,11 @@ private fun SortOptionTile(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) Color(0xFFEFF6FF) else Color.White
+            containerColor = if (isSelected) BrandBlueLight else SurfaceWhite
         ),
         border = BorderStroke(
             width = if (isSelected) 1.5.dp else 1.dp,
-            color = if (isSelected) BrandBlue else Color(0xFFE2E8F0)
+            color = if (isSelected) BrandBlue else BorderLight
         )
     ) {
         Row(
@@ -356,7 +363,7 @@ private fun SortOptionTile(
                 modifier = Modifier
                     .size(34.dp)
                     .background(
-                        if (isSelected) Color(0xFFDBEAFE) else Color(0xFFF1F5F9),
+                        if (isSelected) BrandBlueLight else MaterialTheme.colorScheme.surfaceVariant,
                         RoundedCornerShape(8.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -364,7 +371,7 @@ private fun SortOptionTile(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = if (isSelected) BrandBlue else Color(0xFF64748B),
+                    tint = if (isSelected) BrandBlue else TextSecondary,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -376,13 +383,13 @@ private fun SortOptionTile(
                     text = title,
                     fontSize = 14.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                    color = if (isSelected) BrandBlue else Color(0xFF1E293B)
+                    color = if (isSelected) BrandBlue else TextPrimary
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     fontSize = 11.5.sp,
-                    color = Color(0xFF64748B)
+                    color = TextSecondary
                 )
             }
 
@@ -397,7 +404,7 @@ private fun SortOptionTile(
                 Box(
                     modifier = Modifier
                         .size(18.dp)
-                        .border(1.5.dp, Color(0xFFCBD5E1), CircleShape)
+                        .border(1.5.dp, BorderLight, CircleShape)
                 )
             }
         }
@@ -415,10 +422,10 @@ private fun FilterStatusChip(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) BrandBlue else Color(0xFFF8FAFC))
+            .background(if (isSelected) BrandBlue else SurfaceWhite)
             .border(
                 width = 1.dp,
-                color = if (isSelected) BrandBlue else Color(0xFFE2E8F0),
+                color = if (isSelected) BrandBlue else BorderLight,
                 shape = RoundedCornerShape(10.dp)
             )
             .clickable(onClick = onClick)
@@ -438,7 +445,7 @@ private fun FilterStatusChip(
                 text = label,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                color = if (isSelected) Color.White else Color(0xFF334155),
+                color = if (isSelected) Color.White else TextPrimary,
                 maxLines = 1
             )
         }

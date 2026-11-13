@@ -90,11 +90,19 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sumanonline.hisabkhata.R
 import com.sumanonline.hisabkhata.core.common.ImageUtils
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
+import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.NavyBluePrimary
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
+import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
+import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
+import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
+import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
+import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.components.AppBottomBar
 import com.sumanonline.hisabkhata.core.designsystem.components.BottomTab
 import com.sumanonline.hisabkhata.core.designsystem.components.ConfirmDialog
@@ -748,7 +756,7 @@ fun ProfileScreen(
                     Text(
                         text = "Privacy Policy",
                         fontSize = 12.sp,
-                        color = Color(0xFF64748B),
+                        color = TextSecondary,
                         modifier = Modifier.clickable {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://hisabkhata.sumanonline.com/privacy-policy"))
                             try { context.startActivity(intent) } catch (_: Exception) {}
@@ -757,12 +765,12 @@ fun ProfileScreen(
                     Text(
                         text = "   •   ",
                         fontSize = 11.sp,
-                        color = Color(0xFFCBD5E1)
+                        color = TextTertiary
                     )
                     Text(
                         text = "Terms of Service",
                         fontSize = 12.sp,
-                        color = Color(0xFF64748B),
+                        color = TextSecondary,
                         modifier = Modifier.clickable {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://hisabkhata.sumanonline.com/terms-of-condition"))
                             try { context.startActivity(intent) } catch (_: Exception) {}
@@ -779,32 +787,32 @@ fun ProfileScreen(
                     Box(
                         modifier = Modifier
                             .size(7.dp)
-                            .background(Color(0xFF10B981), CircleShape)
+                            .background(GotGreen, CircleShape)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "HisabKhata Pro",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E293B)
+                        color = TextPrimary
                     )
                     Text(
                         text = "  •  ",
                         fontSize = 12.sp,
-                        color = Color(0xFF94A3B8)
+                        color = TextTertiary
                     )
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xFFF1F5F9))
-                            .border(0.5.dp, Color(0xFFCBD5E1), RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(0.5.dp, BorderLight, RoundedCornerShape(4.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = "v1.1.0",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF64748B)
+                            color = TextSecondary
                         )
                     }
                 }
@@ -821,13 +829,13 @@ fun ProfileScreen(
                     Text(
                         text = "Maintained by ",
                         fontSize = 12.sp,
-                        color = Color(0xFF64748B)
+                        color = TextSecondary
                     )
                     Text(
                         text = "SumanOnline.Com ↗",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BrandBlue
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -837,7 +845,7 @@ fun ProfileScreen(
                 Text(
                     text = "© $currentYear SumanOnline Web Services.",
                     fontSize = 11.5.sp,
-                    color = Color(0xFF94A3B8),
+                    color = TextTertiary,
                     textAlign = TextAlign.Center
                 )
             }
@@ -852,14 +860,14 @@ fun ProfileScreen(
         ModalBottomSheet(
             onDismissRequest = { showEditProfileSheet = false },
             sheetState = sheetState,
-            containerColor = Color.White,
+            containerColor = SurfaceWhite,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             dragHandle = {
                 Box(
                     modifier = Modifier
                         .padding(top = 10.dp, bottom = 4.dp)
                         .size(width = 44.dp, height = 4.dp)
-                        .background(Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
+                        .background(BorderLight, RoundedCornerShape(2.dp))
                 )
             }
         ) {
@@ -877,14 +885,14 @@ fun ProfileScreen(
                     Box(
                         modifier = Modifier
                             .size(38.dp)
-                            .background(Color(0xFFEFF6FF), CircleShape)
-                            .border(1.dp, Color(0xFFDBEAFE), CircleShape),
+                            .background(BrandBlueLight, CircleShape)
+                            .border(1.dp, BorderLight, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Settings,
                             contentDescription = null,
-                            tint = BrandBlue,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -896,12 +904,12 @@ fun ProfileScreen(
                             text = "Account & Settings",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
+                            color = TextPrimary
                         )
                         Text(
                             text = session.email,
                             fontSize = 12.sp,
-                            color = Color(0xFF64748B)
+                            color = TextSecondary
                         )
                     }
 
@@ -912,14 +920,14 @@ fun ProfileScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Close",
-                            tint = Color(0xFF64748B),
+                            tint = TextSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
 
                 HorizontalDivider(
-                    color = Color(0xFFF1F5F9),
+                    color = BorderLight,
                     thickness = 1.dp,
                     modifier = Modifier.padding(top = 6.dp)
                 )
@@ -934,7 +942,7 @@ fun ProfileScreen(
                         text = "BUSINESS INFORMATION",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
+                        color = TextSecondary,
                         letterSpacing = 0.5.sp
                     )
 
@@ -946,7 +954,13 @@ fun ProfileScreen(
                         label = { Text("Merchant / Contact Name") },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandBlue),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            unfocusedBorderColor = BorderLight
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -958,7 +972,13 @@ fun ProfileScreen(
                         label = { Text("Shop / Business Name") },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandBlue),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            unfocusedBorderColor = BorderLight
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -970,7 +990,13 @@ fun ProfileScreen(
                         label = { Text("Phone Number") },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandBlue),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            unfocusedBorderColor = BorderLight
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -982,7 +1008,13 @@ fun ProfileScreen(
                         label = { Text("UPI ID for Receiving Payments (e.g. mobile@upi)") },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandBlue),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            unfocusedBorderColor = BorderLight
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -995,11 +1027,14 @@ fun ProfileScreen(
                             Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
                         },
                         enabled = !isSaving,
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
+                        ),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
-                        Text("Save Profile Changes", fontWeight = FontWeight.Bold, fontSize = 14.5.sp)
+                        Text("Save Profile Changes", fontWeight = FontWeight.Bold, fontSize = 14.5.sp, color = Color.White)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -1009,14 +1044,17 @@ fun ProfileScreen(
                             showEditProfileSheet = false
                             showLogoutConfirm = true
                         },
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = GiveRed),
-                        border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = RedPillBg,
+                            contentColor = GiveRed
+                        ),
+                        border = BorderStroke(1.dp, GiveRedStroke),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
                         Icon(Icons.Default.Logout, contentDescription = null, tint = GiveRed, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Sign Out", fontWeight = FontWeight.Bold, fontSize = 14.5.sp)
+                        Text("Sign Out", fontWeight = FontWeight.Bold, fontSize = 14.5.sp, color = GiveRed)
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))

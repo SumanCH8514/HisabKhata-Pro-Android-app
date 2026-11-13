@@ -90,6 +90,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.material3.MaterialTheme
 import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
@@ -97,10 +98,13 @@ import com.sumanonline.hisabkhata.core.common.ImageUtils
 import com.sumanonline.hisabkhata.core.database.entity.TransactionEntity
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
+import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
 import com.sumanonline.hisabkhata.core.designsystem.NavyBluePrimary
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
+import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
@@ -382,14 +386,14 @@ fun CustomerLedgerScreen(
                                     text = statusLabel,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF334155)
+                                    color = TextSecondary
                                 )
                                 Text(
                                     text = CurrencyFormatter.formatInrClean(Math.abs(customer.balance), withSpace = false),
                                     fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = when {
-                                        isSettled -> Color(0xFF0F172A)
+                                        isSettled -> TextPrimary
                                         isGet -> GiveRed
                                         else -> GotGreen
                                     }
@@ -397,7 +401,7 @@ fun CustomerLedgerScreen(
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
-                            HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+                            HorizontalDivider(color = BorderLight, thickness = 1.dp)
                             Spacer(modifier = Modifier.height(10.dp))
 
                             Row(
@@ -525,7 +529,7 @@ fun CustomerLedgerScreen(
                         QuickActionButton(
                             icon = Icons.Default.Link,
                             label = "Copy Link",
-                            iconTint = Color(0xFF2563EB),
+                            iconTint = MaterialTheme.colorScheme.primary,
                             onClick = {
                                 val shareUrl = "${Constants.WEB_PORTAL_BASE_URL}customer/share/${customer.id}"
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -539,8 +543,8 @@ fun CustomerLedgerScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFF8FAFC))
-                            .border(BorderStroke(1.dp, Color(0xFFE2E8F0)))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(BorderStroke(1.dp, BorderLight))
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -548,7 +552,7 @@ fun CustomerLedgerScreen(
                             text = "ENTRIES",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF8C9BAE),
+                            color = TextSecondary,
                             letterSpacing = 0.5.sp,
                             modifier = Modifier
                                 .weight(1.4f)
@@ -559,7 +563,7 @@ fun CustomerLedgerScreen(
                             text = "YOU GAVE",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF8C9BAE),
+                            color = TextSecondary,
                             textAlign = TextAlign.Center,
                             letterSpacing = 0.5.sp,
                             modifier = Modifier.weight(0.8f)
@@ -569,7 +573,7 @@ fun CustomerLedgerScreen(
                             text = "YOU GOT",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF8C9BAE),
+                            color = TextSecondary,
                             textAlign = TextAlign.Center,
                             letterSpacing = 0.5.sp,
                             modifier = Modifier.weight(0.8f)
@@ -598,14 +602,14 @@ fun CustomerLedgerScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(50))
                                     .background(SurfaceWhite)
-                                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(50))
+                                    .border(1.dp, BorderLight, RoundedCornerShape(50))
                                     .padding(horizontal = 16.dp, vertical = 6.dp)
                             ) {
                                 Text(
                                     text = DateUtils.formatDatePill(dateKey, txList.firstOrNull()?.timestamp ?: System.currentTimeMillis()),
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF64748B),
+                                    color = TextSecondary,
                                     letterSpacing = 0.5.sp
                                 )
                             }
@@ -648,11 +652,11 @@ fun CustomerLedgerScreen(
                                 viewModel.setCustomerDueDate(customer.id, 7)
                                 showReminderDialog = false
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEFF6FF)),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandBlueLight),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("+7 Days", color = NavyBluePrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("+7 Days", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
 
                         Button(
@@ -660,11 +664,11 @@ fun CustomerLedgerScreen(
                                 viewModel.setCustomerDueDate(customer.id, 14)
                                 showReminderDialog = false
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEFF6FF)),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandBlueLight),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("+14 Days", color = NavyBluePrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("+14 Days", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
 
                         Button(
@@ -672,11 +676,11 @@ fun CustomerLedgerScreen(
                                 viewModel.setCustomerDueDate(customer.id, 30)
                                 showReminderDialog = false
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEFF6FF)),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandBlueLight),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("+30 Days", color = NavyBluePrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("+30 Days", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                 }
@@ -868,7 +872,7 @@ private fun QuickActionButton(
                 .size(44.dp)
                 .clip(CircleShape)
                 .background(SurfaceWhite)
-                .border(1.dp, Color(0xFFE2E8F0), CircleShape),
+                .border(1.dp, BorderLight, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             if (painter != null) {
@@ -891,7 +895,7 @@ private fun QuickActionButton(
         Text(
             text = label,
             fontSize = 11.sp,
-            color = Color(0xFF64748B),
+            color = TextSecondary,
             fontWeight = FontWeight.Medium
         )
     }
@@ -916,6 +920,7 @@ private fun LedgerTableRowItem(
         color = SurfaceWhite
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
+            val dividerCol = BorderLight
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -923,13 +928,13 @@ private fun LedgerTableRowItem(
                         val col1Right = size.width * (1.4f / 3.0f)
                         val col2Right = size.width * (2.2f / 3.0f)
                         drawLine(
-                            color = Color(0xFFF1F5F9),
+                            color = dividerCol,
                             start = Offset(col1Right, 0f),
                             end = Offset(col1Right, size.height),
                             strokeWidth = 1.dp.toPx()
                         )
                         drawLine(
-                            color = Color(0xFFF8FAFC),
+                            color = dividerCol,
                             start = Offset(col2Right, 0f),
                             end = Offset(col2Right, size.height),
                             strokeWidth = 1.dp.toPx()
@@ -946,7 +951,7 @@ private fun LedgerTableRowItem(
                         text = DateUtils.formatDisplayDateTime(tx.timestamp),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B)
+                        color = TextSecondary
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -956,7 +961,7 @@ private fun LedgerTableRowItem(
                     val absBal = Math.abs(tx.balance)
                     val balFormattedClean = CurrencyFormatter.formatInrClean(absBal, withSpace = false).replace("₹", "")
                     val balText = if (isZero) "Bal. ₹0" else if (isNegative) "Bal. ₹-$balFormattedClean" else "Bal. ₹$balFormattedClean"
-                    val pillBg = if (isZero || !isNegative) Color(0xFFDCFCE7) else Color(0xFFFEE2E2)
+                    val pillBg = if (isZero || !isNegative) GreenPillBg else RedPillBg
                     val pillText = if (isZero || !isNegative) GotGreen else GiveRed
 
                     Box(
@@ -979,7 +984,7 @@ private fun LedgerTableRowItem(
                             text = tx.description,
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B),
+                            color = TextPrimary,
                             lineHeight = 18.sp,
                             maxLines = 4,
                             overflow = TextOverflow.Ellipsis
@@ -1009,7 +1014,7 @@ private fun LedgerTableRowItem(
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_attachment_image),
                                     contentDescription = "Attachment",
-                                    tint = Color(0xFF2563EB),
+                                    tint = BrandBlue,
                                     modifier = Modifier
                                         .size(18.dp)
                                         .clickable { onAttachmentClick(tx.attachment) }
@@ -1041,7 +1046,7 @@ private fun LedgerTableRowItem(
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_attachment_image),
                                     contentDescription = "Attachment",
-                                    tint = Color(0xFF2563EB),
+                                    tint = BrandBlue,
                                     modifier = Modifier
                                         .size(18.dp)
                                         .clickable { onAttachmentClick(tx.attachment) }
@@ -1052,7 +1057,7 @@ private fun LedgerTableRowItem(
                 }
             }
 
-            HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+            HorizontalDivider(color = BorderLight, thickness = 1.dp)
         }
     }
 }

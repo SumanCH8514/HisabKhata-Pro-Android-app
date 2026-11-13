@@ -51,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -402,13 +403,13 @@ fun ReportsScreen(
                                 Icon(
                                     imageVector = Icons.Default.PictureAsPdf,
                                     contentDescription = null,
-                                    tint = SurfaceWhite,
+                                    tint = Color.White,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "PDF Statement",
-                                    color = SurfaceWhite,
+                                    color = Color.White,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1,

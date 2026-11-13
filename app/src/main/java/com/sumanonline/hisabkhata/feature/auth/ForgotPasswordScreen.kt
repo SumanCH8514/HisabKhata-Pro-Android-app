@@ -59,6 +59,8 @@ import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun ForgotPasswordScreen(
@@ -213,19 +215,22 @@ fun ForgotPasswordScreen(
                         onClick = { viewModel.sendPasswordReset(email) },
                         enabled = uiState !is Resource.Loading,
                         shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
                     ) {
                         if (uiState is Resource.Loading) {
-                            CircularProgressIndicator(color = SurfaceWhite, modifier = Modifier.size(24.dp))
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {
                             Text(
                                 text = "Send Reset Link",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = SurfaceWhite
+                                color = Color.White
                             )
                         }
                     }

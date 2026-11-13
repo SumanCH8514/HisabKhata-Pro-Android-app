@@ -44,6 +44,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -64,6 +65,19 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sumanonline.hisabkhata.core.common.ImageUtils
 import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
+import com.sumanonline.hisabkhata.core.designsystem.GiveRed
+import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
+import com.sumanonline.hisabkhata.core.designsystem.GotGreen
+import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
+import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
+import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
+import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
+import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
+import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
+import com.sumanonline.hisabkhata.core.designsystem.WarningAmber
+import com.sumanonline.hisabkhata.core.designsystem.WarningAmberLight
 import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,14 +95,14 @@ fun PartyProfileBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color.White,
+        containerColor = SurfaceWhite,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         dragHandle = {
             Box(
                 modifier = Modifier
                     .padding(top = 10.dp, bottom = 4.dp)
                     .size(width = 44.dp, height = 4.dp)
-                    .background(Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
+                    .background(BorderLight, RoundedCornerShape(2.dp))
             )
         }
     ) {
@@ -106,14 +120,14 @@ fun PartyProfileBottomSheet(
                 Box(
                     modifier = Modifier
                         .size(38.dp)
-                        .background(Color(0xFFEFF6FF), CircleShape)
-                        .border(1.dp, Color(0xFFDBEAFE), CircleShape),
+                        .background(BrandBlueLight, CircleShape)
+                        .border(1.dp, BorderLight, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.AccountCircle,
                         contentDescription = null,
-                        tint = Color(0xFF0052CC),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -125,12 +139,12 @@ fun PartyProfileBottomSheet(
                         text = "Party Profile",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E293B)
+                        color = TextPrimary
                     )
                     Text(
                         text = "Party details & settings",
                         fontSize = 12.5.sp,
-                        color = Color(0xFF64748B)
+                        color = TextSecondary
                     )
                 }
 
@@ -141,14 +155,14 @@ fun PartyProfileBottomSheet(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Color(0xFF64748B),
+                        tint = TextSecondary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
             HorizontalDivider(
-                color = Color(0xFFF1F5F9),
+                color = BorderLight,
                 thickness = 1.dp,
                 modifier = Modifier.padding(top = 6.dp)
             )
@@ -162,8 +176,8 @@ fun PartyProfileBottomSheet(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = BorderStroke(1.dp, BorderLight)
                 ) {
                     Row(
                         modifier = Modifier
@@ -199,7 +213,7 @@ fun PartyProfileBottomSheet(
                                 text = customer.name,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E293B),
+                                color = TextPrimary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -213,14 +227,14 @@ fun PartyProfileBottomSheet(
                                 val typeLabel = if (customer.type.equals("Supplier", ignoreCase = true)) "SUPPLIER" else "CUSTOMER"
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFFEBF3FF), RoundedCornerShape(12.dp))
+                                        .background(BrandBlueLight, RoundedCornerShape(12.dp))
                                         .padding(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
                                     Text(
                                         text = "• $typeLabel",
                                         fontSize = 10.5.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF0052CC)
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
 
@@ -231,7 +245,7 @@ fun PartyProfileBottomSheet(
                                         text = displayPhone,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF64748B),
+                                        color = TextSecondary,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -247,14 +261,14 @@ fun PartyProfileBottomSheet(
                                     Icon(
                                         imageVector = Icons.Outlined.Email,
                                         contentDescription = null,
-                                        tint = Color(0xFF94A3B8),
+                                        tint = TextTertiary,
                                         modifier = Modifier.size(13.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = customer.email,
                                         fontSize = 12.sp,
-                                        color = Color(0xFF64748B),
+                                        color = TextSecondary,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -276,14 +290,14 @@ fun PartyProfileBottomSheet(
                             .weight(1f)
                             .height(46.dp),
                         shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White),
+                        border = BorderStroke(1.dp, BorderLight),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceWhite),
                         contentPadding = PaddingValues(horizontal = 8.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = null,
-                            tint = Color(0xFF0052CC),
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -291,7 +305,7 @@ fun PartyProfileBottomSheet(
                             text = "Edit Profile",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0052CC)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -301,7 +315,7 @@ fun PartyProfileBottomSheet(
                             .weight(1f)
                             .height(46.dp),
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0052CC)),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         contentPadding = PaddingValues(horizontal = 8.dp)
                     ) {
                         Icon(
@@ -326,7 +340,7 @@ fun PartyProfileBottomSheet(
                     text = "CONTACT DETAILS",
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B),
+                    color = TextSecondary,
                     letterSpacing = 0.5.sp
                 )
 
@@ -335,8 +349,8 @@ fun PartyProfileBottomSheet(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = BorderStroke(1.dp, BorderLight)
                 ) {
                     Row(
                         modifier = Modifier
@@ -347,13 +361,13 @@ fun PartyProfileBottomSheet(
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
-                                .background(Color(0xFFE8F5E9), RoundedCornerShape(10.dp)),
+                                .background(GreenPillBg, RoundedCornerShape(10.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Call,
                                 contentDescription = null,
-                                tint = Color(0xFF16A34A),
+                                tint = GotGreen,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -365,7 +379,7 @@ fun PartyProfileBottomSheet(
                                 text = "PHONE NUMBER",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8),
+                                color = TextTertiary,
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
@@ -376,7 +390,7 @@ fun PartyProfileBottomSheet(
                                 text = phoneDisplay,
                                 fontSize = 14.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (customer.phone.isNotBlank()) Color(0xFF1E293B) else Color(0xFF94A3B8)
+                                color = if (customer.phone.isNotBlank()) TextPrimary else TextTertiary
                             )
                         }
 
@@ -385,7 +399,7 @@ fun PartyProfileBottomSheet(
                                 modifier = Modifier
                                     .size(34.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFE8F5E9))
+                                    .background(GreenPillBg)
                                     .clickable {
                                         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${customer.phone}"))
                                         context.startActivity(intent)
@@ -395,7 +409,7 @@ fun PartyProfileBottomSheet(
                                 Icon(
                                     imageVector = Icons.Default.Call,
                                     contentDescription = "Call",
-                                    tint = Color(0xFF16A34A),
+                                    tint = GotGreen,
                                     modifier = Modifier.size(17.dp)
                                 )
                             }
@@ -406,7 +420,7 @@ fun PartyProfileBottomSheet(
                                 modifier = Modifier
                                     .size(34.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF1F5F9))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
                                     .clickable {
                                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                         val clip = ClipData.newPlainText("Phone Number", customer.phone)
@@ -418,7 +432,7 @@ fun PartyProfileBottomSheet(
                                 Icon(
                                     imageVector = Icons.Outlined.ContentCopy,
                                     contentDescription = "Copy Phone",
-                                    tint = Color(0xFF64748B),
+                                    tint = TextSecondary,
                                     modifier = Modifier.size(17.dp)
                                 )
                             }
@@ -431,8 +445,8 @@ fun PartyProfileBottomSheet(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = BorderStroke(1.dp, BorderLight)
                 ) {
                     Row(
                         modifier = Modifier
@@ -443,13 +457,13 @@ fun PartyProfileBottomSheet(
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
-                                .background(Color(0xFFEBF3FF), RoundedCornerShape(10.dp)),
+                                .background(BrandBlueLight, RoundedCornerShape(10.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Email,
                                 contentDescription = null,
-                                tint = Color(0xFF0052CC),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -461,7 +475,7 @@ fun PartyProfileBottomSheet(
                                 text = "EMAIL ADDRESS",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8),
+                                color = TextTertiary,
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
@@ -469,7 +483,7 @@ fun PartyProfileBottomSheet(
                                 text = if (customer.email.isNotBlank()) customer.email else "Not added",
                                 fontSize = 14.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (customer.email.isNotBlank()) Color(0xFF1E293B) else Color(0xFF94A3B8),
+                                color = if (customer.email.isNotBlank()) TextPrimary else TextTertiary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -480,7 +494,7 @@ fun PartyProfileBottomSheet(
                                 modifier = Modifier
                                     .size(34.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFEBF3FF))
+                                    .background(BrandBlueLight)
                                     .clickable {
                                         val intent = Intent(Intent.ACTION_SENDTO).apply {
                                             data = Uri.parse("mailto:${customer.email}")
@@ -496,7 +510,7 @@ fun PartyProfileBottomSheet(
                                 Icon(
                                     imageVector = Icons.Outlined.Email,
                                     contentDescription = "Send Email",
-                                    tint = Color(0xFF0052CC),
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(17.dp)
                                 )
                             }
@@ -507,7 +521,7 @@ fun PartyProfileBottomSheet(
                                 modifier = Modifier
                                     .size(34.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF1F5F9))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
                                     .clickable {
                                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                         val clip = ClipData.newPlainText("Email", customer.email)
@@ -519,7 +533,7 @@ fun PartyProfileBottomSheet(
                                 Icon(
                                     imageVector = Icons.Outlined.ContentCopy,
                                     contentDescription = "Copy Email",
-                                    tint = Color(0xFF64748B),
+                                    tint = TextSecondary,
                                     modifier = Modifier.size(17.dp)
                                 )
                             }
@@ -532,8 +546,8 @@ fun PartyProfileBottomSheet(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = BorderStroke(1.dp, BorderLight)
                 ) {
                     Row(
                         modifier = Modifier
@@ -544,13 +558,13 @@ fun PartyProfileBottomSheet(
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
-                                .background(Color(0xFFFEF3C7), RoundedCornerShape(10.dp)),
+                                .background(WarningAmberLight, RoundedCornerShape(10.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Storefront,
                                 contentDescription = null,
-                                tint = Color(0xFFD97706),
+                                tint = WarningAmber,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -562,7 +576,7 @@ fun PartyProfileBottomSheet(
                                 text = "GSTIN / TAX ID",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8),
+                                color = TextTertiary,
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
@@ -571,7 +585,7 @@ fun PartyProfileBottomSheet(
                                 text = customer.gst?.ifBlank { "Not added" } ?: "Not added",
                                 fontSize = 14.sp,
                                 fontStyle = if (!hasGst) FontStyle.Italic else FontStyle.Normal,
-                                color = if (hasGst) Color(0xFF1E293B) else Color(0xFF94A3B8)
+                                color = if (hasGst) TextPrimary else TextTertiary
                             )
                         }
                     }
@@ -585,13 +599,13 @@ fun PartyProfileBottomSheet(
                         .fillMaxWidth()
                         .height(48.dp),
                     shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, Color(0xFFFEE2E2)),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFFEF2F2))
+                    border = BorderStroke(1.dp, GiveRedStroke),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = RedPillBg)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Delete,
                         contentDescription = null,
-                        tint = Color(0xFFDC2626),
+                        tint = GiveRed,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -599,7 +613,7 @@ fun PartyProfileBottomSheet(
                         text = "Delete Party Ledger",
                         fontSize = 14.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFDC2626)
+                        color = GiveRed
                     )
                 }
 

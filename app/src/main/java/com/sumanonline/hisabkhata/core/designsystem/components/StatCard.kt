@@ -41,6 +41,8 @@ import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.GotGreenLight
 import com.sumanonline.hisabkhata.core.designsystem.GotGreenStroke
+import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
+import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
@@ -102,13 +104,13 @@ fun SummaryBalanceCards(
                         modifier = Modifier
                             .size(24.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFDCFCE7)),
+                            .background(GreenPillBg),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.CallMade,
                             contentDescription = "Give",
-                            tint = Color(0xFF16A34A),
+                            tint = GotGreen,
                             modifier = Modifier.size(14.dp)
                         )
                     }
@@ -118,10 +120,10 @@ fun SummaryBalanceCards(
                     text = formatSummaryAmount(totalGive),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Black,
-                    color = Color(0xFF059669)
+                    color = GotGreen
                 )
                 HorizontalDivider(
-                    color = Color(0xFFF1F5F9),
+                    color = BorderLight,
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 10.dp)
                 )
@@ -176,13 +178,13 @@ fun SummaryBalanceCards(
                         modifier = Modifier
                             .size(24.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFFEE2E2)),
+                            .background(RedPillBg),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.SouthEast,
                             contentDescription = "Get",
-                            tint = Color(0xFFDC2626),
+                            tint = GiveRed,
                             modifier = Modifier.size(14.dp)
                         )
                     }
@@ -192,10 +194,10 @@ fun SummaryBalanceCards(
                     text = formatSummaryAmount(totalGet),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Black,
-                    color = Color(0xFFDC2626)
+                    color = GiveRed
                 )
                 HorizontalDivider(
-                    color = Color(0xFFF1F5F9),
+                    color = BorderLight,
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 10.dp)
                 )

@@ -74,7 +74,7 @@ fun AppTopBar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = SurfaceWhite
+                            tint = Color.White
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -88,7 +88,7 @@ fun AppTopBar(
                         Text(
                             text = title,
                             style = MaterialTheme.typography.titleLarge.copy(
-                                color = SurfaceWhite,
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp
                             )
@@ -98,7 +98,7 @@ fun AppTopBar(
                         Text(
                             text = subtitle,
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = SurfaceWhite.copy(alpha = 0.85f),
+                                color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 12.sp
                             )
                         )
@@ -119,13 +119,13 @@ fun AppTopBar(
                         Icon(
                             imageVector = Icons.Default.Sync,
                             contentDescription = "Sync",
-                            tint = SurfaceWhite,
+                            tint = Color.White,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = if (isSyncing) "Syncing" else "$syncPendingCount Offline",
-                            color = SurfaceWhite,
+                            color = Color.White,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )

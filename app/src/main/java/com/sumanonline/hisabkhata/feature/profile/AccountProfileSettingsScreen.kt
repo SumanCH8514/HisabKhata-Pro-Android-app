@@ -88,9 +88,17 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.material3.MaterialTheme
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
+import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
+import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
+import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
+import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
+import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
+import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
 import com.sumanonline.hisabkhata.core.common.ImageUtils
 import kotlinx.coroutines.launch
@@ -272,7 +280,7 @@ fun AccountProfileSettingsScreen(
                         Text(
                             text = "Profile strength : ",
                             fontSize = 13.sp,
-                            color = Color(0xFF424242),
+                            color = TextSecondary,
                             fontWeight = FontWeight.Normal
                         )
                         Text(
@@ -518,10 +526,10 @@ fun AccountProfileSettingsScreen(
             OutlinedButton(
                 onClick = { showLogoutConfirm = true },
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
+                    containerColor = RedPillBg,
                     contentColor = GiveRed
                 ),
-                border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                border = BorderStroke(1.dp, GiveRedStroke),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -553,7 +561,7 @@ fun AccountProfileSettingsScreen(
         ModalBottomSheet(
             onDismissRequest = { activeEditField = null },
             sheetState = sheetState,
-            containerColor = Color.White
+            containerColor = SurfaceWhite
         ) {
             Column(
                 modifier = Modifier
@@ -564,7 +572,7 @@ fun AccountProfileSettingsScreen(
                     text = "Edit ${spec.title}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
+                    color = TextPrimary
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -578,8 +586,11 @@ fun AccountProfileSettingsScreen(
                     maxLines = if (spec.isMultiline) 4 else 1,
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = BrandBlue,
-                        focusedLabelColor = BrandBlue
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        unfocusedBorderColor = BorderLight
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -591,7 +602,7 @@ fun AccountProfileSettingsScreen(
                         text = "Suggestions",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF757575)
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
@@ -603,7 +614,12 @@ fun AccountProfileSettingsScreen(
                                 onClick = { editFieldValue = suggestion },
                                 label = { Text(suggestion, fontSize = 12.sp) },
                                 colors = SuggestionChipDefaults.suggestionChipColors(
-                                    containerColor = if (editFieldValue == suggestion) Color(0xFFEFF6FF) else Color(0xFFF8FAFC)
+                                    containerColor = if (editFieldValue == suggestion) BrandBlueLight else MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = if (editFieldValue == suggestion) MaterialTheme.colorScheme.primary else TextPrimary
+                                ),
+                                border = SuggestionChipDefaults.suggestionChipBorder(
+                                    enabled = true,
+                                    borderColor = BorderLight
                                 )
                             )
                         }
@@ -619,11 +635,12 @@ fun AccountProfileSettingsScreen(
                     OutlinedButton(
                         onClick = { activeEditField = null },
                         shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, BorderLight),
                         modifier = Modifier
                             .weight(1f)
                             .height(46.dp)
                     ) {
-                        Text("Cancel", color = Color(0xFF64748B), fontWeight = FontWeight.SemiBold)
+                        Text("Cancel", color = TextSecondary, fontWeight = FontWeight.SemiBold)
                     }
 
                     Button(
@@ -638,7 +655,10 @@ fun AccountProfileSettingsScreen(
                             Toast.makeText(context, "${spec.title} updated", Toast.LENGTH_SHORT).show()
                         },
                         enabled = !isSaving,
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
+                        ),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .weight(1f)
@@ -657,13 +677,13 @@ fun AccountProfileSettingsScreen(
     if (showPhotoOptionsDialog) {
         AlertDialog(
             onDismissRequest = { showPhotoOptionsDialog = false },
-            title = { Text("Profile Photo", fontWeight = FontWeight.Bold) },
+            title = { Text("Profile Photo", fontWeight = FontWeight.Bold, color = TextPrimary) },
             text = {
                 Column {
                     Text(
                         text = "Choose an option to update your profile photo:",
                         fontSize = 14.sp,
-                        color = Color(0xFF475569)
+                        color = TextSecondary
                     )
                 }
             },
@@ -673,9 +693,12 @@ fun AccountProfileSettingsScreen(
                         showPhotoOptionsDialog = false
                         imagePickerLauncher.launch("image/*")
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Text("Select from Gallery")
+                    Text("Select from Gallery", color = Color.White)
                 }
             },
             dismissButton = {
@@ -686,7 +709,7 @@ fun AccountProfileSettingsScreen(
                         showPhotoUrlDialog = true
                     }
                 ) {
-                    Text("Enter Image URL", color = BrandBlue)
+                    Text("Enter Image URL", color = MaterialTheme.colorScheme.primary)
                 }
             }
         )
@@ -696,7 +719,7 @@ fun AccountProfileSettingsScreen(
     if (showPhotoUrlDialog) {
         AlertDialog(
             onDismissRequest = { showPhotoUrlDialog = false },
-            title = { Text("Enter Photo URL", fontWeight = FontWeight.Bold) },
+            title = { Text("Enter Photo URL", fontWeight = FontWeight.Bold, color = TextPrimary) },
             text = {
                 Column {
                     OutlinedTextField(
@@ -704,7 +727,13 @@ fun AccountProfileSettingsScreen(
                         onValueChange = { photoUrlInput = it },
                         label = { Text("Image URL") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = BorderLight,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        )
                     )
                 }
             },
@@ -715,14 +744,17 @@ fun AccountProfileSettingsScreen(
                         showPhotoUrlDialog = false
                         Toast.makeText(context, "Profile photo updated", Toast.LENGTH_SHORT).show()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Text("Save")
+                    Text("Save", color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPhotoUrlDialog = false }) {
-                    Text("Cancel")
+                    Text("Cancel", color = TextSecondary)
                 }
             }
         )
@@ -732,8 +764,8 @@ fun AccountProfileSettingsScreen(
     if (showLogoutConfirm) {
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = false },
-            title = { Text("Sign Out", fontWeight = FontWeight.Bold) },
-            text = { Text("Are you sure you want to sign out of HisabKhata?") },
+            title = { Text("Sign Out", fontWeight = FontWeight.Bold, color = TextPrimary) },
+            text = { Text("Are you sure you want to sign out of HisabKhata?", color = TextSecondary) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -748,7 +780,7 @@ fun AccountProfileSettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutConfirm = false }) {
-                    Text("Cancel", color = Color(0xFF64748B))
+                    Text("Cancel", color = TextSecondary)
                 }
             }
         )
@@ -764,11 +796,11 @@ fun AccountProfileSettingsScreen(
                     Icon(
                         imageVector = Icons.Outlined.LockReset,
                         contentDescription = null,
-                        tint = BrandBlue,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Change Password", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Change Password", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
                 }
             },
             text = {
@@ -776,19 +808,19 @@ fun AccountProfileSettingsScreen(
                     Text(
                         text = "We will send password reset instructions to your registered email address:",
                         fontSize = 14.sp,
-                        color = Color(0xFF475569)
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                             .padding(12.dp)
                     ) {
                         Text(
                             text = targetEmail,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF0F172A),
+                            color = TextPrimary,
                             fontSize = 14.sp
                         )
                     }
@@ -796,7 +828,7 @@ fun AccountProfileSettingsScreen(
                     Text(
                         text = "Click the link in the received email to securely choose your new password.",
                         fontSize = 12.5.sp,
-                        color = Color(0xFF64748B)
+                        color = TextSecondary
                     )
                 }
             },
@@ -812,14 +844,17 @@ fun AccountProfileSettingsScreen(
                             Toast.makeText(context, "No registered email found for this session", Toast.LENGTH_LONG).show()
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Send Email", color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPasswordResetDialog = false }) {
-                    Text("Cancel", color = Color(0xFF64748B))
+                    Text("Cancel", color = TextSecondary)
                 }
             }
         )
@@ -839,11 +874,11 @@ fun AccountProfileSettingsScreen(
                     Icon(
                         imageVector = Icons.Outlined.VpnKey,
                         contentDescription = null,
-                        tint = BrandBlue,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Google Authenticator 2FA", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Google Authenticator 2FA", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
                 }
             },
             text = {
@@ -851,7 +886,7 @@ fun AccountProfileSettingsScreen(
                     Text(
                         text = "Protect your ledger account by verifying a 6-digit Time-based One-Time Password (TOTP) from Google Authenticator on sign-in.",
                         fontSize = 13.5.sp,
-                        color = Color(0xFF475569),
+                        color = TextSecondary,
                         lineHeight = 18.sp
                     )
 
@@ -861,7 +896,7 @@ fun AccountProfileSettingsScreen(
                         text = "YOUR AUTHENTICATOR SECRET KEY",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
+                        color = TextSecondary,
                         letterSpacing = 0.5.sp
                     )
 
@@ -870,8 +905,8 @@ fun AccountProfileSettingsScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight)
                     ) {
                         Row(
                             modifier = Modifier
@@ -885,7 +920,7 @@ fun AccountProfileSettingsScreen(
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.5.sp,
-                                color = BrandBlue
+                                color = MaterialTheme.colorScheme.primary
                             )
 
                             IconButton(
@@ -899,7 +934,7 @@ fun AccountProfileSettingsScreen(
                                 Icon(
                                     imageVector = Icons.Outlined.ContentCopy,
                                     contentDescription = "Copy",
-                                    tint = BrandBlue,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -925,7 +960,7 @@ fun AccountProfileSettingsScreen(
                             text = "Enable 2FA Protection",
                             fontSize = 14.5.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1E293B)
+                            color = TextPrimary
                         )
                         Switch(
                             checked = preferences.twoFactorEnabled,
@@ -936,7 +971,7 @@ fun AccountProfileSettingsScreen(
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
-                                checkedTrackColor = BrandBlue
+                                checkedTrackColor = MaterialTheme.colorScheme.primary
                             )
                         )
                     }
@@ -945,7 +980,10 @@ fun AccountProfileSettingsScreen(
             confirmButton = {
                 Button(
                     onClick = { showTwoFactorDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Done", color = Color.White)
                 }

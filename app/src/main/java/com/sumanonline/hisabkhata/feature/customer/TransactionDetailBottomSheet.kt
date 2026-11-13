@@ -35,9 +35,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -242,7 +244,7 @@ fun TransactionDetailBottomSheet(
                             text = "Tap to expand",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
-                            color = SurfaceWhite
+                            color = Color.White
                         )
                     }
                 }
@@ -253,6 +255,7 @@ fun TransactionDetailBottomSheet(
             OutlinedButton(
                 onClick = { showDeleteConfirm = true },
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = GiveRed),
+                border = BorderStroke(1.dp, BorderLight),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -275,7 +278,7 @@ fun TransactionDetailBottomSheet(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black)
+                    .background(Color.Black)
             ) {
                 val imageModel = remember(transaction.attachment) {
                     ImageUtils.sanitizeImageSource(transaction.attachment)
@@ -298,12 +301,12 @@ fun TransactionDetailBottomSheet(
                         .padding(24.dp)
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f))
+                        .background(Color.Black.copy(alpha = 0.6f))
                 ) {
                     Icon(
                         Icons.Default.Close,
                         contentDescription = "Close Fullscreen",
-                        tint = SurfaceWhite
+                        tint = Color.White
                     )
                 }
             }

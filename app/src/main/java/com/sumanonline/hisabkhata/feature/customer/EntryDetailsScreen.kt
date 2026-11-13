@@ -41,8 +41,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -62,9 +64,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sumanonline.hisabkhata.R
@@ -74,12 +75,16 @@ import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.common.ImageUtils
 import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
 import com.sumanonline.hisabkhata.core.database.entity.TransactionEntity
-import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
+import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
+import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
+import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
+import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.components.ConfirmDialog
 
 @Composable
@@ -135,7 +140,7 @@ fun EntryDetailsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(130.dp)
-                .background(BrandBlue)
+                .background(MaterialTheme.colorScheme.primary)
         )
 
         Column(
@@ -174,8 +179,8 @@ fun EntryDetailsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp),
                 shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                border = BorderStroke(1.dp, BorderLight),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
@@ -203,21 +208,21 @@ fun EntryDetailsScreen(
                                     modifier = Modifier
                                         .size(46.dp)
                                         .clip(CircleShape)
-                                        .border(1.dp, Color(0xFFCBD5E1), CircleShape)
+                                        .border(1.dp, BorderLight, CircleShape)
                                 )
                             } else {
                                 Box(
                                     modifier = Modifier
                                         .size(46.dp)
                                         .clip(CircleShape)
-                                        .background(Color(0xFFE2E8F0)),
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = customer.name.take(1).uppercase(),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp,
-                                        color = BrandBlue
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
@@ -235,7 +240,7 @@ fun EntryDetailsScreen(
                                 Text(
                                     text = DateUtils.formatEntryDetailsDateTime(currentTransaction.timestamp),
                                     fontSize = 13.sp,
-                                    color = Color(0xFF64748B)
+                                    color = TextSecondary
                                 )
                             }
                         }
@@ -251,7 +256,7 @@ fun EntryDetailsScreen(
                             Text(
                                 text = amountLabel,
                                 fontSize = 13.sp,
-                                color = Color(0xFF64748B)
+                                color = TextSecondary
                             )
                         }
                     }
@@ -271,8 +276,8 @@ fun EntryDetailsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFF8FAFC))
-                            .border(1.dp, Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(1.dp, BorderLight, RoundedCornerShape(8.dp))
                             .padding(12.dp)
                     ) {
                         Column {
@@ -280,7 +285,7 @@ fun EntryDetailsScreen(
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_transaction_details),
                                     contentDescription = null,
-                                    tint = Color(0xFF94A3B8),
+                                    tint = TextTertiary,
                                     modifier = Modifier.size(15.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -288,7 +293,7 @@ fun EntryDetailsScreen(
                                     text = "TRANSACTION DETAILS",
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF64748B),
+                                    color = TextSecondary,
                                     letterSpacing = 0.5.sp
                                 )
                             }
@@ -298,7 +303,7 @@ fun EntryDetailsScreen(
                             Text(
                                 text = noteDisplay,
                                 fontSize = 13.5.sp,
-                                color = Color(0xFF1E293B),
+                                color = TextPrimary,
                                 lineHeight = 19.sp
                             )
                         }
@@ -311,7 +316,7 @@ fun EntryDetailsScreen(
                         text = "ATTACHMENTS (${if (hasAttachment) 1 else 0})",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
+                        color = TextSecondary,
                         letterSpacing = 0.5.sp
                     )
 
@@ -321,8 +326,8 @@ fun EntryDetailsScreen(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
-                                .background(Color(0xFFF1F5F9))
+                                .border(1.dp, BorderLight, RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .clickable { showFullAttachment = true },
                             contentAlignment = Alignment.Center
                         ) {
@@ -339,7 +344,7 @@ fun EntryDetailsScreen(
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+                    HorizontalDivider(color = BorderLight, thickness = 1.dp)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
@@ -351,7 +356,7 @@ fun EntryDetailsScreen(
                             text = "Running Balance",
                             fontSize = 14.5.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF1E293B)
+                            color = TextPrimary
                         )
                         Text(
                             text = runningBalanceFormatted,
@@ -362,7 +367,7 @@ fun EntryDetailsScreen(
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+                    HorizontalDivider(color = BorderLight, thickness = 1.dp)
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
@@ -377,7 +382,7 @@ fun EntryDetailsScreen(
                         Icon(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = "Edit Entry",
-                            tint = BrandBlue,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -385,7 +390,7 @@ fun EntryDetailsScreen(
                             text = "EDIT ENTRY",
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = BrandBlue,
+                            color = MaterialTheme.colorScheme.primary,
                             letterSpacing = 0.5.sp
                         )
                     }
@@ -416,8 +421,8 @@ fun EntryDetailsScreen(
                             }
                         },
                     shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    border = BorderStroke(1.dp, BorderLight),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -435,7 +440,7 @@ fun EntryDetailsScreen(
                             text = "Send SMS",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF334155)
+                            color = TextPrimary
                         )
                     }
                 }
@@ -456,8 +461,8 @@ fun EntryDetailsScreen(
                             }
                         },
                     shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    border = BorderStroke(1.dp, BorderLight),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -475,7 +480,7 @@ fun EntryDetailsScreen(
                             text = "Send Whatsapp",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF334155)
+                            color = TextPrimary
                         )
                     }
                 }
@@ -495,8 +500,8 @@ fun EntryDetailsScreen(
                             }
                         },
                     shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    border = BorderStroke(1.dp, BorderLight),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -514,7 +519,7 @@ fun EntryDetailsScreen(
                             text = "Send Mail",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF334155)
+                            color = TextPrimary
                         )
                     }
                 }
@@ -527,8 +532,8 @@ fun EntryDetailsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp),
                 shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                border = BorderStroke(1.dp, BorderLight),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
             ) {
                 Column(
                     modifier = Modifier
@@ -539,27 +544,27 @@ fun EntryDetailsScreen(
                         text = "${if (isGave) "You gave:" else "You got:"} $formattedAmount",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF1E293B)
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Balance: $balanceDisplay",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF334155)
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Sent by: $merchantName",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF334155)
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "Details: $shareLink",
                         fontSize = 13.sp,
-                        color = Color(0xFF64748B),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             clipboard.setPrimaryClip(ClipData.newPlainText("HisabKhata Share Link", shareLink))
@@ -576,7 +581,7 @@ fun EntryDetailsScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth(),
-            color = Color.White,
+            color = SurfaceWhite,
             shadowElevation = 8.dp
         ) {
             Row(
@@ -593,16 +598,16 @@ fun EntryDetailsScreen(
                         .weight(0.9f)
                         .height(46.dp),
                     shape = RoundedCornerShape(6.dp),
-                    border = BorderStroke(1.dp, Color(0xFFDC2626)),
+                    border = BorderStroke(1.dp, GiveRedStroke),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White,
-                        contentColor = Color(0xFFDC2626)
+                        containerColor = RedPillBg,
+                        contentColor = GiveRed
                     )
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Delete,
                         contentDescription = "Delete",
-                        tint = Color(0xFFDC2626),
+                        tint = GiveRed,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -610,7 +615,7 @@ fun EntryDetailsScreen(
                         text = "DELETE",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.5.sp,
-                        color = Color(0xFFDC2626),
+                        color = GiveRed,
                         letterSpacing = 0.5.sp
                     )
                 }
@@ -628,7 +633,7 @@ fun EntryDetailsScreen(
                         .height(46.dp),
                     shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = BrandBlue,
+                        containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White
                     )
                 ) {
@@ -710,7 +715,7 @@ fun EntryDetailsScreen(
         Dialog(onDismissRequest = { showEditDialog = false }) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = Color.White,
+                color = SurfaceWhite,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -727,7 +732,15 @@ fun EntryDetailsScreen(
                         onValueChange = { editAmount = it },
                         label = { Text("Amount (₹)") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = BorderLight,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = TextSecondary
+                        )
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -735,7 +748,15 @@ fun EntryDetailsScreen(
                         value = editNote,
                         onValueChange = { editNote = it },
                         label = { Text("Note / Description") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = BorderLight,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = TextSecondary
+                        )
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -744,7 +765,15 @@ fun EntryDetailsScreen(
                         onValueChange = { editDate = it },
                         label = { Text("Date (YYYY-MM-DD)") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = BorderLight,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = TextSecondary
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(18.dp))
@@ -777,7 +806,10 @@ fun EntryDetailsScreen(
                                 showEditDialog = false
                                 Toast.makeText(context, "Entry updated", Toast.LENGTH_SHORT).show()
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = Color.White
+                            )
                         ) {
                             Text("Save", color = Color.White)
                         }

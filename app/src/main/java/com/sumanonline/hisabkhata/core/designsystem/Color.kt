@@ -37,15 +37,41 @@ val BrandBlueLight: Color
 
 val BrandAccentOrange = Color(0xFFFFA500)
 
+val DefaultGiveRedLight = Color(0xFFFEF2F2)
+val DefaultGotGreenLight = Color(0xFFF0FDF4)
+val DefaultGiveRedStroke = Color(0xFFF4C7C3)
+val DefaultGotGreenStroke = Color(0xFFB7E1CD)
+
 val GiveRed = Color(0xFFDC2626)
-val GiveRedLight = Color(0xFFFEF2F2)
-val GiveRedStroke = Color(0xFFF4C7C3)
 val GiveRedDark = Color(0xFF991B1B)
 
 val GotGreen = Color(0xFF16A34A)
-val GotGreenLight = Color(0xFFF0FDF4)
-val GotGreenStroke = Color(0xFFB7E1CD)
 val GotGreenDark = Color(0xFF166534)
+
+val isAppDark: Boolean
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.surface == Color(0xFF1E293B)
+
+val GiveRedLight: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) Color(0xFF7F1D1D).copy(alpha = 0.25f) else DefaultGiveRedLight
+
+val GiveRedStroke: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) Color(0xFFDC2626).copy(alpha = 0.35f) else DefaultGiveRedStroke
+
+val GotGreenLight: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) Color(0xFF14532D).copy(alpha = 0.25f) else DefaultGotGreenLight
+
+val GotGreenStroke: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) Color(0xFF16A34A).copy(alpha = 0.35f) else DefaultGotGreenStroke
 
 val PageBackground: Color
     @Composable
@@ -93,14 +119,45 @@ val BorderMedium: Color
     get() = MaterialTheme.colorScheme.outlineVariant
 
 val WarningAmber = Color(0xFFD97706)
-val WarningAmberLight = Color(0xFFFFFBEB)
-val InfoSky = Color(0xFF0284C7)
-val InfoSkyLight = Color(0xFFF0F9FF)
+val WarningAmberLight: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) Color(0xFF78350F).copy(alpha = 0.25f) else Color(0xFFFFFBEB)
 
-val NavyBluePrimary = Color(0xFF073B7E)
-val NavyBlueDark = Color(0xFF002A5C)
-val NavyBlueLightPill = Color(0xFFDBEAFE)
+val InfoSky = Color(0xFF0284C7)
+val InfoSkyLight: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) Color(0xFF0C4A6E).copy(alpha = 0.25f) else Color(0xFFF0F9FF)
+
+val NavyBluePrimary: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary
+
+val NavyBlueDark: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) MaterialTheme.colorScheme.background else Color(0xFF002A5C)
+
+val NavyBlueLightPill: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color(0xFFDBEAFE)
+
 val RedProBadge = Color(0xFFDC2626)
-val GrayPillBg = Color(0xFFF1F5F9)
-val RedPillBg = Color(0xFFFEE2E2)
-val GreenPillBg = Color(0xFFDCFCE7)
+
+val GrayPillBg: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) MaterialTheme.colorScheme.surfaceVariant else Color(0xFFF1F5F9)
+
+val RedPillBg: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) Color(0xFF7F1D1D).copy(alpha = 0.25f) else Color(0xFFFEE2E2)
+
+val GreenPillBg: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isAppDark) Color(0xFF14532D).copy(alpha = 0.25f) else Color(0xFFDCFCE7)

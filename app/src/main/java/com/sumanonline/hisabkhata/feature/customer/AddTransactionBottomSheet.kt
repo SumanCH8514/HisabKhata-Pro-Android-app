@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -204,7 +205,10 @@ fun AddTransactionBottomSheet(
                 },
                 enabled = (amountText.toDoubleOrNull() ?: 0.0) > 0.0,
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = activeColor),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = activeColor,
+                    contentColor = Color.White
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
@@ -213,7 +217,7 @@ fun AddTransactionBottomSheet(
                     text = "SAVE ENTRY",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = SurfaceWhite
+                    color = Color.White
                 )
             }
 

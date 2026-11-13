@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import com.sumanonline.hisabkhata.core.common.AppPreferencesManager
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
+import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
 import com.sumanonline.hisabkhata.core.sync.SyncWorker
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -693,7 +694,7 @@ private fun SettingActionRow(
         if (trailingText != null) {
             Box(
                 modifier = Modifier
-                    .background(Color(0xFFECFDF5), RoundedCornerShape(6.dp))
+                    .background(GreenPillBg, RoundedCornerShape(6.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
