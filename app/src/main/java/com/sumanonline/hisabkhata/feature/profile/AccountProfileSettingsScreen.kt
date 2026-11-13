@@ -880,8 +880,8 @@ fun AccountProfileSettingsScreen(
             userEmail = session.email,
             userId = session.userId,
             isEnabled = preferences.twoFactorEnabled,
-            onToggleEnabled = { enabled ->
-                viewModel.setTwoFactorEnabled(enabled)
+            onToggleEnabled = { enabled, secret ->
+                viewModel.setTwoFactorEnabled(enabled, secret)
                 val msg = if (enabled) "2FA authentication enabled" else "2FA authentication disabled"
                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
             },

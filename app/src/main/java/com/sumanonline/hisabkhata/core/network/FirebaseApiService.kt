@@ -131,6 +131,13 @@ interface FirebaseApiService {
         @Query("auth") auth: String
     ): Response<Unit>
 
+    @PATCH("users/{userId}/preferences.json")
+    suspend fun patchUserPreferences(
+        @Path("userId") userId: String,
+        @Body updates: kotlinx.serialization.json.JsonObject,
+        @Query("auth") auth: String
+    ): Response<Unit>
+
     @GET("pending_payments.json")
     suspend fun getPendingPaymentsByMerchant(
         @Query("orderBy") orderBy: String = "\"merchantId\"",

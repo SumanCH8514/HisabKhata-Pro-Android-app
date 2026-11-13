@@ -62,11 +62,13 @@ class ProfileViewModel @Inject constructor(
                                 bankAccount = profile.accountNumber.ifBlank { current.bankAccount }
                             )
                         )
-                        if (profile.emailOtpVerification != preferencesManager.preferences.value.emailOtpVerification) {
-                            preferencesManager.setEmailOtpVerification(profile.emailOtpVerification)
+                        val remoteOtpEnabled = profile.isEmailOtpRequired
+                        if (remoteOtpEnabled != preferencesManager.preferences.value.emailOtpVerification) {
+                            preferencesManager.setEmailOtpVerification(remoteOtpEnabled)
                         }
-                        if (profile.twoFactorEnabled != preferencesManager.preferences.value.twoFactorEnabled) {
-                            preferencesManager.setTwoFactorEnabled(profile.twoFactorEnabled)
+                        val remote2FaEnabled = profile.isTwoFactorActive
+                        if (remote2FaEnabled != preferencesManager.preferences.value.twoFactorEnabled) {
+                            preferencesManager.setTwoFactorEnabled(remote2FaEnabled)
                         }
                     }
                 }
@@ -136,37 +138,62 @@ class ProfileViewModel @Inject constructor(
         sessionManager.setBiometricEnabled(enabled)
     }
 
-    fun setEmailOtpVerification(enabled: Boolean) {
+    fun setEmailOtpVerification(enabled: Boolean, onResult: ((Boolean) -> Unit)? = null) {
         preferencesManager.setEmailOtpVerification(enabled)
         viewModelScope.launch {
             try {
                 val token = sessionManager.getIdToken()
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
-                    val updates = kotlinx.serialization.json.buildJsonObject {
+                    val rootUpdates = kotlinx.serialization.json.buildJsonObject {
+                        put("emailOtpLogin", kotlinx.serialization.json.JsonPrimitive(enabled))
                         put("emailOtpVerification", kotlinx.serialization.json.JsonPrimitive(enabled))
                         put("updatedAt", kotlinx.serialization.json.JsonPrimitive(System.currentTimeMillis()))
                     }
-                    firebaseApi.patchUserProfile(userId, updates, token)
+                    val r1 = firebaseApi.patchUserProfile(userId, rootUpdates, token)
+
+                    val prefUpdates = kotlinx.serialization.json.buildJsonObject {
+                        put("emailOtpLogin", kotlinx.serialization.json.JsonPrimitive(enabled))
+                    }
+                    val r2 = firebaseApi.patchUserPreferences(userId, prefUpdates, token)
+                    onResult?.invoke(r1.isSuccessful || r2.isSuccessful)
+                } else {
+                    onResult?.invoke(true)
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+                onResult?.invoke(false)
+            }
         }
     }
 
-    fun setTwoFactorEnabled(enabled: Boolean) {
+    fun setTwoFactorEnabled(enabled: Boolean, secret: String? = null, onResult: ((Boolean) -> Unit)? = null) {
         preferencesManager.setTwoFactorEnabled(enabled)
         viewModelScope.launch {
             try {
                 val token = sessionManager.getIdToken()
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
-                    val updates = kotlinx.serialization.json.buildJsonObject {
+                    val rootUpdates = kotlinx.serialization.json.buildJsonObject {
+                        put("twoFactorAuth", kotlinx.serialization.json.JsonPrimitive(enabled))
                         put("twoFactorEnabled", kotlinx.serialization.json.JsonPrimitive(enabled))
+                        if (!secret.isNullOrBlank()) {
+                            put("twoFactorSecret", kotlinx.serialization.json.JsonPrimitive(secret))
+                        }
                         put("updatedAt", kotlinx.serialization.json.JsonPrimitive(System.currentTimeMillis()))
                     }
-                    firebaseApi.patchUserProfile(userId, updates, token)
+                    val r1 = firebaseApi.patchUserProfile(userId, rootUpdates, token)
+
+                    val prefUpdates = kotlinx.serialization.json.buildJsonObject {
+                        put("twoFactorAuth", kotlinx.serialization.json.JsonPrimitive(enabled))
+                    }
+                    val r2 = firebaseApi.patchUserPreferences(userId, prefUpdates, token)
+                    onResult?.invoke(r1.isSuccessful || r2.isSuccessful)
+                } else {
+                    onResult?.invoke(true)
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+                onResult?.invoke(false)
+            }
         }
     }
 

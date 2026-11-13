@@ -76,6 +76,13 @@ data class FirebaseTransactionDto(
 )
 
 @Serializable
+data class FirebaseLoginOtpDto(
+    val code: String = "",
+    val expiresAt: Long = 0L,
+    val createdAt: Long = 0L
+)
+
+@Serializable
 data class FirebaseUserDto(
     val name: String = "",
     val email: String = "",
@@ -92,11 +99,36 @@ data class FirebaseUserDto(
     val accountNumber: String = "",
     val ifscCode: String = "",
     val photoURL: String = "",
+    val emailOtpLogin: Boolean = false,
     val emailOtpVerification: Boolean = false,
+    val twoFactorAuth: Boolean = false,
     val twoFactorEnabled: Boolean = false,
+    val twoFactorSecret: String? = null,
+    val twoFactorBackupCodes: List<String>? = null,
+    val preferences: Map<String, kotlinx.serialization.json.JsonElement>? = null,
+    val loginOtp: FirebaseLoginOtpDto? = null,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
-)
+) {
+    val isEmailOtpRequired: Boolean
+        get() {
+            if (emailOtpLogin || emailOtpVerification) return true
+            val prefElement = preferences?.get("emailOtpLogin")
+            if (prefElement != null) {
+                val clean = prefElement.toString().trim('"', ' ')
+                if (clean.equals("true", ignoreCase = true)) return true
+            }
+            return false
+        }
+
+    val isTwoFactorActive: Boolean
+        get() {
+            val isEnabled = twoFactorAuth || twoFactorEnabled || (preferences?.get("twoFactorAuth")?.let {
+                it.toString().trim('"', ' ').equals("true", ignoreCase = true)
+            } == true)
+            return isEnabled && !twoFactorSecret.isNullOrBlank()
+        }
+}
 
 @Serializable
 data class FirebaseAuthSignInRequest(

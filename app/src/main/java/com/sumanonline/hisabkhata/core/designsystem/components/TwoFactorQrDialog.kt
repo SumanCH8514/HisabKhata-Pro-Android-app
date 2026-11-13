@@ -66,7 +66,7 @@ fun TwoFactorQrDialog(
     userEmail: String,
     userId: String,
     isEnabled: Boolean,
-    onToggleEnabled: (Boolean) -> Unit,
+    onToggleEnabled: (Boolean, String?) -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -289,7 +289,7 @@ fun TwoFactorQrDialog(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onToggleEnabled(!isEnabled) },
+                        .clickable { onToggleEnabled(!isEnabled, if (!isEnabled) base32Secret else null) },
                     shape = RoundedCornerShape(10.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isEnabled) BrandBlue.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -318,7 +318,7 @@ fun TwoFactorQrDialog(
                         }
                         Switch(
                             checked = isEnabled,
-                            onCheckedChange = { onToggleEnabled(it) },
+                            onCheckedChange = { onToggleEnabled(it, if (it) base32Secret else null) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = BrandBlue

@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
@@ -109,21 +110,37 @@ class AuthViewModel @Inject constructor(
                         null
                     }
 
-                    // Check if Login Email OTP Verification is enabled for this account
-                    val isOtpVerificationEnabled = profile?.emailOtpVerification == true ||
+                    // Check if Login Email OTP Verification is enabled for this account (cloud or local)
+                    val isOtpVerificationEnabled = profile?.isEmailOtpRequired == true ||
                             preferencesManager.preferences.value.emailOtpVerification
 
                     if (isOtpVerificationEnabled) {
+                        // Persist local preference so app remains in sync
+                        preferencesManager.setEmailOtpVerification(true)
+
                         // Generate 6-digit OTP
                         val generatedOtp = String.format(java.util.Locale.US, "%06d", (100000..999999).random())
                         _pendingLoginVerification.value = PendingLoginVerification(
                             authData = authData,
                             profile = profile,
                             otpCode = generatedOtp,
-                            email = authData.email
+                            email = authData.email,
+                            expiryTimestamp = System.currentTimeMillis() + 10 * 60 * 1000L
                         )
 
-                        // Send OTP via Backend Email Service
+                        // 1. Sync loginOtp to Firebase Realtime Database at users/{userId} for cross-platform compatibility
+                        try {
+                            val otpUpdate = buildJsonObject {
+                                put("loginOtp", buildJsonObject {
+                                    put("code", JsonPrimitive(generatedOtp))
+                                    put("expiresAt", JsonPrimitive(System.currentTimeMillis() + 10 * 60 * 1000L))
+                                    put("createdAt", JsonPrimitive(System.currentTimeMillis()))
+                                })
+                            }
+                            firebaseApi.patchUserProfile(authData.localId, otpUpdate, authData.idToken)
+                        } catch (_: Exception) {}
+
+                        // 2. Send OTP via Backend Email Service
                         val recipientName = profile?.name?.ifBlank { null }
                             ?: authData.email.substringBefore("@")
                         try {
@@ -133,7 +150,7 @@ class AuthViewModel @Inject constructor(
                                     customer_name = recipientName,
                                     merchant_name = "HisabKhata Security",
                                     subject = "Your Login Verification Code: $generatedOtp",
-                                    message = "Your 6-digit verification code to sign in to HisabKhata is: $generatedOtp. This code is valid for 5 minutes.",
+                                    message = "Your 6-digit verification code to sign in to HisabKhata is: $generatedOtp. This code is valid for 10 minutes.",
                                     type = "OTP",
                                     otp = generatedOtp
                                 )
@@ -183,6 +200,16 @@ class AuthViewModel @Inject constructor(
             return
         }
 
+        // Clear loginOtp on Firebase Realtime Database
+        viewModelScope.launch {
+            try {
+                val clearOtp = buildJsonObject {
+                    put("loginOtp", JsonNull)
+                }
+                firebaseApi.patchUserProfile(pending.authData.localId, clearOtp, pending.authData.idToken)
+            } catch (_: Exception) {}
+        }
+
         // OTP Verified successfully! Complete login
         completeUserLogin(pending.authData, pending.profile)
         _pendingLoginVerification.value = null
@@ -200,8 +227,20 @@ class AuthViewModel @Inject constructor(
             val newOtp = String.format(java.util.Locale.US, "%06d", (100000..999999).random())
             _pendingLoginVerification.value = pending.copy(
                 otpCode = newOtp,
-                expiryTimestamp = System.currentTimeMillis() + 5 * 60 * 1000L
+                expiryTimestamp = System.currentTimeMillis() + 10 * 60 * 1000L
             )
+
+            // Update Firebase Realtime Database loginOtp
+            try {
+                val otpUpdate = buildJsonObject {
+                    put("loginOtp", buildJsonObject {
+                        put("code", JsonPrimitive(newOtp))
+                        put("expiresAt", JsonPrimitive(System.currentTimeMillis() + 10 * 60 * 1000L))
+                        put("createdAt", JsonPrimitive(System.currentTimeMillis()))
+                    })
+                }
+                firebaseApi.patchUserProfile(pending.authData.localId, otpUpdate, pending.authData.idToken)
+            } catch (_: Exception) {}
 
             try {
                 val recipientName = pending.profile?.name?.ifBlank { null }
@@ -212,7 +251,7 @@ class AuthViewModel @Inject constructor(
                         customer_name = recipientName,
                         merchant_name = "HisabKhata Security",
                         subject = "Your New Login Verification Code: $newOtp",
-                        message = "Your new 6-digit verification code to sign in to HisabKhata is: $newOtp. This code is valid for 5 minutes.",
+                        message = "Your new 6-digit verification code to sign in to HisabKhata is: $newOtp. This code is valid for 10 minutes.",
                         type = "OTP",
                         otp = newOtp
                     )

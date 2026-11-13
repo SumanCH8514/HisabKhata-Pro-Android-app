@@ -460,8 +460,8 @@ fun ApplicationSettingsScreen(
             userEmail = session.email,
             userId = session.userId,
             isEnabled = preferences.twoFactorEnabled,
-            onToggleEnabled = { enabled ->
-                profileViewModel.setTwoFactorEnabled(enabled)
+            onToggleEnabled = { enabled, secret ->
+                profileViewModel.setTwoFactorEnabled(enabled, secret)
             },
             onDismiss = { showTwoFactorDialog = false }
         )
