@@ -455,14 +455,16 @@ fun CustomerListScreen(
     if (showAddDialog) {
         AddEditCustomerDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, phone, email, openingBalance, balanceType, type ->
+            onConfirm = { name, phone, email, openingBalance, balanceType, type, photoUrl, gst ->
                 viewModel.addCustomer(
                     name = name,
                     phone = phone,
                     email = email,
                     openingBalance = openingBalance,
                     balanceType = balanceType,
-                    type = type
+                    type = type,
+                    photoURL = photoUrl,
+                    gst = gst
                 )
                 showAddDialog = false
             }
