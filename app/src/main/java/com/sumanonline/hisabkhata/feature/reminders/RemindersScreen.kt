@@ -24,12 +24,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.outlined.AutoMode
 import androidx.compose.material.icons.outlined.Clear
-import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -86,8 +83,7 @@ import com.sumanonline.hisabkhata.core.designsystem.isAppDark
 fun RemindersScreen(
     viewModel: RemindersViewModel,
     onTabSelected: (BottomTab) -> Unit,
-    onCustomerClick: (String) -> Unit,
-    onNavigateToAutoReminder: (() -> Unit)? = null
+    onCustomerClick: (String) -> Unit
 ) {
     val context = LocalContext.current
     val dueCustomers by viewModel.dueCustomers.collectAsState()
@@ -95,15 +91,8 @@ fun RemindersScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
 
-    // Calculated summary metrics for the top cards
-    val totalPendingDues = remember(dueCustomers) {
-        dueCustomers.sumOf { Math.abs(it.balance) }
-    }
     val overdueCustomers = remember(dueCustomers) {
         dueCustomers.filter { DateUtils.getDueDateStatus(it.dueDate) is DueStatus.Overdue }
-    }
-    val overdueTotal = remember(overdueCustomers) {
-        overdueCustomers.sumOf { Math.abs(it.balance) }
     }
     val dueTodayCustomers = remember(dueCustomers) {
         dueCustomers.filter { DateUtils.getDueDateStatus(it.dueDate) is DueStatus.DueToday }
@@ -125,32 +114,6 @@ fun RemindersScreen(
                             .size(38.dp)
                             .clip(CircleShape)
                     )
-                },
-                actions = {
-                    if (onNavigateToAutoReminder != null) {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(Color.White.copy(alpha = 0.18f))
-                                .clickable { onNavigateToAutoReminder() }
-                                .padding(horizontal = 10.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.AutoMode,
-                                contentDescription = "Auto Reminder",
-                                tint = Color.White,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Auto Cron",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
                 }
             )
         },
@@ -168,86 +131,7 @@ fun RemindersScreen(
                 .padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 1. Top 3 Summary Cards (like PaymentsScreen & CustomerListScreen)
-            item(key = "reminder_summary_cards") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Total Pending Dues Card
-                    ReminderMetricCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Total Due",
-                        icon = {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(GiveRed)
-                            )
-                        },
-                        count = dueCustomers.size.toString(),
-                        subtitle = CurrencyFormatter.formatInr(totalPendingDues),
-                        subtitleColor = GiveRed,
-                        isSelected = selectedFilter == ReminderFilter.ALL,
-                        accentColor = MaterialTheme.colorScheme.primary,
-                        onClick = { viewModel.setFilter(ReminderFilter.ALL) }
-                    )
-
-                    // Overdue Card
-                    ReminderMetricCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Overdue",
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.ErrorOutline,
-                                contentDescription = null,
-                                tint = GiveRed,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        },
-                        count = overdueCustomers.size.toString(),
-                        subtitle = CurrencyFormatter.formatInr(overdueTotal),
-                        subtitleColor = GiveRed,
-                        isSelected = selectedFilter == ReminderFilter.OVERDUE,
-                        accentColor = GiveRed,
-                        onClick = {
-                            viewModel.setFilter(
-                                if (selectedFilter == ReminderFilter.OVERDUE) ReminderFilter.ALL else ReminderFilter.OVERDUE
-                            )
-                        }
-                    )
-
-                    // Due Soon / Today Card
-                    ReminderMetricCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Due Soon",
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Schedule,
-                                contentDescription = null,
-                                tint = WarningAmber,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        },
-                        count = (dueTodayCustomers.size + dueSoonCustomers.size).toString(),
-                        subtitle = if (dueTodayCustomers.isNotEmpty()) "${dueTodayCustomers.size} Today" else "Upcoming",
-                        subtitleColor = WarningAmber,
-                        isSelected = selectedFilter == ReminderFilter.DUE_SOON || selectedFilter == ReminderFilter.DUE_TODAY,
-                        accentColor = WarningAmber,
-                        onClick = {
-                            viewModel.setFilter(
-                                if (selectedFilter == ReminderFilter.DUE_SOON) ReminderFilter.ALL else ReminderFilter.DUE_SOON
-                            )
-                        }
-                    )
-                }
-            }
-
-            // 2. Sticky Filter Pills Row (pins to top on scroll)
+            // 1. Sticky Filter Pills Row (pins to top on scroll)
             stickyHeader(key = "sticky_reminder_filters") {
                 Box(
                     modifier = Modifier
@@ -293,7 +177,7 @@ fun RemindersScreen(
                 }
             }
 
-            // 3. Search Bar
+            // 2. Search Bar
             item(key = "reminder_search_bar") {
                 Box(
                     modifier = Modifier
@@ -345,7 +229,7 @@ fun RemindersScreen(
                 }
             }
 
-            // 4. Customer Reminders List
+            // 3. Customer Reminders List
             if (filteredCustomers.isEmpty()) {
                 item(key = "empty_reminders_view") {
                     Box(
@@ -381,73 +265,6 @@ fun RemindersScreen(
             item(key = "reminders_bottom_spacer") {
                 Spacer(modifier = Modifier.height(72.dp))
             }
-        }
-    }
-}
-
-@Composable
-private fun ReminderMetricCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    icon: @Composable () -> Unit,
-    count: String,
-    subtitle: String,
-    subtitleColor: Color = TextSecondary,
-    isSelected: Boolean,
-    accentColor: Color = MaterialTheme.colorScheme.primary,
-    onClick: () -> Unit
-) {
-    val borderColor = if (isSelected) accentColor else BorderLight
-    val containerBg = if (isSelected) accentColor.copy(alpha = if (isAppDark) 0.12f else 0.05f) else SurfaceWhite
-
-    Card(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = containerBg),
-        border = BorderStroke(
-            width = if (isSelected) 1.5.dp else 1.dp,
-            color = borderColor
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                icon()
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = count,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            Text(
-                text = subtitle,
-                fontSize = 12.sp,
-                fontWeight = if (subtitleColor != TextSecondary) FontWeight.Bold else FontWeight.Normal,
-                color = subtitleColor
-            )
         }
     }
 }
@@ -664,7 +481,7 @@ private fun ReminderCustomerCard(
                         .height(40.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Send,
+                        imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(14.dp)
