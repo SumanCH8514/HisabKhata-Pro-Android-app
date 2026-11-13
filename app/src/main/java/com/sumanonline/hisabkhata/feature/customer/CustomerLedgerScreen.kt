@@ -820,13 +820,11 @@ fun CustomerLedgerScreen(
     }
 
     if (showEditDialog) {
-        AddEditCustomerDialog(
-            existingCustomer = customer,
+        EditCustomerProfileBottomSheet(
+            customer = customer,
             onDismiss = { showEditDialog = false },
-            onConfirm = { name, phone, email, _, _, type ->
-                viewModel.updateCustomer(
-                    customer.copy(name = name, phone = phone, email = email, type = type)
-                )
+            onSave = { updatedCustomer ->
+                viewModel.updateCustomer(updatedCustomer)
                 showEditDialog = false
             }
         )
