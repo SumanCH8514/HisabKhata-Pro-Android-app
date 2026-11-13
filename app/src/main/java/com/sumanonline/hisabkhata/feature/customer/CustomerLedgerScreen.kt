@@ -710,8 +710,8 @@ fun CustomerLedgerScreen(
             customerName = customer.name,
             isGave = true,
             onDismiss = { showAddGaveSheet = false },
-            onSave = { amount, description, date ->
-                viewModel.addTransaction(customer.id, amount, true, description, date)
+            onSave = { amount, description, date, attachment ->
+                viewModel.addTransaction(customer.id, amount, true, description, date, attachment)
                 showAddGaveSheet = false
             }
         )
@@ -722,8 +722,8 @@ fun CustomerLedgerScreen(
             customerName = customer.name,
             isGave = false,
             onDismiss = { showAddGotSheet = false },
-            onSave = { amount, description, date ->
-                viewModel.addTransaction(customer.id, amount, false, description, date)
+            onSave = { amount, description, date, attachment ->
+                viewModel.addTransaction(customer.id, amount, false, description, date, attachment)
                 showAddGotSheet = false
             }
         )
