@@ -90,18 +90,20 @@ class PaymentsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val summary: StateFlow<PaymentSummary> = allPayments.map { list ->
-        val pending = list.filter { it.status.equals("pending", ignoreCase = true) }
-        val approved = list.filter { it.status.equals("approved", ignoreCase = true) }
-        val rejected = list.filter { it.status.equals("rejected", ignoreCase = true) }
-        PaymentSummary(
-            allCount = list.size,
-            pendingCount = pending.size,
-            pendingTotal = pending.sumOf { it.amount },
-            approvedCount = approved.size,
-            approvedTotal = approved.sumOf { it.amount },
-            rejectedCount = rejected.size,
-            rejectedTotal = rejected.sumOf { it.amount }
-        )
+        withContext(Dispatchers.Default) {
+            val pending = list.filter { it.status.equals("pending", ignoreCase = true) }
+            val approved = list.filter { it.status.equals("approved", ignoreCase = true) }
+            val rejected = list.filter { it.status.equals("rejected", ignoreCase = true) }
+            PaymentSummary(
+                allCount = list.size,
+                pendingCount = pending.size,
+                pendingTotal = pending.sumOf { it.amount },
+                approvedCount = approved.size,
+                approvedTotal = approved.sumOf { it.amount },
+                rejectedCount = rejected.size,
+                rejectedTotal = rejected.sumOf { it.amount }
+            )
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PaymentSummary())
 
     val filteredPayments: StateFlow<List<PendingPaymentEntity>> = combine(
@@ -109,22 +111,25 @@ class PaymentsViewModel @Inject constructor(
         _selectedFilter,
         _searchQuery
     ) { payments, filter, query ->
-        payments.filter { payment ->
-            val matchesFilter = when (filter) {
-                PaymentFilter.ALL -> true
-                PaymentFilter.PENDING -> payment.status.equals("pending", ignoreCase = true)
-                PaymentFilter.APPROVED -> payment.status.equals("approved", ignoreCase = true)
-                PaymentFilter.REJECTED -> payment.status.equals("rejected", ignoreCase = true)
-            }
+        withContext(Dispatchers.Default) {
             val q = query.trim()
-            val matchesQuery = if (q.isBlank()) {
-                true
-            } else {
+            val hasQuery = q.isNotBlank()
+
+            payments.filter { payment ->
+                val matchesFilter = when (filter) {
+                    PaymentFilter.ALL -> true
+                    PaymentFilter.PENDING -> payment.status.equals("pending", ignoreCase = true)
+                    PaymentFilter.APPROVED -> payment.status.equals("approved", ignoreCase = true)
+                    PaymentFilter.REJECTED -> payment.status.equals("rejected", ignoreCase = true)
+                }
+                if (!matchesFilter) return@filter false
+
+                if (!hasQuery) return@filter true
+
                 payment.customerName.contains(q, ignoreCase = true) ||
                         (payment.transactionId?.contains(q, ignoreCase = true) == true) ||
                         payment.amount.toString().contains(q)
             }
-            matchesFilter && matchesQuery
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -135,12 +140,15 @@ class PaymentsViewModel @Inject constructor(
     val qrBitmap: StateFlow<Bitmap?> = _qrBitmap.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            session.collect { s ->
-                generateQr(s.upiId, _customAmount.value)
-            }
-        }
+        // Fast instant launch: Cloud sync runs asynchronously in background,
+        // and heavy QR bitmap generation is deferred until the Store QR modal is requested.
         refreshPayments()
+    }
+
+    fun ensureQrGenerated() {
+        if (_qrBitmap.value == null && session.value.upiId.isNotBlank()) {
+            generateQr(session.value.upiId, _customAmount.value)
+        }
     }
 
     fun setFilter(filter: PaymentFilter) {

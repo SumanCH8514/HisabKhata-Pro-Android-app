@@ -21,11 +21,44 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.HisabKhata">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="hisabkhata.sumanonline.com" />
+                <data android:host="backend.hisabkhata.sumanonline.com" />
+
+                <!-- Payment verification & Payments paths from emails -->
+                <data android:pathPrefix="/payments" />
+                <data android:pathPrefix="/payment" />
+                <data android:pathPrefix="/verify-payment" />
+                <data android:pathPrefix="/verify" />
+
+                <!-- Customer Ledger & Transaction paths from emails -->
+                <data android:pathPrefix="/customer" />
+                <data android:pathPrefix="/transaction" />
+                <data android:pathPrefix="/ledger" />
+                <data android:pathPrefix="/entry" />
+            </intent-filter>
+
+            <!-- Custom URI Scheme for app redirection: hisabkhata://... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="hisabkhata" />
             </intent-filter>
         </activity>
 

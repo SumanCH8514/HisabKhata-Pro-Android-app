@@ -1,5 +1,7 @@
 package com.sumanonline.hisabkhata
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -18,6 +20,7 @@ import com.sumanonline.hisabkhata.core.security.SecureSessionManager
 import com.sumanonline.hisabkhata.core.sync.SyncWorker
 import com.sumanonline.hisabkhata.feature.navigation.AppNavigation
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executor
 import javax.inject.Inject
@@ -31,6 +34,8 @@ class MainActivity : FragmentActivity() {
     @Inject
     lateinit var preferencesManager: AppPreferencesManager
 
+    private val deepLinkUriState = MutableStateFlow<Uri?>(null)
+
     private lateinit var executor: Executor
     private lateinit var biometricPrompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
@@ -40,6 +45,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleIncomingIntent(intent)
         enableEdgeToEdge()
 
         val initialPrefs = preferencesManager.preferences.value
@@ -121,6 +127,17 @@ class MainActivity : FragmentActivity() {
         biometricPrompt.authenticate(promptInfo)
     }
 
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
+    }
+
+    private fun handleIncomingIntent(intent: android.content.Intent?) {
+        val uri = intent?.data ?: return
+        deepLinkUriState.value = uri
+    }
+
     private fun renderContent() {
         setContent {
             val preferences by preferencesManager.preferences.collectAsState()
@@ -131,7 +148,8 @@ class MainActivity : FragmentActivity() {
                 fontFamily = preferences.fontFamily
             ) {
                 AppNavigation(
-                    isBiometricAuthenticated = isBiometricAuthenticated
+                    isBiometricAuthenticated = isBiometricAuthenticated,
+                    deepLinkFlow = deepLinkUriState
                 )
             }
         }

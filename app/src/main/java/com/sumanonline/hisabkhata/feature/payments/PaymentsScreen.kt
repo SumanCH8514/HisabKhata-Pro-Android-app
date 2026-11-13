@@ -201,7 +201,10 @@ fun PaymentsScreen(
                                 .clip(RoundedCornerShape(20.dp))
                                 .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
                                 .background(SurfaceWhite)
-                                .clickable { showStoreQrSheet = true }
+                                .clickable {
+                                    viewModel.ensureQrGenerated()
+                                    showStoreQrSheet = true
+                                }
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -442,7 +445,11 @@ fun PaymentsScreen(
                     }
                 }
             } else {
-                items(filteredPayments, key = { it.id }) { payment ->
+                items(
+                    items = filteredPayments,
+                    key = { it.id },
+                    contentType = { "payment_card" }
+                ) { payment ->
                     val customer = customerMap[payment.customerId]
                     Box(
                         modifier = Modifier
@@ -900,6 +907,28 @@ private fun PaymentCardItem(
     onViewProof: () -> Unit,
     onNavigateToLedger: () -> Unit
 ) {
+    val formattedAmount = remember(payment.amount) { CurrencyFormatter.formatInr(payment.amount) }
+    val formattedDateTime = remember(payment.timestamp) { formatPaymentDateTime(payment.timestamp) }
+    val displayRef = remember(payment.transactionId) {
+        val raw = payment.transactionId
+        if (raw.isNullOrBlank() || raw.equals("None", ignoreCase = true)) null
+        else if (raw.length > 15) raw.take(12) + "…"
+        else raw
+    }
+    val context = LocalContext.current
+    val proofModel = remember(payment.screenshot) {
+        payment.screenshot?.let { ImageUtils.sanitizeImageSource(it) }
+    }
+    val proofRequest = remember(proofModel) {
+        if (proofModel != null) {
+            ImageRequest.Builder(context)
+                .data(proofModel)
+                .size(60, 60)
+                .crossfade(false)
+                .build()
+        } else null
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -937,7 +966,7 @@ private fun PaymentCardItem(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = formatPaymentDateTime(payment.timestamp),
+                        text = formattedDateTime,
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
@@ -948,7 +977,7 @@ private fun PaymentCardItem(
                 // Amount and Status Badge
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = CurrencyFormatter.formatInr(payment.amount),
+                        text = formattedAmount,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -1035,10 +1064,8 @@ private fun PaymentCardItem(
                         softWrap = false
                     )
 
-                    if (!payment.transactionId.isNullOrBlank() && !payment.transactionId.equals("None", ignoreCase = true)) {
+                    if (displayRef != null && !payment.transactionId.isNullOrBlank()) {
                         val rawRef = payment.transactionId
-                        val displayRef = if (rawRef.length > 15) rawRef.take(12) + "…" else rawRef
-
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
@@ -1085,7 +1112,7 @@ private fun PaymentCardItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // View Proof Button (if screenshot attached)
-                    if (!payment.screenshot.isNullOrBlank()) {
+                    if (proofRequest != null) {
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
@@ -1096,7 +1123,7 @@ private fun PaymentCardItem(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             AsyncImage(
-                                model = ImageUtils.sanitizeImageSource(payment.screenshot),
+                                model = proofRequest,
                                 contentDescription = "Proof",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -1244,11 +1271,17 @@ private fun CustomerAvatarBadge(
     photoUrl: String?
 ) {
     if (!photoUrl.isNullOrBlank()) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(ImageUtils.sanitizeImageSource(photoUrl))
+        val context = LocalContext.current
+        val sanitized = remember(photoUrl) { ImageUtils.sanitizeImageSource(photoUrl) }
+        val imageRequest = remember(sanitized) {
+            ImageRequest.Builder(context)
+                .data(sanitized)
+                .size(132, 132)
                 .crossfade(true)
-                .build(),
+                .build()
+        }
+        AsyncImage(
+            model = imageRequest,
             contentDescription = name,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -1256,7 +1289,9 @@ private fun CustomerAvatarBadge(
                 .clip(CircleShape)
         )
     } else {
-        val initial = name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+        val initial = remember(name) {
+            name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+        }
         val bgColor = remember(name) { getAvatarPaletteColor(name) }
         Box(
             modifier = Modifier
@@ -1290,10 +1325,13 @@ private fun getAvatarPaletteColor(name: String): Color {
     return palette[hash % palette.size]
 }
 
+private val paymentDateFormatThreadLocal = ThreadLocal.withInitial {
+    SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.ENGLISH)
+}
+
 private fun formatPaymentDateTime(timestamp: Long): String {
     return try {
-        val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.ENGLISH)
-        sdf.format(Date(timestamp))
+        paymentDateFormatThreadLocal.get()?.format(Date(timestamp)) ?: DateUtils.formatDisplayDateTime(timestamp)
     } catch (_: Exception) {
         DateUtils.formatDisplayDateTime(timestamp)
     }

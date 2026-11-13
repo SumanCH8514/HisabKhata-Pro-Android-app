@@ -1,6 +1,8 @@
 package com.sumanonline.hisabkhata.feature.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -8,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.sumanonline.hisabkhata.core.designsystem.components.BottomTab
 import com.sumanonline.hisabkhata.feature.about.AboutProjectScreen
 import com.sumanonline.hisabkhata.feature.auth.AuthViewModel
@@ -30,13 +33,33 @@ import com.sumanonline.hisabkhata.feature.reports.CustomerReportScreen
 import com.sumanonline.hisabkhata.feature.reports.ReportsScreen
 import com.sumanonline.hisabkhata.feature.reports.ReportsViewModel
 import com.sumanonline.hisabkhata.feature.splash.SplashScreen
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
     authViewModel: AuthViewModel = hiltViewModel(),
-    isBiometricAuthenticated: Boolean = true
+    isBiometricAuthenticated: Boolean = true,
+    deepLinkFlow: StateFlow<Uri?>? = null
 ) {
+    // Handle runtime deep link events (e.g., when an email link is clicked while app is in background or running)
+    LaunchedEffect(deepLinkFlow) {
+        deepLinkFlow?.collect { uri ->
+            if (uri != null && authViewModel.isUserLoggedIn()) {
+                val targetRoute = resolveRouteFromUri(uri)
+                if (targetRoute != null) {
+                    navController.navigate(targetRoute) {
+                        popUpTo(Screen.Customers.route) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route
@@ -45,8 +68,9 @@ fun AppNavigation(
             SplashScreen(
                 isBiometricAuthenticated = isBiometricAuthenticated,
                 onSplashFinished = {
+                    val deepLinkTarget = deepLinkFlow?.value?.let { resolveRouteFromUri(it) }
                     val nextRoute = if (authViewModel.isUserLoggedIn()) {
-                        Screen.Customers.route
+                        deepLinkTarget ?: Screen.Customers.route
                     } else {
                         Screen.Login.route
                     }
@@ -63,7 +87,9 @@ fun AppNavigation(
                 onNavigateToRegister = { navController.navigate(Screen.Register.route) },
                 onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
                 onLoginSuccess = {
-                    navController.navigate(Screen.Customers.route) {
+                    val deepLinkTarget = deepLinkFlow?.value?.let { resolveRouteFromUri(it) }
+                    val nextRoute = deepLinkTarget ?: Screen.Customers.route
+                    navController.navigate(nextRoute) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
@@ -109,7 +135,15 @@ fun AppNavigation(
 
         composable(
             route = Screen.CustomerLedger.route,
-            arguments = listOf(navArgument("customerId") { type = NavType.StringType })
+            arguments = listOf(navArgument("customerId") { type = NavType.StringType }),
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "https://hisabkhata.sumanonline.com/customer/{customerId}" },
+                navDeepLink { uriPattern = "https://hisabkhata.sumanonline.com/ledger/{customerId}" },
+                navDeepLink { uriPattern = "https://hisabkhata.sumanonline.com/transaction/{customerId}" },
+                navDeepLink { uriPattern = "hisabkhata://customer/{customerId}" },
+                navDeepLink { uriPattern = "hisabkhata://ledger/{customerId}" },
+                navDeepLink { uriPattern = "hisabkhata://transaction/{customerId}" }
+            )
         ) { backStackEntry ->
             val customerId = backStackEntry.arguments?.getString("customerId") ?: return@composable
             val customerViewModel: CustomerViewModel = hiltViewModel()
@@ -146,7 +180,20 @@ fun AppNavigation(
             )
         }
 
-        composable(Screen.Payments.route) {
+        composable(
+            route = Screen.Payments.route,
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "https://hisabkhata.sumanonline.com/payments.*" },
+                navDeepLink { uriPattern = "https://hisabkhata.sumanonline.com/verify-payment.*" },
+                navDeepLink { uriPattern = "https://hisabkhata.sumanonline.com/payment.*" },
+                navDeepLink { uriPattern = "https://hisabkhata.sumanonline.com/verify.*" },
+                navDeepLink { uriPattern = "https://backend.hisabkhata.sumanonline.com/payments.*" },
+                navDeepLink { uriPattern = "hisabkhata://payments.*" },
+                navDeepLink { uriPattern = "hisabkhata://payment.*" },
+                navDeepLink { uriPattern = "hisabkhata://verify.*" },
+                navDeepLink { uriPattern = "hisabkhata://verify-payment.*" }
+            )
+        ) {
             val paymentsViewModel: PaymentsViewModel = hiltViewModel()
             PaymentsScreen(
                 viewModel = paymentsViewModel,
@@ -259,3 +306,50 @@ private fun handleBottomNavigation(navController: NavHostController, tab: Bottom
         }
     }
 }
+
+private fun resolveRouteFromUri(uri: Uri): String? {
+    val scheme = uri.scheme?.lowercase() ?: return null
+    val host = uri.host?.lowercase() ?: ""
+    val path = uri.path ?: ""
+    val segments = uri.pathSegments
+
+    if (scheme == "hisabkhata") {
+        return when {
+            host.startsWith("payment") || host.startsWith("verify") -> Screen.Payments.route
+            host.startsWith("customer") || host.startsWith("ledger") || host.startsWith("transaction") || host.startsWith("entry") -> {
+                val customerId = segments.firstOrNull()
+                    ?: uri.getQueryParameter("customerId")
+                    ?: uri.getQueryParameter("customer_id")
+                    ?: uri.getQueryParameter("id")
+                if (!customerId.isNullOrBlank()) Screen.CustomerLedger.createRoute(customerId) else Screen.Customers.route
+            }
+            path.startsWith("/payment") || path.startsWith("/verify") -> Screen.Payments.route
+            path.startsWith("/customer") || path.startsWith("/ledger") || path.startsWith("/transaction") || path.startsWith("/entry") -> {
+                val customerId = segments.getOrNull(1)
+                    ?: uri.getQueryParameter("customerId")
+                    ?: uri.getQueryParameter("customer_id")
+                    ?: uri.getQueryParameter("id")
+                if (!customerId.isNullOrBlank()) Screen.CustomerLedger.createRoute(customerId) else Screen.Customers.route
+            }
+            else -> Screen.Payments.route
+        }
+    }
+
+    if (scheme == "http" || scheme == "https") {
+        if (host.contains("hisabkhata")) {
+            if (path.startsWith("/payment") || path.startsWith("/verify")) {
+                return Screen.Payments.route
+            }
+            if (path.startsWith("/customer") || path.startsWith("/ledger") || path.startsWith("/transaction") || path.startsWith("/entry")) {
+                val customerId = segments.getOrNull(1)
+                    ?: uri.getQueryParameter("customerId")
+                    ?: uri.getQueryParameter("customer_id")
+                    ?: uri.getQueryParameter("id")
+                return if (!customerId.isNullOrBlank()) Screen.CustomerLedger.createRoute(customerId) else Screen.Customers.route
+            }
+        }
+    }
+
+    return null
+}
+
