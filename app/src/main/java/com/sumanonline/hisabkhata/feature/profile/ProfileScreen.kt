@@ -348,7 +348,7 @@ fun ProfileScreen(
                     OutlinedButton(
                         onClick = onNavigateToAccountSettings,
                         shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(1.dp, BrandBlue),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface),
                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                         modifier = Modifier.height(34.dp)
@@ -357,7 +357,7 @@ fun ProfileScreen(
                             text = "Edit",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = BrandBlue
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -434,8 +434,8 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .clickable(onClick = onNavigateToAccountSettings),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, BorderLight),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Row(
@@ -458,7 +458,7 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = Icons.Outlined.ManageAccounts,
                                 contentDescription = null,
-                                tint = BrandBlue,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -499,7 +499,7 @@ fun ProfileScreen(
                     .clickable(onClick = onNavigateToApplicationSettings),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                border = BorderStroke(1.dp, BorderLight),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Row(
@@ -522,7 +522,7 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = Icons.Outlined.Security,
                                 contentDescription = null,
-                                tint = BrandBlue,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -563,7 +563,7 @@ fun ProfileScreen(
                     .clickable(onClick = onNavigateToPreferencesSettings),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                border = BorderStroke(1.dp, BorderLight),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Row(
@@ -586,7 +586,7 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = Icons.Outlined.Palette,
                                 contentDescription = null,
-                                tint = BrandBlue,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -627,7 +627,7 @@ fun ProfileScreen(
                     .clickable { onNavigateToAboutProject() },
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                border = BorderStroke(1.dp, BorderLight),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Row(
@@ -646,7 +646,7 @@ fun ProfileScreen(
                         Icon(
                             imageVector = Icons.Outlined.Info,
                             contentDescription = null,
-                            tint = BrandBlue,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(22.dp)
                         )
                     }

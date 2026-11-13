@@ -150,7 +150,7 @@ fun AccountProfileSettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(BrandBlue)
+                    .background(MaterialTheme.colorScheme.primary)
                     .statusBarsPadding()
             ) {
                 Row(
@@ -216,7 +216,7 @@ fun AccountProfileSettingsScreen(
                             photoUrl = null,
                             size = 108.dp,
                             fontSize = 36.sp,
-                            backgroundColor = BrandBlue,
+                            backgroundColor = MaterialTheme.colorScheme.primary,
                             textColor = Color.White
                         )
                     }
@@ -226,7 +226,7 @@ fun AccountProfileSettingsScreen(
                         modifier = Modifier
                             .size(34.dp)
                             .clip(CircleShape)
-                            .background(BrandBlue)
+                            .background(MaterialTheme.colorScheme.primary)
                             .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
                             .clickable { showPhotoOptionsDialog = true },
                         contentAlignment = Alignment.Center
@@ -247,7 +247,7 @@ fun AccountProfileSettingsScreen(
                     text = "Edit photo",
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = BrandBlue,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
                         .clickable { showPhotoOptionsDialog = true }
@@ -1058,7 +1058,7 @@ private fun SettingsRow(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = BrandBlue,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
         }
