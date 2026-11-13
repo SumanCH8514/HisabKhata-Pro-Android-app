@@ -60,6 +60,9 @@ class CustomerViewModel @Inject constructor(
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -79,6 +82,14 @@ class CustomerViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    init {
+        viewModelScope.launch {
+            rawCustomers.collect {
+                _isLoading.value = false
+            }
+        }
+    }
 
     val totalGet: StateFlow<BigDecimal> = rawCustomers.combine(_searchQuery) { list, _ ->
         var sum = BigDecimal.ZERO

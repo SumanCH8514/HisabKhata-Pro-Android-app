@@ -224,7 +224,7 @@ fun ReportsScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    items(transactions, key = { it.id }) { tx ->
+                    items(transactions, key = { it.id }, contentType = { "report_tx_item" }) { tx ->
                         val isDebit = tx.amount < 0 || tx.type == "GAVE"
                         val party = customerNameMap[tx.customerId] ?: "Party"
 

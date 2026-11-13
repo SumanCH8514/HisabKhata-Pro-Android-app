@@ -14,7 +14,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -72,6 +71,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -106,6 +107,8 @@ import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.components.ConfirmDialog
 import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
 import com.sumanonline.hisabkhata.core.designsystem.components.EmptyStateView
+import com.sumanonline.hisabkhata.core.designsystem.components.LedgerScreenSkeleton
+import com.sumanonline.hisabkhata.core.designsystem.components.shimmerBrush
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -122,7 +125,9 @@ fun CustomerLedgerScreen(
     val context = LocalContext.current
     val customerState = viewModel.getCustomerById(customerId).collectAsState(initial = null)
     val customer = customerState.value
-    val transactions by viewModel.getTransactionsForCustomer(customerId).collectAsState()
+    val transactionsFlow = remember(customerId) { viewModel.getTransactionsForCustomer(customerId) }
+    val transactions by transactionsFlow.collectAsState()
+    val shimmer = shimmerBrush()
 
     var showAddGaveSheet by remember { mutableStateOf(false) }
     var showAddGotSheet by remember { mutableStateOf(false) }
@@ -146,10 +151,11 @@ fun CustomerLedgerScreen(
 
     if (customer == null) {
         Box(
-            modifier = Modifier.fillMaxSize().background(PageBackground),
-            contentAlignment = Alignment.Center
+            modifier = Modifier
+                .fillMaxSize()
+                .background(PageBackground)
         ) {
-            Text("Loading party details…", color = TextSecondary)
+            LedgerScreenSkeleton(brush = shimmer)
         }
         return
     }
@@ -238,7 +244,7 @@ fun CustomerLedgerScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            item(key = "customer_header_and_balance_card") {
+            item(key = "customer_header_and_balance_card", contentType = "header_and_card") {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -573,7 +579,7 @@ fun CustomerLedgerScreen(
             }
 
             if (transactions.isEmpty()) {
-                item {
+                item(contentType = "empty_state") {
                     EmptyStateView(
                         title = "No transactions yet",
                         message = "Record cash/online payments or credit sales using the buttons below."
@@ -581,7 +587,7 @@ fun CustomerLedgerScreen(
                 }
             } else {
                 groupedTransactions.forEach { (dateKey, txList) ->
-                    item(key = "date_header_$dateKey") {
+                    item(key = "date_header_$dateKey", contentType = "date_header") {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -606,7 +612,7 @@ fun CustomerLedgerScreen(
                         }
                     }
 
-                    items(txList, key = { it.id }) { tx ->
+                    items(txList, key = { it.id }, contentType = { "ledger_row" }) { tx ->
                         LedgerTableRowItem(
                             tx = tx,
                             onClick = { selectedTransaction = tx },
@@ -619,7 +625,7 @@ fun CustomerLedgerScreen(
                     }
                 }
 
-                item {
+                item(contentType = "bottom_spacer") {
                     Spacer(modifier = Modifier.height(20.dp))
                 }
             }
@@ -915,7 +921,22 @@ private fun LedgerTableRowItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(IntrinsicSize.Min),
+                    .drawBehind {
+                        val col1Right = size.width * (1.4f / 3.0f)
+                        val col2Right = size.width * (2.2f / 3.0f)
+                        drawLine(
+                            color = Color(0xFFF1F5F9),
+                            start = Offset(col1Right, 0f),
+                            end = Offset(col1Right, size.height),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                        drawLine(
+                            color = Color(0xFFF8FAFC),
+                            start = Offset(col2Right, 0f),
+                            end = Offset(col2Right, size.height),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
@@ -970,15 +991,7 @@ private fun LedgerTableRowItem(
 
                 Box(
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .width(1.dp)
-                        .background(Color(0xFFF1F5F9))
-                )
-
-                Box(
-                    modifier = Modifier
                         .weight(0.8f)
-                        .fillMaxHeight()
                         .padding(horizontal = 4.dp, vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -1010,15 +1023,7 @@ private fun LedgerTableRowItem(
 
                 Box(
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .width(1.dp)
-                        .background(Color(0xFFF8FAFC))
-                )
-
-                Box(
-                    modifier = Modifier
                         .weight(0.8f)
-                        .fillMaxHeight()
                         .padding(horizontal = 4.dp, vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {

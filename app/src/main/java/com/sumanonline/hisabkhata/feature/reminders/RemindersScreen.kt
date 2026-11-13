@@ -98,7 +98,7 @@ fun RemindersScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(dueCustomers, key = { it.id }) { customer ->
+                    items(dueCustomers, key = { it.id }, contentType = { "reminder_customer" }) { customer ->
                         val dueStatus = DateUtils.getDueDateStatus(customer.dueDate)
 
                         Card(

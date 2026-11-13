@@ -64,6 +64,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,8 +95,11 @@ import com.sumanonline.hisabkhata.core.designsystem.components.AppBottomBar
 import com.sumanonline.hisabkhata.core.designsystem.components.BottomTab
 import com.sumanonline.hisabkhata.core.designsystem.components.ConfirmDialog
 import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
+import com.sumanonline.hisabkhata.core.designsystem.components.CustomerListItemSkeleton
+import com.sumanonline.hisabkhata.core.designsystem.components.CustomerListSkeleton
 import com.sumanonline.hisabkhata.core.designsystem.components.EmptyStateView
 import com.sumanonline.hisabkhata.core.designsystem.components.SummaryBalanceCards
+import com.sumanonline.hisabkhata.core.designsystem.components.shimmerBrush
 import java.math.BigDecimal
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -122,12 +126,15 @@ fun CustomerListScreen(
     val givePartiesCount by viewModel.givePartiesCount.collectAsState()
     val getPartiesCount by viewModel.getPartiesCount.collectAsState()
     val overduePartiesCount by viewModel.overduePartiesCount.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
+    val isFabExpanded by remember { derivedStateOf { !listState.isScrollInProgress } }
+    val shimmer = shimmerBrush()
 
     Scaffold(
         topBar = {
@@ -147,7 +154,7 @@ fun CustomerListScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showAddDialog = true },
-                expanded = !listState.isScrollInProgress,
+                expanded = isFabExpanded,
                 icon = {
                     Icon(
                         imageVector = Icons.Default.PersonAdd,
@@ -180,7 +187,7 @@ fun CustomerListScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            item {
+            item(contentType = "home_header") {
                 HomeHeaderBar(
                     businessName = session.businessName.ifBlank { "M/S Suman Enterprise" },
                     isSyncing = isSyncing,
@@ -195,7 +202,7 @@ fun CustomerListScreen(
                 )
             }
 
-            item {
+            item(contentType = "summary_cards") {
                 SummaryBalanceCards(
                     totalGet = totalGet,
                     totalGive = totalGive,
@@ -206,14 +213,14 @@ fun CustomerListScreen(
                 )
             }
 
-            item {
+            item(contentType = "receivable_banner") {
                 NetReceivableBanner(
                     netBalance = netBalance,
                     onViewClick = { onTabSelected(BottomTab.REPORTS) }
                 )
             }
 
-            stickyHeader {
+            stickyHeader(contentType = "sticky_search_filters") {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = PageBackground
@@ -226,7 +233,7 @@ fun CustomerListScreen(
                 }
             }
 
-            item {
+            item(contentType = "filter_chips") {
                 Column {
                     Row(
                         modifier = Modifier
@@ -387,8 +394,12 @@ fun CustomerListScreen(
                 }
             }
 
-            if (customers.isEmpty()) {
-                item {
+            if (isLoading) {
+                items(6, contentType = { "loading_skeleton_item" }) {
+                    CustomerListItemSkeleton(brush = shimmer)
+                }
+            } else if (customers.isEmpty()) {
+                item(contentType = "empty_state") {
                     EmptyStateView(
                         title = if (searchQuery.isNotEmpty()) "No matching party found" else "No parties added yet",
                         message = if (searchQuery.isNotEmpty()) "Try searching with a different name or number" else "Add your first customer to track credits and debits easily.",
@@ -397,7 +408,7 @@ fun CustomerListScreen(
                     )
                 }
             } else {
-                items(customers, key = { it.id }) { customer ->
+                items(customers, key = { it.id }, contentType = { "customer_item" }) { customer ->
                     CustomerListItem(
                         customer = customer,
                         onClick = { onCustomerClick(customer.id) }
@@ -405,7 +416,7 @@ fun CustomerListScreen(
                 }
             }
 
-            item {
+            item(contentType = "bottom_spacer") {
                 Spacer(modifier = Modifier.height(88.dp))
             }
         }
@@ -951,11 +962,9 @@ fun CustomerListItem(
 
                 Spacer(modifier = Modifier.height(3.dp))
 
-                val (badgeBg, badgeText, badgeLabel) = when {
-                    isGet -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), "YOU'LL GET")
-                    isGive -> Triple(Color(0xFFDCFCE7), Color(0xFF16A34A), "YOU'LL GIVE")
-                    else -> Triple(Color(0xFFF1F5F9), Color(0xFF64748B), "SETTLED")
-                }
+                val badgeBg = if (isGet) Color(0xFFFEE2E2) else if (isGive) Color(0xFFDCFCE7) else Color(0xFFF1F5F9)
+                val badgeText = if (isGet) Color(0xFFDC2626) else if (isGive) Color(0xFF16A34A) else Color(0xFF64748B)
+                val badgeLabel = if (isGet) "YOU'LL GET" else if (isGive) "YOU'LL GIVE" else "SETTLED"
 
                 if (!isSettled) {
                     Box(

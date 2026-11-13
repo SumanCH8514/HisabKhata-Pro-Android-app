@@ -76,6 +76,8 @@ import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.components.AppBottomBar
 import com.sumanonline.hisabkhata.core.designsystem.components.AppTopBar
 import com.sumanonline.hisabkhata.core.designsystem.components.BottomTab
+import com.sumanonline.hisabkhata.core.designsystem.components.SkeletonBox
+import com.sumanonline.hisabkhata.core.designsystem.components.shimmerBrush
 
 @Composable
 fun PaymentsScreen(
@@ -143,6 +145,7 @@ fun PaymentsScreen(
 
                     Spacer(modifier = Modifier.height(18.dp))
 
+                    val shimmer = shimmerBrush()
                     Box(
                         modifier = Modifier
                             .size(230.dp)
@@ -157,6 +160,13 @@ fun PaymentsScreen(
                                 bitmap = qrBitmap!!.asImageBitmap(),
                                 contentDescription = "UPI QR Code",
                                 modifier = Modifier.fillMaxSize()
+                            )
+                        } else if (session.upiId.isNotBlank()) {
+                            SkeletonBox(
+                                brush = shimmer,
+                                width = 206.dp,
+                                height = 206.dp,
+                                shape = RoundedCornerShape(12.dp)
                             )
                         } else {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {

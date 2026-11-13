@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -49,6 +50,8 @@ import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.components.AppTopBar
 import com.sumanonline.hisabkhata.core.designsystem.components.EmptyStateView
+import com.sumanonline.hisabkhata.core.designsystem.components.ReportsScreenSkeleton
+import com.sumanonline.hisabkhata.core.designsystem.components.shimmerBrush
 import com.sumanonline.hisabkhata.feature.customer.CustomerViewModel
 
 @Composable
@@ -60,14 +63,18 @@ fun CustomerReportScreen(
     val context = LocalContext.current
     val customerState = customerViewModel.getCustomerById(customerId).collectAsState(initial = null)
     val customer = customerState.value
-    val transactions by customerViewModel.getTransactionsForCustomer(customerId).collectAsState()
+    val transactionsFlow = remember(customerId) { customerViewModel.getTransactionsForCustomer(customerId) }
+    val transactions by transactionsFlow.collectAsState()
+    val shimmer = shimmerBrush()
 
     if (customer == null) {
         Box(
-            modifier = Modifier.fillMaxSize().background(PageBackground),
-            contentAlignment = Alignment.Center
+            modifier = Modifier
+                .fillMaxSize()
+                .background(PageBackground)
+                .padding(16.dp)
         ) {
-            Text("Loading customer statement…", color = TextSecondary)
+            ReportsScreenSkeleton(brush = shimmer)
         }
         return
     }
@@ -168,7 +175,7 @@ fun CustomerReportScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(transactions, key = { it.id }) { tx ->
+                    items(transactions, key = { it.id }, contentType = { "customer_report_tx" }) { tx ->
                         val isDebit = tx.amount < 0 || tx.type == "GAVE"
                         Card(
                             modifier = Modifier.fillMaxWidth(),
