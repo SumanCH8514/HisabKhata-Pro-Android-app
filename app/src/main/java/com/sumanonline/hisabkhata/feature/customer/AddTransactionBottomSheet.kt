@@ -100,6 +100,11 @@ fun AddTransactionBottomSheet(
     customerName: String,
     customerPhotoUrl: String? = null,
     isGave: Boolean,
+    initialAmount: Double? = null,
+    initialDescription: String = "",
+    initialDate: String? = null,
+    initialAttachments: List<String> = emptyList(),
+    isEditMode: Boolean = false,
     onDismiss: () -> Unit,
     onUploadBill: suspend (imageBytes: ByteArray, extension: String) -> String?,
     onSave: (amount: Double, description: String, date: String, primaryAttachment: String?, allAttachments: List<String>) -> Unit
@@ -107,11 +112,31 @@ fun AddTransactionBottomSheet(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var amountText by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+    var amountText by remember(initialAmount) {
+        mutableStateOf(
+            if (initialAmount != null && initialAmount > 0.0) {
+                if (initialAmount % 1.0 == 0.0) initialAmount.toLong().toString() else String.format(Locale.US, "%.2f", initialAmount)
+            } else ""
+        )
+    }
+    var description by remember(initialDescription) { mutableStateOf(initialDescription) }
+    var existingAttachments by remember(initialAttachments) { mutableStateOf(initialAttachments) }
     var attachedBills by remember { mutableStateOf<List<AttachedBillItem>>(emptyList()) }
-    var selectedCalendar by remember { mutableStateOf(Calendar.getInstance()) }
+    var selectedCalendar by remember(initialDate) {
+        mutableStateOf(
+            Calendar.getInstance().apply {
+                if (!initialDate.isNullOrBlank()) {
+                    try {
+                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                        sdf.parse(initialDate)?.let { time = it }
+                    } catch (_: Exception) {}
+                }
+            }
+        )
+    }
     var isSaving by remember { mutableStateOf(false) }
+
+    val totalBillsCount = existingAttachments.size + attachedBills.size
 
     val displayDate = remember(selectedCalendar) {
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(selectedCalendar.time)
@@ -124,7 +149,7 @@ fun AddTransactionBottomSheet(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
-            val remaining = 4 - attachedBills.size
+            val remaining = 4 - totalBillsCount
             if (remaining <= 0) {
                 Toast.makeText(context, "Maximum 4 bills can be attached", Toast.LENGTH_SHORT).show()
                 return@rememberLauncherForActivityResult
@@ -134,7 +159,7 @@ fun AddTransactionBottomSheet(
             var invalidFormatCount = 0
 
             for (uri in uris) {
-                if (attachedBills.size + newBills.size >= 4) {
+                if (existingAttachments.size + attachedBills.size + newBills.size >= 4) {
                     Toast.makeText(context, "Maximum 4 bills limit reached", Toast.LENGTH_SHORT).show()
                     break
                 }
@@ -320,6 +345,7 @@ fun AddTransactionBottomSheet(
                                     isSaving = true
                                     coroutineScope.launch {
                                         val uploadedUrls = mutableListOf<String>()
+                                        uploadedUrls.addAll(existingAttachments)
                                         for (item in attachedBills) {
                                             val r2Url = onUploadBill(item.byteArray, item.extension)
                                             if (r2Url != null) {
@@ -365,7 +391,7 @@ fun AddTransactionBottomSheet(
                                 }
                             } else {
                                 Text(
-                                    text = "SAVE",
+                                    text = if (isEditMode) "UPDATE" else "SAVE",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 1.sp
@@ -695,7 +721,7 @@ fun AddTransactionBottomSheet(
                             .border(BorderStroke(1.2.dp, Color(0xFF374151)), RoundedCornerShape(24.dp))
                             .background(Color.White)
                             .clickable {
-                                if (attachedBills.size < 4) {
+                                if (totalBillsCount < 4) {
                                     galleryLauncher.launch("image/*")
                                 } else {
                                     Toast.makeText(context, "Maximum 4 bills attached", Toast.LENGTH_SHORT).show()
@@ -711,19 +737,19 @@ fun AddTransactionBottomSheet(
                             Icon(
                                 imageVector = Icons.Default.CameraAlt,
                                 contentDescription = "Attach Bills",
-                                tint = if (attachedBills.isNotEmpty()) Color(0xFF0F5132) else Color(0xFF1F2937),
+                                tint = if (totalBillsCount > 0) Color(0xFF0F5132) else Color(0xFF1F2937),
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = when (attachedBills.size) {
+                                text = when (totalBillsCount) {
                                     0 -> "Attach Bills"
                                     4 -> "4/4 Bills (Max)"
-                                    else -> "${attachedBills.size}/4 Attached"
+                                    else -> "$totalBillsCount/4 Attached"
                                 },
                                 fontSize = 13.5.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (attachedBills.isNotEmpty()) Color(0xFF0F5132) else Color(0xFF1F2937),
+                                color = if (totalBillsCount > 0) Color(0xFF0F5132) else Color(0xFF1F2937),
                                 maxLines = 1
                             )
                         }
@@ -731,7 +757,7 @@ fun AddTransactionBottomSheet(
                 }
 
                 // 4. Attached Bills Preview Section (Up to 4 images, local until Save)
-                if (attachedBills.isNotEmpty()) {
+                if (existingAttachments.isNotEmpty() || attachedBills.isNotEmpty()) {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -741,7 +767,7 @@ fun AddTransactionBottomSheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Attached Bills (${attachedBills.size}/4)",
+                                text = "Attached Bills ($totalBillsCount/4)",
                                 fontSize = 12.5.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF374151)
@@ -762,6 +788,48 @@ fun AddTransactionBottomSheet(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Pre-fetched existing attachments
+                            existingAttachments.forEachIndexed { index, url ->
+                                Box(
+                                    modifier = Modifier.size(68.dp)
+                                ) {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(context)
+                                            .data(url)
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "Existing Attachment ${index + 1}",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .border(BorderStroke(1.dp, Color(0xFFD1D5DB)), RoundedCornerShape(10.dp))
+                                    )
+
+                                    // Delete (X) badge button
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(3.dp)
+                                            .size(20.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFDC2626))
+                                            .clickable {
+                                                existingAttachments = existingAttachments.toMutableList().apply { removeAt(index) }
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Remove bill",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Newly added bills from local gallery
                             attachedBills.forEachIndexed { index, item ->
                                 Box(
                                     modifier = Modifier
@@ -800,7 +868,7 @@ fun AddTransactionBottomSheet(
                                 }
                             }
 
-                            if (attachedBills.size < 4) {
+                            if (totalBillsCount < 4) {
                                 Box(
                                     modifier = Modifier
                                         .size(68.dp)

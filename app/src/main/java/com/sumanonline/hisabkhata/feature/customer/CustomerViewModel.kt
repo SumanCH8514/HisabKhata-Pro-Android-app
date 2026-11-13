@@ -398,27 +398,27 @@ class CustomerViewModel @Inject constructor(
         txId: String,
         oldAmount: Double,
         newAmount: Double,
+        isGave: Boolean,
         description: String,
-        date: String
+        date: String,
+        attachment: String? = null,
+        attachments: List<String> = emptyList()
     ) {
         viewModelScope.launch {
-            val delta = newAmount - oldAmount
-            if (delta != 0.0) {
-                val customer = customerDao.getCustomerById(customerId)
-                if (customer != null) {
-                    customerDao.updateBalance(customerId, customer.balance + delta, System.currentTimeMillis())
-                }
-            }
-            val existing = transactionDao.getTransactionById(txId)
-            if (existing != null) {
-                val updated = existing.copy(
-                    amount = newAmount,
-                    description = description,
-                    date = date,
-                    syncStatus = Constants.SYNC_STATUS_PENDING
-                )
-                transactionDao.update(updated)
-            }
+            val signedNewAmount = if (isGave) -Math.abs(newAmount) else Math.abs(newAmount)
+            val txType = if (isGave) Constants.TX_TYPE_GAVE else Constants.TX_TYPE_GOT
+
+            syncEngine.updateTransactionOffline(
+                customerId = customerId,
+                txId = txId,
+                oldAmount = oldAmount,
+                newAmount = signedNewAmount,
+                type = txType,
+                description = description,
+                date = date,
+                attachment = attachment,
+                attachments = attachments
+            )
             triggerSync()
         }
     }

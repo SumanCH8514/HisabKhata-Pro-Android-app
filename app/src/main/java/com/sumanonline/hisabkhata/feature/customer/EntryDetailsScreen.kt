@@ -733,114 +733,44 @@ fun EntryDetailsScreen(
     }
 
     if (showEditDialog) {
-        var editAmount by remember { mutableStateOf(Math.abs(currentTransaction.amount).toString()) }
-        var editNote by remember { mutableStateOf(currentTransaction.description) }
-        var editDate by remember { mutableStateOf(currentTransaction.date) }
-
-        Dialog(onDismissRequest = { showEditDialog = false }) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = SurfaceWhite,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "Edit Transaction Entry",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    OutlinedTextField(
-                        value = editAmount,
-                        onValueChange = { editAmount = it },
-                        label = { Text("Amount (₹)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = BorderLight,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = TextSecondary
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = editNote,
-                        onValueChange = { editNote = it },
-                        label = { Text("Note / Description") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = BorderLight,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = TextSecondary
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = editDate,
-                        onValueChange = { editDate = it },
-                        label = { Text("Date (YYYY-MM-DD)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = BorderLight,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = TextSecondary
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = { showEditDialog = false }) {
-                            Text("Cancel", color = TextSecondary)
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                val newAmtNum = editAmount.toDoubleOrNull() ?: Math.abs(currentTransaction.amount)
-                                val signedNewAmount = if (isGave) -newAmtNum else newAmtNum
-                                viewModel.updateTransaction(
-                                    customerId = customer.id,
-                                    txId = currentTransaction.id,
-                                    oldAmount = currentTransaction.amount,
-                                    newAmount = signedNewAmount,
-                                    description = editNote,
-                                    date = editDate
-                                )
-                                currentTransaction = currentTransaction.copy(
-                                    amount = signedNewAmount,
-                                    description = editNote,
-                                    date = editDate
-                                )
-                                showEditDialog = false
-                                Toast.makeText(context, "Entry updated", Toast.LENGTH_SHORT).show()
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = Color.White
-                            )
-                        ) {
-                            Text("Save", color = Color.White)
-                        }
-                    }
-                }
-            }
+        val existingAttachments = remember(currentTransaction.attachment) {
+            currentTransaction.attachment?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
         }
+        AddTransactionBottomSheet(
+            customerName = customer.name,
+            customerPhotoUrl = customer.photoURL,
+            isGave = isGave,
+            initialAmount = Math.abs(currentTransaction.amount),
+            initialDescription = currentTransaction.description,
+            initialDate = currentTransaction.date,
+            initialAttachments = existingAttachments,
+            isEditMode = true,
+            onDismiss = { showEditDialog = false },
+            onUploadBill = { bytes, ext -> viewModel.uploadBillToR2(bytes, ext, customer.id) },
+            onSave = { newAmount, newDescription, newDate, primaryAttachment, allAttachments ->
+                val signedNewAmount = if (isGave) -newAmount else newAmount
+                val attachmentStr = if (allAttachments.size > 1) allAttachments.joinToString(",") else primaryAttachment
+
+                viewModel.updateTransaction(
+                    customerId = customer.id,
+                    txId = currentTransaction.id,
+                    oldAmount = currentTransaction.amount,
+                    newAmount = signedNewAmount,
+                    isGave = isGave,
+                    description = newDescription,
+                    date = newDate,
+                    attachment = primaryAttachment,
+                    attachments = allAttachments
+                )
+                currentTransaction = currentTransaction.copy(
+                    amount = signedNewAmount,
+                    description = newDescription,
+                    date = newDate,
+                    attachment = attachmentStr
+                )
+                showEditDialog = false
+                Toast.makeText(context, "Entry updated successfully", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 }

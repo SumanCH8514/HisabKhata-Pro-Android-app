@@ -246,6 +246,92 @@ class SyncEngine @Inject constructor(
         outboxDao.insertOperation(outboxOp)
     }
 
+    suspend fun updateTransactionOffline(
+        customerId: String,
+        txId: String,
+        oldAmount: Double,
+        newAmount: Double,
+        type: String,
+        description: String,
+        date: String,
+        attachment: String? = null,
+        attachments: List<String> = emptyList()
+    ) = withContext(Dispatchers.IO) {
+        val userId = sessionManager.getUserId()
+        val now = System.currentTimeMillis()
+        val customer = customerDao.getCustomerById(customerId)
+
+        val delta = newAmount - oldAmount
+        val newCustomerBalance = (customer?.balance ?: 0.0) + delta
+        if (delta != 0.0) {
+            customerDao.updateBalance(customerId, newCustomerBalance, now)
+        }
+
+        val allAttachments = if (attachments.isNotEmpty()) {
+            attachments
+        } else if (!attachment.isNullOrBlank()) {
+            listOf(attachment)
+        } else {
+            emptyList()
+        }
+        val primaryAttachment = allAttachments.firstOrNull() ?: attachment
+        val attachmentString = if (allAttachments.size > 1) allAttachments.joinToString(",") else primaryAttachment
+
+        val existing = transactionDao.getTransactionById(txId)
+        val clientTxId = existing?.clientTxId ?: UUID.randomUUID().toString()
+
+        val updated = (existing ?: TransactionEntity(
+            id = txId,
+            clientTxId = clientTxId,
+            userId = userId,
+            customerId = customerId,
+            amount = newAmount,
+            type = type,
+            description = description.trim(),
+            date = date,
+            timestamp = now,
+            balance = newCustomerBalance,
+            attachment = attachmentString,
+            syncStatus = Constants.SYNC_STATUS_PENDING
+        )).copy(
+            amount = newAmount,
+            type = type,
+            description = description.trim(),
+            date = date,
+            balance = newCustomerBalance,
+            attachment = attachmentString,
+            syncStatus = Constants.SYNC_STATUS_PENDING
+        )
+
+        transactionDao.insertOrUpdate(updated)
+
+        val dto = FirebaseTransactionDto(
+            userId = userId,
+            customerId = customerId,
+            amount = newAmount,
+            type = type,
+            description = description.trim(),
+            date = date,
+            timestamp = existing?.timestamp ?: now,
+            balance = newCustomerBalance,
+            attachment = primaryAttachment,
+            attachments = allAttachments,
+            clientTxId = clientTxId
+        )
+
+        val outboxOp = OutboxOperationEntity(
+            operationId = UUID.randomUUID().toString(),
+            operationType = Constants.OP_CREATE_TRANSACTION,
+            entityId = txId,
+            userId = userId,
+            payloadJson = json.encodeToString(FirebaseTransactionDto.serializer(), dto),
+            createdAt = now,
+            status = Constants.SYNC_STATUS_PENDING
+        )
+
+        outboxDao.insertOperation(outboxOp)
+    }
+
     private data class ExecutionResult(
         val isSuccess: Boolean,
         val httpCode: Int = 200,
