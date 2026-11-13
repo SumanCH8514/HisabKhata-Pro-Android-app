@@ -70,6 +70,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -145,6 +146,10 @@ fun AccountProfileSettingsScreen(
             viewModel.updateSingleField("photoURL", uriString)
             Toast.makeText(context, "Profile photo updated", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshProfile()
     }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -518,9 +523,14 @@ fun AccountProfileSettingsScreen(
                 isClickable = true,
                 onClick = {
                     val next = !preferences.emailOtpVerification
-                    viewModel.setEmailOtpVerification(next)
-                    val msg = if (next) "Email OTP verification enabled" else "Email OTP verification disabled"
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    viewModel.setEmailOtpVerification(next) { success ->
+                        val msg = if (success) {
+                            if (next) "Email OTP verification enabled & synced with cloud" else "Email OTP verification disabled & synced with cloud"
+                        } else {
+                            if (next) "Email OTP enabled locally (cloud sync pending)" else "Email OTP disabled locally (cloud sync pending)"
+                        }
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    }
                 }
             )
 

@@ -103,6 +103,25 @@ class AuthViewModel @Inject constructor(
                 if (response.isSuccessful && response.body() != null) {
                     val authData = response.body()!!
 
+                    // 1. Direct query of users/{userId}/preferences/emailOtpLogin.json (infallible check)
+                    val directPrefOtp: Boolean? = try {
+                        val directOtpRes = firebaseApi.getEmailOtpLoginPreference(authData.localId, authData.idToken)
+                        if (directOtpRes.isSuccessful && directOtpRes.body() != null) {
+                            val clean = directOtpRes.body()?.toString()?.trim('"', ' ')
+                            if (clean?.equals("true", ignoreCase = true) == true || clean == "1") {
+                                true
+                            } else if (clean?.equals("false", ignoreCase = true) == true || clean == "0") {
+                                false
+                            } else {
+                                null
+                            }
+                        } else {
+                            null
+                        }
+                    } catch (_: Exception) {
+                        null
+                    }
+
                     val profile = try {
                         val profileRes = firebaseApi.getUserProfile(authData.localId, authData.idToken)
                         if (profileRes.isSuccessful) profileRes.body() else null
@@ -110,14 +129,20 @@ class AuthViewModel @Inject constructor(
                         null
                     }
 
-                    // Check if Login Email OTP Verification is enabled for this account (cloud or local)
-                    val isOtpVerificationEnabled = profile?.isEmailOtpRequired == true ||
-                            preferencesManager.preferences.value.emailOtpVerification
+                    // Check if Login Email OTP Verification is enabled for this account (cloud authoritative, fallback local)
+                    val isOtpVerificationEnabled = when {
+                        directPrefOtp != null -> directPrefOtp
+                        profile != null -> {
+                            if (profile.isEmailOtpExplicitlyDisabled) false
+                            else profile.isEmailOtpRequired
+                        }
+                        else -> preferencesManager.preferences.value.emailOtpVerification
+                    }
+
+                    // Synchronize local preference with authoritative cloud status
+                    preferencesManager.setEmailOtpVerification(isOtpVerificationEnabled)
 
                     if (isOtpVerificationEnabled) {
-                        // Persist local preference so app remains in sync
-                        preferencesManager.setEmailOtpVerification(true)
-
                         // Generate 6-digit OTP
                         val generatedOtp = String.format(java.util.Locale.US, "%06d", (100000..999999).random())
                         _pendingLoginVerification.value = PendingLoginVerification(

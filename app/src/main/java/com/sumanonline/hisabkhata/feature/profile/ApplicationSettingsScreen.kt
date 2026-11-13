@@ -110,6 +110,10 @@ fun ApplicationSettingsScreen(
     var isExporting by remember { mutableStateOf(false) }
     var cacheSizeBytes by remember { mutableStateOf(getAppCacheBytes(context)) }
 
+    LaunchedEffect(Unit) {
+        profileViewModel.refreshProfile()
+    }
+
     val timeoutOptions = listOf("Immediately", "1 Minute", "5 Minutes", "15 Minutes")
 
     Scaffold(
@@ -186,9 +190,14 @@ fun ApplicationSettingsScreen(
                 },
                 checked = preferences.emailOtpVerification,
                 onCheckedChange = { enabled ->
-                    profileViewModel.setEmailOtpVerification(enabled)
-                    val msg = if (enabled) "Email OTP verification enabled" else "Email OTP verification disabled"
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    profileViewModel.setEmailOtpVerification(enabled) { success ->
+                        val msg = if (success) {
+                            if (enabled) "Email OTP verification enabled & synced with cloud" else "Email OTP verification disabled & synced with cloud"
+                        } else {
+                            if (enabled) "Email OTP enabled locally (cloud sync pending)" else "Email OTP disabled locally (cloud sync pending)"
+                        }
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    }
                 }
             )
 

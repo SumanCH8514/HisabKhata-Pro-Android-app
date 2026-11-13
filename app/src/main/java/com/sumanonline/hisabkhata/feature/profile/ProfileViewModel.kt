@@ -41,9 +41,36 @@ class ProfileViewModel @Inject constructor(
     fun refreshProfile() {
         viewModelScope.launch {
             try {
-                val token = sessionManager.getIdToken()
+                val token = sessionManager.getFreshToken(firebaseApi)
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
+                    // Check direct preference node (what Firebase Console and webview edit)
+                    var directOtp: Boolean? = null
+                    try {
+                        val directOtpRes = firebaseApi.getEmailOtpLoginPreference(userId, token)
+                        if (directOtpRes.isSuccessful && directOtpRes.body() != null) {
+                            val clean = directOtpRes.body()?.toString()?.trim('"', ' ')
+                            if (clean?.equals("true", ignoreCase = true) == true || clean == "1") {
+                                directOtp = true
+                            } else if (clean?.equals("false", ignoreCase = true) == true || clean == "0") {
+                                directOtp = false
+                            }
+                        }
+                    } catch (_: Exception) {}
+
+                    var direct2Fa: Boolean? = null
+                    try {
+                        val direct2FaRes = firebaseApi.getTwoFactorAuthPreference(userId, token)
+                        if (direct2FaRes.isSuccessful && direct2FaRes.body() != null) {
+                            val clean = direct2FaRes.body()?.toString()?.trim('"', ' ')
+                            if (clean?.equals("true", ignoreCase = true) == true || clean == "1") {
+                                direct2Fa = true
+                            } else if (clean?.equals("false", ignoreCase = true) == true || clean == "0") {
+                                direct2Fa = false
+                            }
+                        }
+                    } catch (_: Exception) {}
+
                     val res = firebaseApi.getUserProfile(userId, token)
                     if (res.isSuccessful && res.body() != null) {
                         val profile = res.body()!!
@@ -62,13 +89,19 @@ class ProfileViewModel @Inject constructor(
                                 bankAccount = profile.accountNumber.ifBlank { current.bankAccount }
                             )
                         )
-                        val remoteOtpEnabled = profile.isEmailOtpRequired
-                        if (remoteOtpEnabled != preferencesManager.preferences.value.emailOtpVerification) {
-                            preferencesManager.setEmailOtpVerification(remoteOtpEnabled)
+                        val finalOtp = when {
+                            directOtp != null -> directOtp
+                            profile.isEmailOtpExplicitlyDisabled -> false
+                            else -> profile.isEmailOtpRequired
                         }
-                        val remote2FaEnabled = profile.isTwoFactorActive
-                        if (remote2FaEnabled != preferencesManager.preferences.value.twoFactorEnabled) {
-                            preferencesManager.setTwoFactorEnabled(remote2FaEnabled)
+                        preferencesManager.setEmailOtpVerification(finalOtp)
+
+                        val final2Fa = direct2Fa ?: profile.isTwoFactorActive
+                        preferencesManager.setTwoFactorEnabled(final2Fa)
+                    } else if (directOtp != null) {
+                        preferencesManager.setEmailOtpVerification(directOtp)
+                        if (direct2Fa != null) {
+                            preferencesManager.setTwoFactorEnabled(direct2Fa)
                         }
                     }
                 }
@@ -82,7 +115,7 @@ class ProfileViewModel @Inject constructor(
             _isSaving.value = true
             sessionManager.updateField(key, value)
             try {
-                val token = sessionManager.getIdToken()
+                val token = sessionManager.getFreshToken(firebaseApi)
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
                     val fbKey = when (key) {
@@ -115,7 +148,7 @@ class ProfileViewModel @Inject constructor(
             sessionManager.updateProfile(name, businessName, phone, upiId)
 
             try {
-                val token = sessionManager.getIdToken()
+                val token = sessionManager.getFreshToken(firebaseApi)
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
                     val updates = kotlinx.serialization.json.buildJsonObject {
@@ -142,9 +175,15 @@ class ProfileViewModel @Inject constructor(
         preferencesManager.setEmailOtpVerification(enabled)
         viewModelScope.launch {
             try {
-                val token = sessionManager.getIdToken()
+                val token = sessionManager.getFreshToken(firebaseApi)
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
+                    // 1. Direct PUT to users/{userId}/preferences/emailOtpLogin.json (matches Firebase RTDB schema)
+                    val putRes = try {
+                        firebaseApi.putEmailOtpLoginPreference(userId, kotlinx.serialization.json.JsonPrimitive(enabled), token)
+                    } catch (_: Exception) { null }
+
+                    // 2. Patch root updates
                     val rootUpdates = kotlinx.serialization.json.buildJsonObject {
                         put("emailOtpLogin", kotlinx.serialization.json.JsonPrimitive(enabled))
                         put("emailOtpVerification", kotlinx.serialization.json.JsonPrimitive(enabled))
@@ -156,7 +195,9 @@ class ProfileViewModel @Inject constructor(
                         put("emailOtpLogin", kotlinx.serialization.json.JsonPrimitive(enabled))
                     }
                     val r2 = firebaseApi.patchUserPreferences(userId, prefUpdates, token)
-                    onResult?.invoke(r1.isSuccessful || r2.isSuccessful)
+
+                    val isSuccess = putRes?.isSuccessful == true || r1.isSuccessful || r2.isSuccessful
+                    onResult?.invoke(isSuccess)
                 } else {
                     onResult?.invoke(true)
                 }
@@ -170,9 +211,14 @@ class ProfileViewModel @Inject constructor(
         preferencesManager.setTwoFactorEnabled(enabled)
         viewModelScope.launch {
             try {
-                val token = sessionManager.getIdToken()
+                val token = sessionManager.getFreshToken(firebaseApi)
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
+                    // 1. Direct PUT to users/{userId}/preferences/twoFactorAuth.json
+                    val putRes = try {
+                        firebaseApi.putTwoFactorAuthPreference(userId, kotlinx.serialization.json.JsonPrimitive(enabled), token)
+                    } catch (_: Exception) { null }
+
                     val rootUpdates = kotlinx.serialization.json.buildJsonObject {
                         put("twoFactorAuth", kotlinx.serialization.json.JsonPrimitive(enabled))
                         put("twoFactorEnabled", kotlinx.serialization.json.JsonPrimitive(enabled))
@@ -187,7 +233,9 @@ class ProfileViewModel @Inject constructor(
                         put("twoFactorAuth", kotlinx.serialization.json.JsonPrimitive(enabled))
                     }
                     val r2 = firebaseApi.patchUserPreferences(userId, prefUpdates, token)
-                    onResult?.invoke(r1.isSuccessful || r2.isSuccessful)
+
+                    val isSuccess = putRes?.isSuccessful == true || r1.isSuccessful || r2.isSuccessful
+                    onResult?.invoke(isSuccess)
                 } else {
                     onResult?.invoke(true)
                 }

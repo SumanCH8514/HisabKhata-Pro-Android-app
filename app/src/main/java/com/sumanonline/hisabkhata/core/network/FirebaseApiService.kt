@@ -138,6 +138,32 @@ interface FirebaseApiService {
         @Query("auth") auth: String
     ): Response<Unit>
 
+    @GET("users/{userId}/preferences/emailOtpLogin.json")
+    suspend fun getEmailOtpLoginPreference(
+        @Path("userId") userId: String,
+        @Query("auth") auth: String
+    ): Response<kotlinx.serialization.json.JsonElement?>
+
+    @PUT("users/{userId}/preferences/emailOtpLogin.json")
+    suspend fun putEmailOtpLoginPreference(
+        @Path("userId") userId: String,
+        @Body value: kotlinx.serialization.json.JsonPrimitive,
+        @Query("auth") auth: String
+    ): Response<Unit>
+
+    @GET("users/{userId}/preferences/twoFactorAuth.json")
+    suspend fun getTwoFactorAuthPreference(
+        @Path("userId") userId: String,
+        @Query("auth") auth: String
+    ): Response<kotlinx.serialization.json.JsonElement?>
+
+    @PUT("users/{userId}/preferences/twoFactorAuth.json")
+    suspend fun putTwoFactorAuthPreference(
+        @Path("userId") userId: String,
+        @Body value: kotlinx.serialization.json.JsonPrimitive,
+        @Query("auth") auth: String
+    ): Response<Unit>
+
     @GET("pending_payments.json")
     suspend fun getPendingPaymentsByMerchant(
         @Query("orderBy") orderBy: String = "\"merchantId\"",

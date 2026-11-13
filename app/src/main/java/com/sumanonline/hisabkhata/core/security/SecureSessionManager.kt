@@ -172,4 +172,27 @@ class SecureSessionManager @Inject constructor(
     fun getUserId(): String = _sessionState.value.userId
 
     fun getIdToken(): String = _sessionState.value.idToken
+
+    suspend fun getFreshToken(firebaseApi: com.sumanonline.hisabkhata.core.network.FirebaseApiService): String {
+        val currentToken = getIdToken()
+        val refreshToken = getRefreshToken()
+        if (refreshToken.isBlank()) return currentToken
+        return try {
+            val response = firebaseApi.refreshIdToken(
+                apiKey = com.sumanonline.hisabkhata.core.common.Constants.FIREBASE_API_KEY,
+                refreshToken = refreshToken
+            )
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                val newIdToken = body.idToken
+                val newRefreshToken = body.refreshToken.ifBlank { refreshToken }
+                updateTokens(newIdToken, newRefreshToken)
+                newIdToken
+            } else {
+                currentToken
+            }
+        } catch (_: Exception) {
+            currentToken
+        }
+    }
 }

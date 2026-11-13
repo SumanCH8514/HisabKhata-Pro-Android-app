@@ -112,21 +112,35 @@ data class FirebaseUserDto(
 ) {
     val isEmailOtpRequired: Boolean
         get() {
-            if (emailOtpLogin || emailOtpVerification) return true
             val prefElement = preferences?.get("emailOtpLogin")
             if (prefElement != null) {
                 val clean = prefElement.toString().trim('"', ' ')
-                if (clean.equals("true", ignoreCase = true)) return true
+                if (clean.equals("true", ignoreCase = true) || clean == "1") return true
+                if (clean.equals("false", ignoreCase = true) || clean == "0") return false
+            }
+            return emailOtpLogin || emailOtpVerification
+        }
+
+    val isEmailOtpExplicitlyDisabled: Boolean
+        get() {
+            val prefElement = preferences?.get("emailOtpLogin")
+            if (prefElement != null) {
+                val clean = prefElement.toString().trim('"', ' ')
+                if (clean.equals("false", ignoreCase = true) || clean == "0") return true
             }
             return false
         }
 
     val isTwoFactorActive: Boolean
         get() {
-            val isEnabled = twoFactorAuth || twoFactorEnabled || (preferences?.get("twoFactorAuth")?.let {
-                it.toString().trim('"', ' ').equals("true", ignoreCase = true)
-            } == true)
-            return isEnabled && !twoFactorSecret.isNullOrBlank()
+            val prefElement = preferences?.get("twoFactorAuth")
+            val isPrefEnabled = if (prefElement != null) {
+                val clean = prefElement.toString().trim('"', ' ')
+                clean.equals("true", ignoreCase = true) || clean == "1"
+            } else {
+                twoFactorAuth || twoFactorEnabled
+            }
+            return isPrefEnabled && !twoFactorSecret.isNullOrBlank()
         }
 }
 
