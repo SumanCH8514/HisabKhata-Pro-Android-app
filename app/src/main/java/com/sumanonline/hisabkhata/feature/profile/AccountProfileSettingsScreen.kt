@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -99,6 +101,7 @@ import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
+import com.sumanonline.hisabkhata.core.designsystem.appSwitchColors
 import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
 import com.sumanonline.hisabkhata.core.common.ImageUtils
 import kotlinx.coroutines.launch
@@ -606,20 +609,30 @@ fun AccountProfileSettingsScreen(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        spec.suggestions.take(3).forEach { suggestion ->
+                        spec.suggestions.forEach { suggestion ->
+                            val isSelected = editFieldValue.equals(suggestion, ignoreCase = true)
                             SuggestionChip(
                                 onClick = { editFieldValue = suggestion },
-                                label = { Text(suggestion, fontSize = 12.sp) },
+                                label = {
+                                    Text(
+                                        text = suggestion,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                },
                                 colors = SuggestionChipDefaults.suggestionChipColors(
-                                    containerColor = if (editFieldValue == suggestion) BrandBlueLight else MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = if (editFieldValue == suggestion) MaterialTheme.colorScheme.primary else TextPrimary
+                                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = if (isSelected) MaterialTheme.colorScheme.primary else TextPrimary
                                 ),
                                 border = SuggestionChipDefaults.suggestionChipBorder(
                                     enabled = true,
-                                    borderColor = BorderLight
+                                    borderColor = if (isSelected) MaterialTheme.colorScheme.primary else BorderLight
                                 )
                             )
                         }
@@ -668,7 +681,7 @@ fun AccountProfileSettingsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(20.dp).navigationBarsPadding())
             }
         }
     }
@@ -969,10 +982,7 @@ fun AccountProfileSettingsScreen(
                                 val msg = if (nextState) "2FA authentication enabled" else "2FA authentication disabled"
                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                             },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = MaterialTheme.colorScheme.primary
-                            )
+                            colors = appSwitchColors()
                         )
                     }
                 }

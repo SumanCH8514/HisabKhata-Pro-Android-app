@@ -73,6 +73,7 @@ import com.sumanonline.hisabkhata.core.common.AppPreferencesManager
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
+import com.sumanonline.hisabkhata.core.designsystem.appSwitchColors
 import com.sumanonline.hisabkhata.core.sync.SyncWorker
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -554,13 +555,7 @@ fun ApplicationSettingsScreen(
                                 val msg = if (nextState) "2FA authentication enabled" else "2FA authentication disabled"
                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                             },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = BrandBlue,
-                                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                            )
+                            colors = appSwitchColors()
                         )
                     }
                 }
@@ -640,13 +635,7 @@ private fun SettingToggleRow(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = BrandBlue,
-                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-            )
+            colors = appSwitchColors()
         )
     }
 }

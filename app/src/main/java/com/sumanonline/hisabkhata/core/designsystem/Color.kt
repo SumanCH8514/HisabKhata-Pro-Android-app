@@ -1,6 +1,8 @@
 package com.sumanonline.hisabkhata.core.designsystem
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
@@ -161,3 +163,19 @@ val GreenPillBg: Color
     @Composable
     @ReadOnlyComposable
     get() = if (isAppDark) Color(0xFF14532D).copy(alpha = 0.25f) else Color(0xFFDCFCE7)
+
+@Composable
+fun appSwitchColors(
+    checkedTrackColor: Color = MaterialTheme.colorScheme.primary,
+    checkedThumbColor: Color = Color.White
+): SwitchColors {
+    val isDark = isAppDark
+    return SwitchDefaults.colors(
+        checkedThumbColor = checkedThumbColor,
+        checkedTrackColor = checkedTrackColor,
+        checkedBorderColor = Color.Transparent,
+        uncheckedThumbColor = Color.White,
+        uncheckedTrackColor = if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1),
+        uncheckedBorderColor = if (isDark) Color(0xFF64748B) else Color(0xFF94A3B8)
+    )
+}
