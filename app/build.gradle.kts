@@ -17,10 +17,27 @@ if (localPropertiesFile.exists()) {
     localProperties.load(FileInputStream(localPropertiesFile))
 }
 
-// Production-grade fallback: local.properties -> System ENV -> google-services.json generated string
-val firebaseApiKey: String = localProperties.getProperty("FIREBASE_API_KEY")
-    ?: System.getenv("FIREBASE_API_KEY")
-    ?: "AIzaSyApT7WcNdjGztQUXd23Wp0pw1AIuJVu7RM"
+fun resolveFirebaseApiKey(): String {
+    val fromProp = localProperties.getProperty("FIREBASE_API_KEY")?.trim()
+    if (!fromProp.isNullOrBlank()) return fromProp
+
+    val fromEnv = System.getenv("FIREBASE_API_KEY")?.trim()
+    if (!fromEnv.isNullOrBlank()) return fromEnv
+
+    val googleServicesJson = file("google-services.json")
+    if (googleServicesJson.exists()) {
+        try {
+            val content = googleServicesJson.readText()
+            val match = Regex(""""current_key":\s*"([^"]+)"""").find(content)
+            if (match != null) {
+                return match.groupValues[1]
+            }
+        } catch (_: Exception) {}
+    }
+    return ""
+}
+
+val firebaseApiKey: String = resolveFirebaseApiKey()
 
 android {
     namespace = "com.sumanonline.hisabkhata"
