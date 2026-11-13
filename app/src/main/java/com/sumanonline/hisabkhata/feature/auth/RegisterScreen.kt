@@ -66,6 +66,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import java.util.Calendar
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -557,6 +559,18 @@ fun RegisterScreen(
                     modifier = Modifier.clickable(onClick = onNavigateToLogin)
                 )
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR) }
+            Text(
+                text = "© $currentYear SumanOnline Web Services.",
+                fontSize = 12.sp,
+                color = TextTertiary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

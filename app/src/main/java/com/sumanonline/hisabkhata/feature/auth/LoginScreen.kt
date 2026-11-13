@@ -58,6 +58,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import java.util.Calendar
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -282,7 +284,7 @@ fun LoginScreen(
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Merchant Login",
+                        text = "Account Login",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -511,6 +513,18 @@ fun LoginScreen(
                     modifier = Modifier.clickable(onClick = onNavigateToRegister)
                 )
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR) }
+            Text(
+                text = "© $currentYear SumanOnline Web Services.",
+                fontSize = 12.sp,
+                color = TextTertiary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
