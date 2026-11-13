@@ -203,7 +203,7 @@ fun AboutProjectScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Version 1.1.0 (Build 2) • Stable",
+                                    text = "Version 1.2.0 (Build 3) • Stable",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextSecondary
@@ -354,7 +354,7 @@ fun AboutProjectScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "What's New in v1.1.0",
+                                text = "What's New in v1.2.0",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
@@ -364,24 +364,24 @@ fun AboutProjectScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         ChangelogItem(
-                            title = "Google Sign-In Integration",
-                            desc = "Full native Google OAuth authentication on Login and Signup pages."
+                            title = "Redesigned Add New Party & Contact Picker",
+                            desc = "Brand blue header with round logo, system contact picker ('Select from Contacts'), and composite input fields."
                         )
                         ChangelogItem(
-                            title = "Self-Healing Cloud Sync",
-                            desc = "Automatic Firebase token refresh and retry queue for offline entries."
+                            title = "Default Silhouette Profile Avatar",
+                            desc = "Seamless silhouette default avatar across ledger, lists, sheets, and reminders when no customer picture is uploaded."
                         )
                         ChangelogItem(
-                            title = "Enhanced Customer Ledger",
-                            desc = "Notes truncated to 4 lines with ellipsis, cleaner overdue indicators."
+                            title = "Automated Transaction Alert Emails",
+                            desc = "Instant transactional email dispatch to party email addresses upon saving 'You Gave' and 'You Got' entries."
                         )
                         ChangelogItem(
-                            title = "Interactive Sync Indicator",
-                            desc = "Smooth rotating sync animation with instant status toast notifications."
+                            title = "Native Edit Transaction Entry Flow",
+                            desc = "Directly opens matching 'You Gave' or 'You Got' modal views with pre-fetched details and attachments."
                         )
                         ChangelogItem(
-                            title = "Biometric Security",
-                            desc = "Hardware-backed fingerprint and face unlock protection."
+                            title = "Enhanced Communication Suite",
+                            desc = "Added dedicated SMS reminder button alongside WhatsApp and Email with single-line search."
                         )
                     }
                 }
