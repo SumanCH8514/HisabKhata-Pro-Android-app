@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sumanonline.hisabkhata.R
@@ -191,9 +192,11 @@ fun RemindersScreen(
                         placeholder = {
                             Text(
                                 text = "Search by customer name or phone...",
-                                fontSize = 14.sp,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Normal,
-                                color = Color(0xFF64748B)
+                                color = Color(0xFF64748B),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         },
                         leadingIcon = {
@@ -217,6 +220,7 @@ fun RemindersScreen(
                             }
                         },
                         singleLine = true,
+                        maxLines = 1,
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = SurfaceWhite,
