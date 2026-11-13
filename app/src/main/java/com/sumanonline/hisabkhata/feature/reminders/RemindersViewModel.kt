@@ -101,6 +101,10 @@ class RemindersViewModel @Inject constructor(
 
     fun sendWhatsAppReminder(context: Context, customer: CustomerEntity) {
         val cleanPhone = customer.phone.replace("+", "").replace(" ", "").replace("-", "").trim()
+        if (cleanPhone.isBlank()) {
+            Toast.makeText(context, "No phone registered for ${customer.name}", Toast.LENGTH_SHORT).show()
+            return
+        }
         val targetPhone = if (cleanPhone.length == 10) "91$cleanPhone" else cleanPhone
         val balanceFormatted = CurrencyFormatter.formatInr(Math.abs(customer.balance))
         val shareLink = "${Constants.WEB_PORTAL_BASE_URL}customer/share/${customer.id}"
@@ -113,6 +117,31 @@ class RemindersViewModel @Inject constructor(
             context.startActivity(intent)
         } catch (_: Exception) {
             Toast.makeText(context, "WhatsApp is not installed on this device", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun sendSmsReminder(context: Context, customer: CustomerEntity) {
+        val cleanPhone = customer.phone.replace("+", "").replace(" ", "").replace("-", "").trim()
+        if (cleanPhone.isBlank()) {
+            Toast.makeText(context, "No phone registered for ${customer.name}", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val targetPhone = if (cleanPhone.length == 10) "91$cleanPhone" else cleanPhone
+        val balanceFormatted = CurrencyFormatter.formatInr(Math.abs(customer.balance))
+        val shareLink = "${Constants.WEB_PORTAL_BASE_URL}customer/share/${customer.id}"
+        val merchantName = session.value.businessName.ifBlank { session.value.displayName.ifBlank { "HisabKhata" } }
+
+        val message = "Hello ${customer.name},\nPayment Reminder from $merchantName:\nYour outstanding balance is: $balanceFormatted\nView statement: $shareLink\nPlease clear dues. Thank you!"
+
+        val uri = Uri.parse("smsto:$targetPhone")
+        val intent = Intent(Intent.ACTION_SENDTO, uri).apply {
+            putExtra("sms_body", message)
+            putExtra(Intent.EXTRA_TEXT, message)
+        }
+        try {
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            Toast.makeText(context, "No SMS app found on this device", Toast.LENGTH_SHORT).show()
         }
     }
 

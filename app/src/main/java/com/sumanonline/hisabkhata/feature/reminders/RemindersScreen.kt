@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
@@ -68,7 +70,6 @@ import com.sumanonline.hisabkhata.core.designsystem.PageBackground
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
-import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.WarningAmber
 import com.sumanonline.hisabkhata.core.designsystem.WarningAmberLight
 import com.sumanonline.hisabkhata.core.designsystem.components.AppBottomBar
@@ -190,15 +191,16 @@ fun RemindersScreen(
                         placeholder = {
                             Text(
                                 text = "Search by customer name or phone...",
-                                fontSize = 13.5.sp,
-                                color = TextTertiary
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = Color(0xFF64748B)
                             )
                         },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Outlined.Search,
                                 contentDescription = "Search",
-                                tint = TextTertiary,
+                                tint = Color(0xFF64748B),
                                 modifier = Modifier.size(20.dp)
                             )
                         },
@@ -208,7 +210,7 @@ fun RemindersScreen(
                                     Icon(
                                         imageVector = Icons.Outlined.Clear,
                                         contentDescription = "Clear",
-                                        tint = TextSecondary,
+                                        tint = Color(0xFF64748B),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -222,7 +224,12 @@ fun RemindersScreen(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = BorderLight,
                             focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
+                            unfocusedTextColor = TextPrimary,
+                            focusedPlaceholderColor = Color(0xFF64748B),
+                            unfocusedPlaceholderColor = Color(0xFF64748B),
+                            focusedLeadingIconColor = Color(0xFF64748B),
+                            unfocusedLeadingIconColor = Color(0xFF64748B),
+                            cursorColor = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -257,6 +264,7 @@ fun RemindersScreen(
                         customer = customer,
                         onCardClick = { onCustomerClick(customer.id) },
                         onSendWhatsApp = { viewModel.sendWhatsAppReminder(context, customer) },
+                        onSendSms = { viewModel.sendSmsReminder(context, customer) },
                         onSendEmail = { viewModel.sendEmailReminder(context, customer) }
                     )
                 }
@@ -345,6 +353,7 @@ private fun ReminderCustomerCard(
     customer: CustomerEntity,
     onCardClick: () -> Unit,
     onSendWhatsApp: () -> Unit,
+    onSendSms: () -> Unit,
     onSendEmail: () -> Unit
 ) {
     val dueStatus = remember(customer.dueDate) {
@@ -467,8 +476,10 @@ private fun ReminderCustomerCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // 1. WhatsApp Reminder
                 Button(
                     onClick = onSendWhatsApp,
                     colors = ButtonDefaults.buttonColors(
@@ -476,46 +487,73 @@ private fun ReminderCustomerCard(
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .height(40.dp)
+                        .height(38.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = null,
+                        contentDescription = "WhatsApp",
                         tint = Color.White,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(13.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = "WhatsApp Reminder",
-                        fontSize = 12.sp,
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color.White,
+                        maxLines = 1
                     )
                 }
 
-                if (customer.email.isNotBlank()) {
-                    OutlinedButton(
-                        onClick = onSendEmail,
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, BorderLight),
-                        modifier = Modifier.height(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Email",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                // 2. SMS Button (between WhatsApp and Email)
+                OutlinedButton(
+                    onClick = onSendSms,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, BorderLight),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                    modifier = Modifier.height(38.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Sms,
+                        contentDescription = "SMS",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "SMS",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1
+                    )
+                }
+
+                // 3. Email Button
+                OutlinedButton(
+                    onClick = onSendEmail,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, BorderLight),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                    modifier = Modifier.height(38.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = "Email",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Email",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1
+                    )
                 }
             }
         }
