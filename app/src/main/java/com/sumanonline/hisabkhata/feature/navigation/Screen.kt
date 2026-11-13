@@ -19,6 +19,7 @@ sealed class Screen(val route: String) {
         fun createRoute(paymentId: String) = "payment_verification/$paymentId"
     }
     data object Reminders : Screen("reminders")
+    data object AutoReminder : Screen("auto_reminder")
     data object Profile : Screen("profile")
     data object AccountSettings : Screen("account_settings")
     data object ApplicationSettings : Screen("application_settings")

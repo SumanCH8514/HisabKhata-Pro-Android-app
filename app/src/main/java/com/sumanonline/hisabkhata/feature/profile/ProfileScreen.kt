@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.ManageAccounts
+import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Payments
@@ -128,7 +129,8 @@ fun ProfileScreen(
     onNavigateToAboutProject: () -> Unit = {},
     onNavigateToAccountSettings: () -> Unit = {},
     onNavigateToApplicationSettings: () -> Unit = {},
-    onNavigateToPreferencesSettings: () -> Unit = {}
+    onNavigateToPreferencesSettings: () -> Unit = {},
+    onNavigateToAutoReminder: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val session by viewModel.session.collectAsState()
@@ -197,12 +199,20 @@ fun ProfileScreen(
             icon = Icons.Outlined.Notifications,
             iconTint = Color(0xFF0052CC),
             iconBg = Color(0xFFEBF3FF),
-            badge = "CRON",
-            badgeBg = Color(0xFF0052CC),
-            badgeText = Color.White,
+            badge = null,
             onClick = {
                 onTabSelected(BottomTab.REMINDERS)
             }
+        ),
+        EcosystemItem(
+            title = "Auto Reminder",
+            icon = Icons.Outlined.MarkEmailRead,
+            iconTint = Color(0xFF0052CC),
+            iconBg = Color(0xFFEBF3FF),
+            badge = "CRON",
+            badgeBg = Color(0xFF0052CC),
+            badgeText = Color.White,
+            onClick = onNavigateToAutoReminder
         ),
         EcosystemItem(
             title = "Loans",

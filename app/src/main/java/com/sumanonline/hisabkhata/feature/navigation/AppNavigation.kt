@@ -17,6 +17,8 @@ import com.sumanonline.hisabkhata.feature.auth.AuthViewModel
 import com.sumanonline.hisabkhata.feature.auth.ForgotPasswordScreen
 import com.sumanonline.hisabkhata.feature.auth.LoginScreen
 import com.sumanonline.hisabkhata.feature.auth.RegisterScreen
+import com.sumanonline.hisabkhata.feature.autoreminder.AutoReminderScreen
+import com.sumanonline.hisabkhata.feature.autoreminder.AutoReminderViewModel
 import com.sumanonline.hisabkhata.feature.customer.CustomerLedgerScreen
 import com.sumanonline.hisabkhata.feature.customer.CustomerListScreen
 import com.sumanonline.hisabkhata.feature.customer.CustomerViewModel
@@ -245,6 +247,20 @@ fun AppNavigation(
                 },
                 onNavigateToPreferencesSettings = {
                     navController.navigate(Screen.PreferencesSettings.route)
+                },
+                onNavigateToAutoReminder = {
+                    navController.navigate(Screen.AutoReminder.route)
+                }
+            )
+        }
+
+        composable(Screen.AutoReminder.route) {
+            val autoReminderViewModel: AutoReminderViewModel = hiltViewModel()
+            AutoReminderScreen(
+                viewModel = autoReminderViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLedger = { customerId ->
+                    navController.navigate(Screen.CustomerLedger.createRoute(customerId))
                 }
             )
         }
@@ -315,6 +331,7 @@ private fun resolveRouteFromUri(uri: Uri): String? {
 
     if (scheme == "hisabkhata") {
         return when {
+            host.startsWith("autoreminder") || host.startsWith("auto-reminder") -> Screen.AutoReminder.route
             host.startsWith("payment") || host.startsWith("verify") -> Screen.Payments.route
             host.startsWith("customer") || host.startsWith("ledger") || host.startsWith("transaction") || host.startsWith("entry") -> {
                 val customerId = segments.firstOrNull()
@@ -323,6 +340,7 @@ private fun resolveRouteFromUri(uri: Uri): String? {
                     ?: uri.getQueryParameter("id")
                 if (!customerId.isNullOrBlank()) Screen.CustomerLedger.createRoute(customerId) else Screen.Customers.route
             }
+            path.startsWith("/autoreminder") || path.startsWith("/auto-reminder") -> Screen.AutoReminder.route
             path.startsWith("/payment") || path.startsWith("/verify") -> Screen.Payments.route
             path.startsWith("/customer") || path.startsWith("/ledger") || path.startsWith("/transaction") || path.startsWith("/entry") -> {
                 val customerId = segments.getOrNull(1)
@@ -337,6 +355,9 @@ private fun resolveRouteFromUri(uri: Uri): String? {
 
     if (scheme == "http" || scheme == "https") {
         if (host.contains("hisabkhata")) {
+            if (path.startsWith("/autoreminder") || path.startsWith("/auto-reminder")) {
+                return Screen.AutoReminder.route
+            }
             if (path.startsWith("/payment") || path.startsWith("/verify")) {
                 return Screen.Payments.route
             }
