@@ -6,6 +6,7 @@ import com.sumanonline.hisabkhata.core.network.model.FirebaseAuthSignUpRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebaseCustomerDto
 import com.sumanonline.hisabkhata.core.network.model.FirebasePasswordResetRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebasePasswordResetResponse
+import com.sumanonline.hisabkhata.core.network.model.FirebasePendingPaymentDto
 import com.sumanonline.hisabkhata.core.network.model.FirebaseSignInWithIdpRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebaseSignInWithIdpResponse
 import com.sumanonline.hisabkhata.core.network.model.FirebaseTokenRefreshResponse
@@ -126,6 +127,25 @@ interface FirebaseApiService {
     @PATCH("users/{userId}.json")
     suspend fun patchUserProfile(
         @Path("userId") userId: String,
+        @Body updates: kotlinx.serialization.json.JsonObject,
+        @Query("auth") auth: String
+    ): Response<Unit>
+
+    @GET("pending_payments.json")
+    suspend fun getPendingPaymentsByMerchant(
+        @Query("orderBy") orderBy: String = "\"merchantId\"",
+        @Query("equalTo") equalTo: String,
+        @Query("auth") auth: String
+    ): Response<Map<String, FirebasePendingPaymentDto>?>
+
+    @GET("pending_payments.json")
+    suspend fun getAllPendingPayments(
+        @Query("auth") auth: String
+    ): Response<Map<String, FirebasePendingPaymentDto>?>
+
+    @PATCH("pending_payments/{id}.json")
+    suspend fun patchPendingPayment(
+        @Path("id") paymentId: String,
         @Body updates: kotlinx.serialization.json.JsonObject,
         @Query("auth") auth: String
     ): Response<Unit>

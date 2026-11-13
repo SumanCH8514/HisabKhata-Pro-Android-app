@@ -3,9 +3,11 @@ package com.sumanonline.hisabkhata.core.sync
 import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.database.dao.CustomerDao
 import com.sumanonline.hisabkhata.core.database.dao.OutboxDao
+import com.sumanonline.hisabkhata.core.database.dao.PendingPaymentDao
 import com.sumanonline.hisabkhata.core.database.dao.TransactionDao
 import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
 import com.sumanonline.hisabkhata.core.database.entity.OutboxOperationEntity
+import com.sumanonline.hisabkhata.core.database.entity.PendingPaymentEntity
 import com.sumanonline.hisabkhata.core.database.entity.TransactionEntity
 import com.sumanonline.hisabkhata.core.network.FirebaseApiService
 import com.sumanonline.hisabkhata.core.network.model.FirebaseCustomerDto
@@ -24,6 +26,7 @@ import javax.inject.Singleton
 class SyncEngine @Inject constructor(
     private val customerDao: CustomerDao,
     private val transactionDao: TransactionDao,
+    private val pendingPaymentDao: PendingPaymentDao,
     private val outboxDao: OutboxDao,
     private val firebaseApi: FirebaseApiService,
     private val sessionManager: SecureSessionManager,
@@ -425,6 +428,39 @@ class SyncEngine @Inject constructor(
                     )
                 }
                 transactionDao.insertOrUpdateAll(cloudTxs)
+            }
+
+            try {
+                var paymentsRes = firebaseApi.getPendingPaymentsByMerchant(equalTo = "\"$userId\"", auth = token)
+                if (paymentsRes.code() == 401) {
+                    val fresh = refreshToken()
+                    if (fresh != null) {
+                        token = fresh
+                        paymentsRes = firebaseApi.getPendingPaymentsByMerchant(equalTo = "\"$userId\"", auth = token)
+                    }
+                }
+                if (!paymentsRes.isSuccessful && paymentsRes.code() == 400) {
+                    paymentsRes = firebaseApi.getAllPendingPayments(auth = token)
+                }
+                if (paymentsRes.isSuccessful && paymentsRes.body() != null) {
+                    val cloudPayments = paymentsRes.body()!!.filter {
+                        it.value.merchantId == userId || it.value.merchantId.isBlank()
+                    }.map { (key, dto) ->
+                        PendingPaymentEntity(
+                            id = key,
+                            merchantId = dto.merchantId.ifBlank { userId },
+                            customerId = dto.customerId,
+                            customerName = dto.customerName,
+                            amount = dto.amount,
+                            transactionId = dto.transactionId,
+                            screenshot = dto.screenshot,
+                            status = dto.status.ifBlank { "pending" },
+                            timestamp = if (dto.timestamp > 0) dto.timestamp else System.currentTimeMillis()
+                        )
+                    }
+                    pendingPaymentDao.insertOrUpdateAll(cloudPayments)
+                }
+            } catch (_: Exception) {
             }
         } catch (_: Exception) {
         }

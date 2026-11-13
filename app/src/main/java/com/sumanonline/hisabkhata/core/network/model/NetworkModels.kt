@@ -160,3 +160,16 @@ data class FirebaseTokenRefreshResponse(
     @SerialName("user_id") val userId: String = "",
     @SerialName("project_id") val projectId: String = ""
 )
+
+@Serializable
+data class FirebasePendingPaymentDto(
+    val merchantId: String = "",
+    val customerId: String = "",
+    val customerName: String = "",
+    val amount: Double = 0.0,
+    val transactionId: String? = null,
+    val screenshot: String? = null,
+    val status: String = "pending",
+    val timestamp: Long = 0L
+)
+

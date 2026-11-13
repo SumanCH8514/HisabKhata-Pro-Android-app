@@ -155,6 +155,9 @@ fun AppNavigation(
                 },
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
+                },
+                onNavigateToLedger = { customerId ->
+                    navController.navigate(Screen.CustomerLedger.createRoute(customerId))
                 }
             )
         }
