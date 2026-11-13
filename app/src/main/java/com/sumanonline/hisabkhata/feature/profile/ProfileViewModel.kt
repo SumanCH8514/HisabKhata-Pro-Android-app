@@ -38,10 +38,6 @@ class ProfileViewModel @Inject constructor(
                     if (res.isSuccessful && res.body() != null) {
                         val profile = res.body()!!
                         val current = sessionManager.sessionState.value
-                        val bankDesc = if (profile.accountNumber.isNotBlank()) {
-                            "${profile.bankName} ${profile.accountNumber}".trim()
-                        } else current.bankAccount
-
                         sessionManager.saveSession(
                             current.copy(
                                 displayName = profile.name.ifBlank { current.displayName },
@@ -53,7 +49,7 @@ class ProfileViewModel @Inject constructor(
                                 businessCategory = profile.businessCategory.ifBlank { current.businessCategory },
                                 businessType = profile.businessType.ifBlank { current.businessType },
                                 gstin = profile.gst.ifBlank { current.gstin },
-                                bankAccount = bankDesc
+                                bankAccount = profile.accountNumber.ifBlank { current.bankAccount }
                             )
                         )
                     }
@@ -63,30 +59,22 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun updateSingleField(fieldKey: String, value: String) {
+    fun updateSingleField(key: String, value: String) {
         viewModelScope.launch {
             _isSaving.value = true
-            sessionManager.updateField(fieldKey, value.trim())
-
+            sessionManager.updateField(key, value)
             try {
                 val token = sessionManager.getIdToken()
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
-                    val firebaseKey = when (fieldKey) {
+                    val fbKey = when (key) {
                         "displayName" -> "name"
-                        "phone" -> "phone"
-                        "businessName" -> "businessName"
-                        "businessAddress" -> "businessAddress"
-                        "businessCategory" -> "businessCategory"
-                        "businessType" -> "businessType"
                         "gstin" -> "gst"
                         "bankAccount" -> "accountNumber"
-                        "upiId" -> "upiId"
-                        "photoURL" -> "photoURL"
-                        else -> fieldKey
+                        else -> key
                     }
                     val updates = kotlinx.serialization.json.buildJsonObject {
-                        put(firebaseKey, kotlinx.serialization.json.JsonPrimitive(value.trim()))
+                        put(fbKey, kotlinx.serialization.json.JsonPrimitive(value.trim()))
                         put("updatedAt", kotlinx.serialization.json.JsonPrimitive(System.currentTimeMillis()))
                     }
                     firebaseApi.patchUserProfile(userId, updates, token)

@@ -1,0 +1,795 @@
+package com.sumanonline.hisabkhata.feature.profile
+
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.Business
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.People
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.Smartphone
+import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.GiveRed
+import com.sumanonline.hisabkhata.core.designsystem.GotGreen
+import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
+import com.sumanonline.hisabkhata.core.common.ImageUtils
+import kotlinx.coroutines.launch
+
+private val SectionHeaderBg = Color(0xFFF4F5F7)
+private val SectionHeaderText = Color(0xFF757575)
+private val RowLabelColor = Color(0xFF757575)
+private val RowValueColor = Color(0xFF1E293B)
+private val RowIconTint = Color(0xFF616161)
+private val BlueChevronTint = Color(0xFF0052CC)
+private val DividerColor = Color(0xFFEEEEEE)
+
+private data class EditFieldSpec(
+    val key: String,
+    val title: String,
+    val initialValue: String,
+    val isMultiline: Boolean = false,
+    val suggestions: List<String> = emptyList()
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AccountProfileSettingsScreen(
+    viewModel: ProfileViewModel,
+    onNavigateBack: () -> Unit,
+    onLogoutSuccess: () -> Unit
+) {
+    val context = LocalContext.current
+    val session by viewModel.session.collectAsState()
+    val isSaving by viewModel.isSaving.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    var activeEditField by remember { mutableStateOf<EditFieldSpec?>(null) }
+    var editFieldValue by remember { mutableStateOf("") }
+    var showLogoutConfirm by remember { mutableStateOf(false) }
+    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
+    var showPhotoUrlDialog by remember { mutableStateOf(false) }
+    var photoUrlInput by remember { mutableStateOf("") }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val uriString = uri.toString()
+            viewModel.updateSingleField("photoURL", uriString)
+            Toast.makeText(context, "Profile photo updated", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    Scaffold(
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(BrandBlue)
+                    .statusBarsPadding()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        text = "Account Profile Settings",
+                        fontSize = 19.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
+            }
+        },
+        containerColor = Color.White
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Top Avatar & Profile Strength Section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(top = 22.dp, bottom = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Circular Avatar with Camera Badge
+                Box(
+                    modifier = Modifier.size(108.dp),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    if (session.photoURL.isNotBlank()) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(ImageUtils.sanitizeImageSource(session.photoURL))
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Profile Photo",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(108.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, Color(0xFFE2E8F0), CircleShape)
+                        )
+                    } else {
+                        CustomerAvatar(
+                            name = session.businessName.ifBlank { session.displayName.ifBlank { "User" } },
+                            photoUrl = null,
+                            size = 108.dp,
+                            fontSize = 36.sp,
+                            backgroundColor = BrandBlue,
+                            textColor = Color.White
+                        )
+                    }
+
+                    // Camera Icon Badge Overlay
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(BrandBlue)
+                            .border(2.dp, Color.White, CircleShape)
+                            .clickable { showPhotoOptionsDialog = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CameraAlt,
+                            contentDescription = "Change photo",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // "Edit photo" link button
+                Text(
+                    text = "Edit photo",
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = BrandBlue,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { showPhotoOptionsDialog = true }
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Horizontal Green Progress Bar (right below Edit photo)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(3.5.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(GotGreen)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Profile Strength Row (Below Progress Bar)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Profile strength : ",
+                            fontSize = 13.sp,
+                            color = Color(0xFF424242),
+                            fontWeight = FontWeight.Normal
+                        )
+                        Text(
+                            text = "Good",
+                            fontSize = 13.sp,
+                            color = GotGreen,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Text(
+                        text = "100%",
+                        fontSize = 13.sp,
+                        color = GotGreen,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // 1. Personal Info Section
+            SectionHeader(title = "Personal Info")
+
+            SettingsRow(
+                icon = Icons.Outlined.Person,
+                label = "Name",
+                value = session.displayName.ifBlank { "Suman Chakrabortty" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "displayName",
+                        title = "Name",
+                        initialValue = session.displayName.ifBlank { "Suman Chakrabortty" }
+                    )
+                    editFieldValue = session.displayName.ifBlank { "Suman Chakrabortty" }
+                }
+            )
+
+            SettingsDivider()
+
+            SettingsRow(
+                icon = Icons.Outlined.Phone,
+                label = "Registered number",
+                value = session.phone.ifBlank { "8918153949" },
+                isClickable = false
+            )
+
+            SettingsDivider()
+
+            SettingsRow(
+                icon = Icons.Outlined.Storefront,
+                label = "Business name",
+                value = session.businessName.ifBlank { "SumanOnline Service" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "businessName",
+                        title = "Business name",
+                        initialValue = session.businessName.ifBlank { "SumanOnline Service" }
+                    )
+                    editFieldValue = session.businessName.ifBlank { "SumanOnline Service" }
+                }
+            )
+
+            // 2. Business info Section
+            SectionHeader(title = "Business info")
+
+            SettingsRow(
+                icon = Icons.Outlined.LocationOn,
+                label = "Business address",
+                value = session.businessAddress.ifBlank { "Karakberia, Karak Berya, Kotalpur, WB, IND, 722141" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "businessAddress",
+                        title = "Business address",
+                        initialValue = session.businessAddress.ifBlank { "Karakberia, Karak Berya, Kotalpur, WB, IND, 722141" },
+                        isMultiline = true
+                    )
+                    editFieldValue = session.businessAddress.ifBlank { "Karakberia, Karak Berya, Kotalpur, WB, IND, 722141" }
+                }
+            )
+
+            SettingsDivider()
+
+            SettingsRow(
+                icon = Icons.Outlined.ContentCopy,
+                label = "Business Category",
+                value = session.businessCategory.ifBlank { "Mobile" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "businessCategory",
+                        title = "Business Category",
+                        initialValue = session.businessCategory.ifBlank { "Mobile" },
+                        suggestions = listOf(
+                            "Mobile & Electronics",
+                            "Lending / Finance",
+                            "Retail / Grocery",
+                            "Wholesale",
+                            "Services",
+                            "Restaurant / Cafe",
+                            "Pharmacy",
+                            "Garments / Fashion",
+                            "Other"
+                        )
+                    )
+                    editFieldValue = session.businessCategory.ifBlank { "Mobile" }
+                }
+            )
+
+            SettingsDivider()
+
+            SettingsRow(
+                icon = Icons.Outlined.Business,
+                label = "Business Type",
+                value = session.businessType.ifBlank { "Personal" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "businessType",
+                        title = "Business Type",
+                        initialValue = session.businessType.ifBlank { "Personal" },
+                        suggestions = listOf(
+                            "Personal",
+                            "Proprietorship",
+                            "Partnership",
+                            "Private Limited",
+                            "LLP"
+                        )
+                    )
+                    editFieldValue = session.businessType.ifBlank { "Personal" }
+                }
+            )
+
+            // 3. Financial info Section
+            SectionHeader(title = "Financial info")
+
+            SettingsRow(
+                icon = Icons.Outlined.Description,
+                label = "GSTIN",
+                value = session.gstin.ifBlank { "NA" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "gstin",
+                        title = "GSTIN",
+                        initialValue = session.gstin.ifBlank { "NA" }
+                    )
+                    editFieldValue = if (session.gstin == "NA") "" else session.gstin
+                }
+            )
+
+            SettingsDivider()
+
+            SettingsRow(
+                icon = Icons.Outlined.AccountBalance,
+                label = "Bank Account",
+                value = session.bankAccount.ifBlank { "NA" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "bankAccount",
+                        title = "Bank Account",
+                        initialValue = session.bankAccount.ifBlank { "NA" }
+                    )
+                    editFieldValue = if (session.bankAccount == "NA") "" else session.bankAccount
+                }
+            )
+
+            SettingsDivider()
+
+            SettingsRow(
+                icon = Icons.Outlined.Smartphone,
+                label = "UPI ID",
+                value = session.upiId.ifBlank { "8514900224@upi" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "upiId",
+                        title = "UPI ID",
+                        initialValue = session.upiId.ifBlank { "8514900224@upi" }
+                    )
+                    editFieldValue = session.upiId.ifBlank { "8514900224@upi" }
+                }
+            )
+
+            // 4. Staff info Section
+            SectionHeader(title = "Staff info")
+
+            SettingsRow(
+                icon = Icons.Outlined.People,
+                label = "Details",
+                value = session.staffCount.ifBlank { "0" },
+                isClickable = true,
+                onClick = {
+                    activeEditField = EditFieldSpec(
+                        key = "staffCount",
+                        title = "Staff Details",
+                        initialValue = session.staffCount.ifBlank { "0" }
+                    )
+                    editFieldValue = session.staffCount.ifBlank { "0" }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Sign Out Button (Matching image style)
+            OutlinedButton(
+                onClick = { showLogoutConfirm = true },
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White,
+                    contentColor = GiveRed
+                ),
+                border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    tint = GiveRed,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Sign Out",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = GiveRed
+                )
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+        }
+    }
+
+    // Modal Bottom Sheet for editing individual field
+    if (activeEditField != null) {
+        val spec = activeEditField!!
+        ModalBottomSheet(
+            onDismissRequest = { activeEditField = null },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Edit ${spec.title}",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedTextField(
+                    value = editFieldValue,
+                    onValueChange = { editFieldValue = it },
+                    label = { Text(spec.title) },
+                    singleLine = !spec.isMultiline,
+                    minLines = if (spec.isMultiline) 3 else 1,
+                    maxLines = if (spec.isMultiline) 4 else 1,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrandBlue,
+                        focusedLabelColor = BrandBlue
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Quick suggestions if present
+                if (spec.suggestions.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Suggestions",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF757575)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        spec.suggestions.take(3).forEach { suggestion ->
+                            SuggestionChip(
+                                onClick = { editFieldValue = suggestion },
+                                label = { Text(suggestion, fontSize = 12.sp) },
+                                colors = SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = if (editFieldValue == suggestion) Color(0xFFEFF6FF) else Color(0xFFF8FAFC)
+                                )
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { activeEditField = null },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(46.dp)
+                    ) {
+                        Text("Cancel", color = Color(0xFF64748B), fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Button(
+                        onClick = {
+                            val keyToSave = spec.key
+                            val valueToSave = editFieldValue.trim()
+                            viewModel.updateSingleField(keyToSave, valueToSave)
+                            scope.launch {
+                                sheetState.hide()
+                                activeEditField = null
+                            }
+                            Toast.makeText(context, "${spec.title} updated", Toast.LENGTH_SHORT).show()
+                        },
+                        enabled = !isSaving,
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(46.dp)
+                    ) {
+                        Text("Save", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+            }
+        }
+    }
+
+    // Photo options dialog (Gallery, URL, Remove)
+    if (showPhotoOptionsDialog) {
+        AlertDialog(
+            onDismissRequest = { showPhotoOptionsDialog = false },
+            title = { Text("Profile Photo", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text(
+                        text = "Choose an option to update your profile photo:",
+                        fontSize = 14.sp,
+                        color = Color(0xFF475569)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPhotoOptionsDialog = false
+                        imagePickerLauncher.launch("image/*")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                ) {
+                    Text("Select from Gallery")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showPhotoOptionsDialog = false
+                        photoUrlInput = session.photoURL
+                        showPhotoUrlDialog = true
+                    }
+                ) {
+                    Text("Enter Image URL", color = BrandBlue)
+                }
+            }
+        )
+    }
+
+    // Photo URL direct entry dialog
+    if (showPhotoUrlDialog) {
+        AlertDialog(
+            onDismissRequest = { showPhotoUrlDialog = false },
+            title = { Text("Enter Photo URL", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = photoUrlInput,
+                        onValueChange = { photoUrlInput = it },
+                        label = { Text("Image URL") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.updateSingleField("photoURL", photoUrlInput.trim())
+                        showPhotoUrlDialog = false
+                        Toast.makeText(context, "Profile photo updated", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPhotoUrlDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Logout confirmation dialog
+    if (showLogoutConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirm = false },
+            title = { Text("Sign Out", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to sign out of HisabKhata?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutConfirm = false
+                        viewModel.logout()
+                        onLogoutSuccess()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GiveRed)
+                ) {
+                    Text("Sign Out", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirm = false }) {
+                    Text("Cancel", color = Color(0xFF64748B))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SectionHeaderBg)
+            .padding(horizontal = 16.dp, vertical = 9.dp)
+    ) {
+        Text(
+            text = title,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = SectionHeaderText
+        )
+    }
+}
+
+@Composable
+private fun SettingsRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    isClickable: Boolean,
+    onClick: () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = isClickable, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Bare line icon
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = RowIconTint,
+            modifier = Modifier.size(22.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Label and Value
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = RowLabelColor,
+                fontWeight = FontWeight.Normal
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = value,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = RowValueColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        // Blue chevron only for clickable items
+        if (isClickable) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = BlueChevronTint,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 54.dp),
+        thickness = 0.7.dp,
+        color = DividerColor
+    )
+}
