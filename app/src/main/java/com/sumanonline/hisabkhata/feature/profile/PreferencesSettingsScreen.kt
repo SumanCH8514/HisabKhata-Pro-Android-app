@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,13 +26,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.BrightnessAuto
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.CurrencyRupee
-import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.FontDownload
 import androidx.compose.material.icons.outlined.FormatSize
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,10 +47,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,6 +88,18 @@ fun PreferencesSettingsScreen(
     val context = LocalContext.current
     val preferences by preferencesManager.preferences.collectAsState()
 
+    var showLanguageDialog by remember { mutableStateOf(false) }
+
+    val languages = listOf(
+        "English (US)",
+        "Hindi (हिन्दी)",
+        "Bengali (বাংলা)",
+        "Gujarati (ગુજરાતી)",
+        "Marathi (मराठी)",
+        "Tamil (தமிழ்)",
+        "Telugu (తెలుగు)"
+    )
+
     val accentColors = listOf(
         AccentColorItem("Brand Blue", Color(0xFF0057BB)),
         AccentColorItem("Emerald Green", Color(0xFF16A34A)),
@@ -89,7 +111,7 @@ fun PreferencesSettingsScreen(
 
     val fontSizes = listOf("Small", "Standard", "Large", "Extra Large")
     val fontFamilies = listOf("System Default", "Sans-Serif", "Serif", "Monospace")
-    val currencies = listOf("INR (₹)", "USD ($)", "EUR (€)", "GBP (£)")
+    val currencies = listOf("Indian Rupee (₹ INR)", "US Dollar ($ USD)", "Euro (€ EUR)", "British Pound (£ GBP)")
     val dateFormats = listOf("dd MMM yyyy", "dd/MM/yyyy", "yyyy-MM-dd")
 
     Scaffold(
@@ -131,7 +153,95 @@ fun PreferencesSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 1. Theme Mode Section
+            // ================= 1. APP PREFERENCES =================
+            SectionHeader(title = "APP PREFERENCES")
+
+            // App Language Row
+            SettingActionRow(
+                icon = Icons.Outlined.Language,
+                title = "App Language",
+                subtitle = preferences.appLanguage,
+                onClick = { showLanguageDialog = true }
+            )
+
+            SettingsDivider()
+
+            // Notifications & Alerts Toggle
+            SettingToggleRow(
+                icon = Icons.Outlined.Notifications,
+                title = "Notifications & Alerts",
+                subtitle = if (preferences.notificationAlerts) {
+                    "Enabled — Daily summaries & due alerts"
+                } else {
+                    "Disabled — Alerts muted"
+                },
+                checked = preferences.notificationAlerts,
+                onCheckedChange = { enabled ->
+                    preferencesManager.setNotificationAlerts(enabled)
+                    val msg = if (enabled) "Notifications & alerts enabled" else "Notifications muted"
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                }
+            )
+
+            SettingsDivider()
+
+            // Currency Format Section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 13.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.CurrencyRupee,
+                        contentDescription = null,
+                        tint = Color(0xFF616161),
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "Currency Format",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF1E293B)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = preferences.currencyFormat,
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    currencies.forEach { curr ->
+                        val isSelected = preferences.currencyFormat == curr
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                preferencesManager.setCurrencyFormat(curr)
+                                Toast.makeText(context, "Currency set to $curr", Toast.LENGTH_SHORT).show()
+                            },
+                            label = { Text(curr, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFFEFF6FF),
+                                selectedLabelColor = BrandBlue
+                            )
+                        )
+                    }
+                }
+            }
+
+            // ================= 2. THEME & DISPLAY MODE =================
             SectionHeader(title = "THEME & DISPLAY MODE")
 
             ThemeOptionRow(
@@ -171,7 +281,7 @@ fun PreferencesSettingsScreen(
                 }
             )
 
-            // 2. Accent Color Section
+            // ================= 3. BRAND ACCENT COLOR =================
             SectionHeader(title = "BRAND ACCENT COLOR")
 
             Column(
@@ -243,7 +353,7 @@ fun PreferencesSettingsScreen(
                 }
             }
 
-            // 3. Typography & Font Size Section
+            // ================= 4. TYPOGRAPHY & FONT SELECTION =================
             SectionHeader(title = "TYPOGRAPHY & FONT SELECTION")
 
             Column(
@@ -271,7 +381,9 @@ fun PreferencesSettingsScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     fontSizes.forEach { size ->
@@ -310,7 +422,9 @@ fun PreferencesSettingsScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     fontFamilies.forEach { family ->
@@ -376,54 +490,14 @@ fun PreferencesSettingsScreen(
                 }
             }
 
-            // 4. Regional & Currency Section
-            SectionHeader(title = "REGIONAL & CURRENCY FORMATS")
+            // ================= 5. DATE FORMAT =================
+            SectionHeader(title = "DATE FORMAT")
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
-                // Currency Selector
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.CurrencyRupee,
-                        contentDescription = null,
-                        tint = Color(0xFF616161),
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Text(
-                        text = "Default Currency: ${preferences.currencyFormat}",
-                        fontSize = 14.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1E293B)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    currencies.forEach { curr ->
-                        val isSelected = preferences.currencyFormat == curr
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { preferencesManager.setCurrencyFormat(curr) },
-                            label = { Text(curr, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0xFFEFF6FF),
-                                selectedLabelColor = BrandBlue
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Date Format Selector
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Outlined.CalendarToday,
@@ -433,7 +507,7 @@ fun PreferencesSettingsScreen(
                     )
                     Spacer(modifier = Modifier.width(14.dp))
                     Text(
-                        text = "Date Format: ${preferences.dateFormat}",
+                        text = "Display Format: ${preferences.dateFormat}",
                         fontSize = 14.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF1E293B)
@@ -443,7 +517,9 @@ fun PreferencesSettingsScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     dateFormats.forEach { fmt ->
@@ -461,8 +537,61 @@ fun PreferencesSettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(36.dp))
         }
+    }
+
+    // Dialog: App Language Selection
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.Language,
+                        contentDescription = null,
+                        tint = BrandBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Select App Language", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+            },
+            text = {
+                Column {
+                    languages.forEach { lang ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    preferencesManager.setAppLanguage(lang)
+                                    showLanguageDialog = false
+                                    Toast.makeText(context, "Language changed to $lang", Toast.LENGTH_SHORT).show()
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = (preferences.appLanguage == lang),
+                                onClick = {
+                                    preferencesManager.setAppLanguage(lang)
+                                    showLanguageDialog = false
+                                    Toast.makeText(context, "Language changed to $lang", Toast.LENGTH_SHORT).show()
+                                },
+                                colors = RadioButtonDefaults.colors(selectedColor = BrandBlue)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = lang, fontSize = 15.sp, color = Color(0xFF1E293B))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text("Cancel", color = BrandBlue)
+                }
+            }
+        )
     }
 }
 
@@ -480,6 +609,102 @@ private fun SectionHeader(title: String) {
             fontWeight = FontWeight.SemiBold,
             color = SectionHeaderText,
             letterSpacing = 0.5.sp
+        )
+    }
+}
+
+@Composable
+private fun SettingActionRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFF616161),
+            modifier = Modifier.size(22.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF1E293B)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                fontSize = 12.sp,
+                color = Color(0xFF64748B)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingToggleRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFF616161),
+            modifier = Modifier.size(22.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF1E293B)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                fontSize = 12.sp,
+                color = Color(0xFF64748B),
+                lineHeight = 16.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = BrandBlue,
+                uncheckedThumbColor = Color(0xFF94A3B8),
+                uncheckedTrackColor = Color(0xFFF1F5F9),
+                uncheckedBorderColor = Color(0xFFCBD5E1)
+            )
         )
     }
 }

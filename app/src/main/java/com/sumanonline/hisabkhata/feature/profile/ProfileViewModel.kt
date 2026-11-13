@@ -1,9 +1,15 @@
 package com.sumanonline.hisabkhata.feature.profile
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sumanonline.hisabkhata.core.common.AppPreferencesManager
+import com.sumanonline.hisabkhata.core.common.Constants
+import com.sumanonline.hisabkhata.core.common.LedgerExportHelper
+import com.sumanonline.hisabkhata.core.database.dao.CustomerDao
+import com.sumanonline.hisabkhata.core.database.dao.TransactionDao
 import com.sumanonline.hisabkhata.core.network.FirebaseApiService
+import com.sumanonline.hisabkhata.core.network.model.FirebasePasswordResetRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebaseUserDto
 import com.sumanonline.hisabkhata.core.security.SecureSessionManager
 import com.sumanonline.hisabkhata.core.security.UserSession
@@ -18,7 +24,9 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     private val firebaseApi: FirebaseApiService,
     private val sessionManager: SecureSessionManager,
-    val preferencesManager: AppPreferencesManager
+    val preferencesManager: AppPreferencesManager,
+    private val customerDao: CustomerDao,
+    private val transactionDao: TransactionDao
 ) : ViewModel() {
 
     val session: StateFlow<UserSession> = sessionManager.sessionState
@@ -120,6 +128,55 @@ class ProfileViewModel @Inject constructor(
 
     fun setBiometricLock(enabled: Boolean) {
         sessionManager.setBiometricEnabled(enabled)
+    }
+
+    fun sendPasswordReset(email: String, onResult: (Boolean, String) -> Unit) {
+        val cleanEmail = email.trim()
+        if (cleanEmail.isBlank() || !cleanEmail.contains("@")) {
+            onResult(false, "Please enter a valid email address")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val apiKey = Constants.FIREBASE_API_KEY
+                val request = FirebasePasswordResetRequest(email = cleanEmail)
+                val response = firebaseApi.sendPasswordReset(apiKey, request)
+                if (response.isSuccessful) {
+                    onResult(true, "Password reset instructions sent to $cleanEmail")
+                } else {
+                    val rawError = response.errorBody()?.string() ?: ""
+                    val msg = if (rawError.contains("EMAIL_NOT_FOUND")) {
+                        "This email is not registered"
+                    } else {
+                        "Failed to send reset email. Please try again."
+                    }
+                    onResult(false, msg)
+                }
+            } catch (e: Exception) {
+                onResult(false, e.localizedMessage ?: "Network error. Please try again.")
+            }
+        }
+    }
+
+    fun exportAllLedger(context: Context, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val user = sessionManager.sessionState.value
+            val res = LedgerExportHelper.exportAllLedgerCsv(
+                context = context,
+                userId = user.userId,
+                merchantName = user.displayName.ifBlank { user.businessName }.ifBlank { "User" },
+                merchantPhone = user.phone,
+                customerDao = customerDao,
+                transactionDao = transactionDao
+            )
+            res.onSuccess { file ->
+                LedgerExportHelper.shareExportedFile(context, file)
+                val kb = (file.length() / 1024).coerceAtLeast(1)
+                onResult(true, "Ledger CSV exported (${kb} KB)")
+            }.onFailure { err ->
+                onResult(false, err.localizedMessage ?: "Failed to export ledger data")
+            }
+        }
     }
 
     fun logout() {

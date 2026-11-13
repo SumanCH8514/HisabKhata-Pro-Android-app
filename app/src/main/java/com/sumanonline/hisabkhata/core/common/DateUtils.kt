@@ -12,6 +12,9 @@ object DateUtils {
     private val displayDateTimeFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
     private val timeOnlyFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
 
+    @Volatile
+    var activeDateFormat: String = "dd MMM yyyy"
+
     fun todayIso(): String {
         return isoDateFormat.format(Date())
     }
@@ -21,7 +24,11 @@ object DateUtils {
     }
 
     fun formatDisplayDate(timestamp: Long): String {
-        return displayDateFormat.format(Date(timestamp))
+        return try {
+            SimpleDateFormat(activeDateFormat, Locale.getDefault()).format(Date(timestamp))
+        } catch (_: Exception) {
+            displayDateFormat.format(Date(timestamp))
+        }
     }
 
     fun formatDisplayDateTime(timestamp: Long): String {

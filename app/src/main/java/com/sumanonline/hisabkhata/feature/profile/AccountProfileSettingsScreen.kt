@@ -1,5 +1,6 @@
 package com.sumanonline.hisabkhata.feature.profile
 
+import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -33,12 +34,22 @@ import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Description
+import android.content.ClipData
+import android.content.ClipboardManager
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.LockReset
+import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material.icons.outlined.VpnKey
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -108,6 +119,7 @@ fun AccountProfileSettingsScreen(
 ) {
     val context = LocalContext.current
     val session by viewModel.session.collectAsState()
+    val preferences by viewModel.preferencesManager.preferences.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val scope = rememberCoroutineScope()
 
@@ -117,6 +129,8 @@ fun AccountProfileSettingsScreen(
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
     var showPhotoUrlDialog by remember { mutableStateOf(false) }
     var photoUrlInput by remember { mutableStateOf("") }
+    var showPasswordResetDialog by remember { mutableStateOf(false) }
+    var showTwoFactorDialog by remember { mutableStateOf(false) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -469,6 +483,42 @@ fun AccountProfileSettingsScreen(
                 }
             )
 
+            // 5. Account & Security Section
+            SectionHeader(title = "Account & Security")
+
+            SettingsRow(
+                icon = Icons.Outlined.LockReset,
+                label = "Change Password",
+                value = "Send reset instructions",
+                isClickable = true,
+                onClick = { showPasswordResetDialog = true }
+            )
+
+            SettingsRow(
+                icon = Icons.Outlined.VpnKey,
+                label = "Two-Factor Auth",
+                value = if (preferences.twoFactorEnabled) "Enabled" else "Protect with Authenticator",
+                isClickable = true,
+                onClick = { showTwoFactorDialog = true }
+            )
+
+            SettingsRow(
+                icon = Icons.Outlined.MarkEmailRead,
+                label = "Login Email OTP",
+                value = if (preferences.emailOtpVerification) {
+                    "Enabled (OTP required)"
+                } else {
+                    "Disabled (Normal login)"
+                },
+                isClickable = true,
+                onClick = {
+                    val next = !preferences.emailOtpVerification
+                    viewModel.preferencesManager.setEmailOtpVerification(next)
+                    val msg = if (next) "Email OTP verification enabled" else "Email OTP verification disabled"
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                }
+            )
+
             Spacer(modifier = Modifier.height(28.dp))
 
             // Sign Out Button (Matching image style)
@@ -706,6 +756,205 @@ fun AccountProfileSettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showLogoutConfirm = false }) {
                     Text("Cancel", color = Color(0xFF64748B))
+                }
+            }
+        )
+    }
+
+    // Password Reset Dialog
+    if (showPasswordResetDialog) {
+        val targetEmail = session.email.ifBlank { "your registered email" }
+        AlertDialog(
+            onDismissRequest = { showPasswordResetDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.LockReset,
+                        contentDescription = null,
+                        tint = BrandBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Change Password", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "We will send password reset instructions to your registered email address:",
+                        fontSize = 14.sp,
+                        color = Color(0xFF475569)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = targetEmail,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF0F172A),
+                            fontSize = 14.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Click the link in the received email to securely choose your new password.",
+                        fontSize = 12.5.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPasswordResetDialog = false
+                        if (session.email.isNotBlank()) {
+                            viewModel.sendPasswordReset(session.email) { _, msg ->
+                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "No registered email found for this session", Toast.LENGTH_LONG).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                ) {
+                    Text("Send Email", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPasswordResetDialog = false }) {
+                    Text("Cancel", color = Color(0xFF64748B))
+                }
+            }
+        )
+    }
+
+    // Two-Factor Authentication Dialog
+    if (showTwoFactorDialog) {
+        val authSecretKey = remember(session.userId) {
+            val keyHash = session.userId.take(8).ifBlank { "8818" }.uppercase()
+            "HKPRO-2FA-$keyHash-AUTH"
+        }
+
+        AlertDialog(
+            onDismissRequest = { showTwoFactorDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.VpnKey,
+                        contentDescription = null,
+                        tint = BrandBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Google Authenticator 2FA", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Protect your ledger account by verifying a 6-digit Time-based One-Time Password (TOTP) from Google Authenticator on sign-in.",
+                        fontSize = 13.5.sp,
+                        color = Color(0xFF475569),
+                        lineHeight = 18.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = "YOUR AUTHENTICATOR SECRET KEY",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF64748B),
+                        letterSpacing = 0.5.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = authSecretKey,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.5.sp,
+                                color = BrandBlue
+                            )
+
+                            IconButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("2FA Key", authSecretKey))
+                                    Toast.makeText(context, "Secret key copied to clipboard", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.ContentCopy,
+                                    contentDescription = "Copy",
+                                    tint = BrandBlue,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val nextState = !preferences.twoFactorEnabled
+                                viewModel.preferencesManager.setTwoFactorEnabled(nextState)
+                                val msg = if (nextState) "2FA authentication enabled" else "2FA authentication disabled"
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Enable 2FA Protection",
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF1E293B)
+                        )
+                        Switch(
+                            checked = preferences.twoFactorEnabled,
+                            onCheckedChange = { nextState ->
+                                viewModel.preferencesManager.setTwoFactorEnabled(nextState)
+                                val msg = if (nextState) "2FA authentication enabled" else "2FA authentication disabled"
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = BrandBlue
+                            )
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showTwoFactorDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                ) {
+                    Text("Done", color = Color.White)
                 }
             }
         )

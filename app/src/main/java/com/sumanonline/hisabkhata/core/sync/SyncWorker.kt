@@ -49,9 +49,10 @@ class SyncWorker @AssistedInject constructor(
             )
         }
 
-        fun schedulePeriodicSync(context: Context) {
+        fun schedulePeriodicSync(context: Context, wifiOnly: Boolean = false) {
+            val networkType = if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED
             val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiredNetworkType(networkType)
                 .build()
 
             val request = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
@@ -60,7 +61,7 @@ class SyncWorker @AssistedInject constructor(
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 Constants.SYNC_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 request
             )
         }
