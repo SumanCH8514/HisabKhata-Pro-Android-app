@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -246,11 +247,11 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable.hisabkhata_logo),
+                painter = painterResource(id = R.drawable.app_logo_round),
                 contentDescription = "HisabKhata Logo",
                 modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .size(92.dp)
+                    .clip(CircleShape)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
