@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -110,13 +111,14 @@ import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.WarningAmber
 import com.sumanonline.hisabkhata.core.designsystem.WarningAmberLight
+import com.sumanonline.hisabkhata.core.designsystem.isAppDark
 import com.sumanonline.hisabkhata.core.designsystem.components.AppBottomBar
 import com.sumanonline.hisabkhata.core.designsystem.components.BottomTab
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PaymentsScreen(
     viewModel: PaymentsViewModel,
@@ -147,280 +149,306 @@ fun PaymentsScreen(
         },
         containerColor = PageBackground
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp)
+                .padding(bottom = innerPadding.calculateBottomPadding())
+                .statusBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Top action bar (Header row with refresh & QR code button)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Payments & Collections",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    if (isRefreshing) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconButton(
-                        onClick = { viewModel.refreshPayments() },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Refresh,
-                            contentDescription = "Refresh",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
-                            .background(SurfaceWhite)
-                            .clickable { showStoreQrSheet = true }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.QrCode2,
-                            contentDescription = "My Store QR",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
+            item(key = "header_action_bar") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp, bottom = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Store QR",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                            text = "Payments & Collections",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
                         )
+                        if (isRefreshing) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        IconButton(
+                            onClick = { viewModel.refreshPayments() },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Refresh,
+                                contentDescription = "Refresh",
+                                tint = TextSecondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
+                                .background(SurfaceWhite)
+                                .clickable { showStoreQrSheet = true }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.QrCode2,
+                                contentDescription = "My Store QR",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Store QR",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
 
             // 1. Top 3 Summary Cards
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Pending Card
-                SummaryMetricCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Pending",
-                    icon = {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF94A3B8))
-                        )
-                    },
-                    count = summary.pendingCount.toString(),
-                    subtitle = CurrencyFormatter.formatInr(summary.pendingTotal),
-                    subtitleColor = TextSecondary,
-                    isSelected = selectedFilter == PaymentFilter.PENDING,
-                    onClick = {
-                        viewModel.setFilter(
-                            if (selectedFilter == PaymentFilter.PENDING) PaymentFilter.ALL else PaymentFilter.PENDING
-                        )
-                    }
-                )
-
-                // Approved Card
-                SummaryMetricCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Approved",
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.CheckCircle,
-                            contentDescription = null,
-                            tint = GotGreen,
-                            modifier = Modifier.size(15.dp)
-                        )
-                    },
-                    count = summary.approvedCount.toString(),
-                    subtitle = CurrencyFormatter.formatInr(summary.approvedTotal),
-                    subtitleColor = GotGreen,
-                    isSelected = selectedFilter == PaymentFilter.APPROVED,
-                    onClick = {
-                        viewModel.setFilter(
-                            if (selectedFilter == PaymentFilter.APPROVED) PaymentFilter.ALL else PaymentFilter.APPROVED
-                        )
-                    }
-                )
-
-                // Rejected Card
-                SummaryMetricCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Rejected",
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Cancel,
-                            contentDescription = null,
-                            tint = GiveRed,
-                            modifier = Modifier.size(15.dp)
-                        )
-                    },
-                    count = summary.rejectedCount.toString(),
-                    subtitle = "Recorded",
-                    subtitleColor = TextSecondary,
-                    isSelected = selectedFilter == PaymentFilter.REJECTED,
-                    onClick = {
-                        viewModel.setFilter(
-                            if (selectedFilter == PaymentFilter.REJECTED) PaymentFilter.ALL else PaymentFilter.REJECTED
-                        )
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 2. Filter Pills Horizontal Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterPillChip(
-                    label = "All",
-                    count = summary.allCount,
-                    isSelected = selectedFilter == PaymentFilter.ALL,
-                    onClick = { viewModel.setFilter(PaymentFilter.ALL) }
-                )
-                FilterPillChip(
-                    label = "Pending",
-                    count = summary.pendingCount,
-                    isSelected = selectedFilter == PaymentFilter.PENDING,
-                    onClick = { viewModel.setFilter(PaymentFilter.PENDING) }
-                )
-                FilterPillChip(
-                    label = "Approved",
-                    count = summary.approvedCount,
-                    isSelected = selectedFilter == PaymentFilter.APPROVED,
-                    onClick = { viewModel.setFilter(PaymentFilter.APPROVED) }
-                )
-                FilterPillChip(
-                    label = "Rejected",
-                    count = summary.rejectedCount,
-                    isSelected = selectedFilter == PaymentFilter.REJECTED,
-                    onClick = { viewModel.setFilter(PaymentFilter.REJECTED) }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 3. Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.setSearchQuery(it) },
-                placeholder = {
-                    Text(
-                        text = "Search by customer or ref...",
-                        fontSize = 13.5.sp,
-                        color = TextTertiary
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Search,
-                        contentDescription = "Search",
-                        tint = TextTertiary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Clear,
-                                contentDescription = "Clear",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(18.dp)
+            item(key = "summary_cards") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Pending Card
+                    SummaryMetricCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Pending",
+                        icon = {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF94A3B8))
+                            )
+                        },
+                        count = summary.pendingCount.toString(),
+                        subtitle = CurrencyFormatter.formatInr(summary.pendingTotal),
+                        subtitleColor = TextSecondary,
+                        isSelected = selectedFilter == PaymentFilter.PENDING,
+                        accentColor = WarningAmber,
+                        onClick = {
+                            viewModel.setFilter(
+                                if (selectedFilter == PaymentFilter.PENDING) PaymentFilter.ALL else PaymentFilter.PENDING
                             )
                         }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceWhite,
-                    unfocusedContainerColor = SurfaceWhite,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = BorderLight
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-            )
+                    )
 
-            Spacer(modifier = Modifier.height(10.dp))
+                    // Approved Card
+                    SummaryMetricCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Approved",
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.CheckCircle,
+                                contentDescription = null,
+                                tint = GotGreen,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        },
+                        count = summary.approvedCount.toString(),
+                        subtitle = CurrencyFormatter.formatInr(summary.approvedTotal),
+                        subtitleColor = GotGreen,
+                        isSelected = selectedFilter == PaymentFilter.APPROVED,
+                        accentColor = GotGreen,
+                        onClick = {
+                            viewModel.setFilter(
+                                if (selectedFilter == PaymentFilter.APPROVED) PaymentFilter.ALL else PaymentFilter.APPROVED
+                            )
+                        }
+                    )
 
-            // 4. Payments List
-            if (filteredPayments.isEmpty()) {
+                    // Rejected Card
+                    SummaryMetricCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Rejected",
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Cancel,
+                                contentDescription = null,
+                                tint = GiveRed,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        },
+                        count = summary.rejectedCount.toString(),
+                        subtitle = "Recorded",
+                        subtitleColor = TextSecondary,
+                        isSelected = selectedFilter == PaymentFilter.REJECTED,
+                        accentColor = GiveRed,
+                        onClick = {
+                            viewModel.setFilter(
+                                if (selectedFilter == PaymentFilter.REJECTED) PaymentFilter.ALL else PaymentFilter.REJECTED
+                            )
+                        }
+                    )
+                }
+            }
+
+            // 2. Sticky Filter Pills Row (sticks at the top when scrolling, title & summary cards scroll away)
+            stickyHeader(key = "sticky_filter_pills") {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
+                        .background(PageBackground)
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(24.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Payments,
-                            contentDescription = null,
-                            tint = TextTertiary,
-                            modifier = Modifier.size(56.dp)
+                        FilterPillChip(
+                            label = "All",
+                            count = summary.allCount,
+                            isSelected = selectedFilter == PaymentFilter.ALL,
+                            accentColor = MaterialTheme.colorScheme.primary,
+                            onClick = { viewModel.setFilter(PaymentFilter.ALL) }
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = if (searchQuery.isNotBlank()) "No matching payments" else "No payments recorded",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                        FilterPillChip(
+                            label = "Pending",
+                            count = summary.pendingCount,
+                            isSelected = selectedFilter == PaymentFilter.PENDING,
+                            accentColor = WarningAmber,
+                            onClick = { viewModel.setFilter(PaymentFilter.PENDING) }
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Customer online payments submitted via payment links will appear here.",
-                            fontSize = 12.5.sp,
-                            color = TextSecondary,
-                            textAlign = TextAlign.Center
+                        FilterPillChip(
+                            label = "Approved",
+                            count = summary.approvedCount,
+                            isSelected = selectedFilter == PaymentFilter.APPROVED,
+                            accentColor = GotGreen,
+                            onClick = { viewModel.setFilter(PaymentFilter.APPROVED) }
+                        )
+                        FilterPillChip(
+                            label = "Rejected",
+                            count = summary.rejectedCount,
+                            isSelected = selectedFilter == PaymentFilter.REJECTED,
+                            accentColor = GiveRed,
+                            onClick = { viewModel.setFilter(PaymentFilter.REJECTED) }
                         )
                     }
                 }
-            } else {
-                LazyColumn(
+            }
+
+            // 3. Search Bar
+            item(key = "search_bar") {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(horizontal = 16.dp)
                 ) {
-                    items(filteredPayments, key = { it.id }) { payment ->
-                        val customer = customerMap[payment.customerId]
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.setSearchQuery(it) },
+                        placeholder = {
+                            Text(
+                                text = "Search by customer or ref...",
+                                fontSize = 13.5.sp,
+                                color = TextTertiary
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = "Search",
+                                tint = TextTertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.setSearchQuery("") }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Clear,
+                                        contentDescription = "Clear",
+                                        tint = TextSecondary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = SurfaceWhite,
+                            unfocusedContainerColor = SurfaceWhite,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = BorderLight,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    )
+                }
+            }
+
+            // 4. Payments List
+            if (filteredPayments.isEmpty()) {
+                item(key = "empty_state") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Payments,
+                                contentDescription = null,
+                                tint = TextTertiary,
+                                modifier = Modifier.size(56.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = if (searchQuery.isNotBlank()) "No matching payments" else "No payments recorded",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Customer online payments submitted via payment links will appear here.",
+                                fontSize = 12.5.sp,
+                                color = TextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(filteredPayments, key = { it.id }) { payment ->
+                    val customer = customerMap[payment.customerId]
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
                         PaymentCardItem(
                             payment = payment,
                             customerPhotoUrl = customer?.photoURL,
@@ -454,11 +482,11 @@ fun PaymentsScreen(
                             }
                         )
                     }
-
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
                 }
+            }
+
+            item(key = "bottom_spacer") {
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -733,17 +761,21 @@ private fun SummaryMetricCard(
     subtitle: String,
     subtitleColor: Color = TextSecondary,
     isSelected: Boolean,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit
 ) {
+    val borderColor = if (isSelected) accentColor else BorderLight
+    val containerBg = if (isSelected) accentColor.copy(alpha = if (isAppDark) 0.12f else 0.05f) else SurfaceWhite
+
     Card(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+        colors = CardDefaults.cardColors(containerColor = containerBg),
         border = androidx.compose.foundation.BorderStroke(
             width = if (isSelected) 1.5.dp else 1.dp,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else BorderLight
+            color = borderColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
@@ -792,17 +824,43 @@ private fun FilterPillChip(
     label: String,
     count: Int,
     isSelected: Boolean,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit
 ) {
-    val containerBg = if (isSelected) SurfaceWhite else Color(0xFFF1F5F9).copy(alpha = 0.7f)
-    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else BorderLight
-    val badgeBg = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color(0xFFE2E8F0)
-    val badgeTextColor = if (isSelected) MaterialTheme.colorScheme.primary else TextSecondary
+    val containerBg = if (isSelected) {
+        accentColor.copy(alpha = if (isAppDark) 0.20f else 0.12f)
+    } else {
+        SurfaceWhite
+    }
+    val borderColor = if (isSelected) {
+        accentColor
+    } else {
+        BorderLight
+    }
+    val textColor = if (isSelected) {
+        accentColor
+    } else {
+        TextSecondary
+    }
+    val badgeBg = if (isSelected) {
+        accentColor
+    } else {
+        if (count > 0) accentColor.copy(alpha = if (isAppDark) 0.22f else 0.12f) else BorderLight.copy(alpha = 0.5f)
+    }
+    val badgeTextColor = if (isSelected) {
+        Color.White
+    } else {
+        if (count > 0) accentColor else TextSecondary
+    }
 
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(20.dp))
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(20.dp)
+            )
             .background(containerBg)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp),
@@ -812,14 +870,14 @@ private fun FilterPillChip(
             text = label,
             fontSize = 13.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) TextPrimary else TextSecondary
+            color = textColor
         )
         Spacer(modifier = Modifier.width(6.dp))
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
                 .background(badgeBg)
-                .padding(horizontal = 7.dp, vertical = 1.dp),
+                .padding(horizontal = 7.dp, vertical = 1.5.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -915,7 +973,11 @@ private fun PaymentCardItem(
                 ) {
                     OutlinedButton(
                         onClick = onReject,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = GiveRed),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GiveRedStroke),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = RedPillBg,
+                            contentColor = GiveRed
+                        ),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(34.dp)
                     ) {
@@ -933,7 +995,10 @@ private fun PaymentCardItem(
 
                     Button(
                         onClick = onApprove,
-                        colors = ButtonDefaults.buttonColors(containerColor = GotGreen),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GotGreen,
+                            contentColor = Color.White
+                        ),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(34.dp)
                     ) {
@@ -951,115 +1016,144 @@ private fun PaymentCardItem(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Footer Row: Ref, View Proof, and Ledger button
+            // Footer Row: Ref on the left, Actions (Proof & Ledger) on the right
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Ref Label & Value
-                Text(
-                    text = "Ref: ",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
-
-                if (!payment.transactionId.isNullOrBlank() && !payment.transactionId.equals("None", ignoreCase = true)) {
-                    val rawRef = payment.transactionId
-                    val displayRef = if (rawRef.length > 17) rawRef.take(14) + "..." else rawRef
-
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .border(0.5.dp, BorderLight, RoundedCornerShape(6.dp))
-                            .background(BorderLight.copy(alpha = 0.25f))
-                            .clickable { onCopyRef(rawRef) }
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = displayRef,
-                            fontSize = 11.5.sp,
-                            fontFamily = FontFamily.Monospace,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Outlined.ContentCopy,
-                            contentDescription = "Copy",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(12.dp)
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "None",
-                        fontSize = 12.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = TextSecondary
-                    )
-                }
-
-                // View Proof Button (if screenshot attached)
-                if (!payment.screenshot.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .border(1.dp, BorderLight, RoundedCornerShape(8.dp))
-                            .background(SurfaceWhite)
-                            .clickable(onClick = onViewProof)
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        AsyncImage(
-                            model = ImageUtils.sanitizeImageSource(payment.screenshot),
-                            contentDescription = "Proof",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clip(RoundedCornerShape(3.dp))
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Text(
-                            text = "View Proof",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Icon(
-                            imageVector = Icons.Outlined.Visibility,
-                            contentDescription = null,
-                            tint = TextSecondary,
-                            modifier = Modifier.size(13.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Ledger button
+                // Left side: Ref ID (flexible, gracefully truncated if tight)
                 Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BrandBlueLight)
-                        .clickable(onClick = onNavigateToLedger)
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    modifier = Modifier.weight(1f, fill = false),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Ledger",
+                        text = "Ref: ",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = TextSecondary,
+                        maxLines = 1,
+                        softWrap = false
                     )
-                    Spacer(modifier = Modifier.width(3.dp))
-                    Text(
-                        text = "→",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+
+                    if (!payment.transactionId.isNullOrBlank() && !payment.transactionId.equals("None", ignoreCase = true)) {
+                        val rawRef = payment.transactionId
+                        val displayRef = if (rawRef.length > 15) rawRef.take(12) + "…" else rawRef
+
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .border(0.5.dp, BorderLight, RoundedCornerShape(6.dp))
+                                .background(BorderLight.copy(alpha = 0.25f))
+                                .clickable { onCopyRef(rawRef) }
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = displayRef,
+                                fontSize = 11.5.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = TextPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Outlined.ContentCopy,
+                                contentDescription = "Copy",
+                                tint = TextSecondary,
+                                modifier = Modifier.size(12.dp)
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "None",
+                            fontSize = 12.sp,
+                            fontStyle = FontStyle.Italic,
+                            color = TextSecondary,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Right side: Action pills (View Proof & Ledger)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // View Proof Button (if screenshot attached)
+                    if (!payment.screenshot.isNullOrBlank()) {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .border(1.dp, BorderLight, RoundedCornerShape(8.dp))
+                                .background(SurfaceWhite)
+                                .clickable(onClick = onViewProof)
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                model = ImageUtils.sanitizeImageSource(payment.screenshot),
+                                contentDescription = "Proof",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(15.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "View Proof",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Icon(
+                                imageVector = Icons.Outlined.Visibility,
+                                contentDescription = null,
+                                tint = TextSecondary,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                    }
+
+                    // Native Ledger Button
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = if (isAppDark) 0.35f else 0.25f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = if (isAppDark) 0.18f else 0.10f))
+                            .clickable(onClick = onNavigateToLedger)
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Ledger",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = "→",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
                 }
             }
         }
