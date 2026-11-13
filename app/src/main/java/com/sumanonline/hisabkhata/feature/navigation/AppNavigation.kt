@@ -220,6 +220,9 @@ fun AppNavigation(
                 },
                 onCustomerClick = { customerId ->
                     navController.navigate(Screen.CustomerLedger.createRoute(customerId))
+                },
+                onNavigateToAutoReminder = {
+                    navController.navigate(Screen.AutoReminder.route)
                 }
             )
         }

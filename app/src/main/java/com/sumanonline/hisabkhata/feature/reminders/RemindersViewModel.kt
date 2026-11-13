@@ -26,6 +26,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class ReminderFilter(val label: String) {
+    ALL("All"),
+    OVERDUE("Overdue"),
+    DUE_TODAY("Due Today"),
+    DUE_SOON("Due Soon")
+}
+
 @HiltViewModel
 class RemindersViewModel @Inject constructor(
     private val customerDao: CustomerDao,
@@ -34,6 +41,20 @@ class RemindersViewModel @Inject constructor(
 ) : ViewModel() {
 
     val session = sessionManager.sessionState
+
+    private val _searchQuery = kotlinx.coroutines.flow.MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    private val _selectedFilter = kotlinx.coroutines.flow.MutableStateFlow(ReminderFilter.ALL)
+    val selectedFilter: StateFlow<ReminderFilter> = _selectedFilter
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun setFilter(filter: ReminderFilter) {
+        _selectedFilter.value = filter
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val dueCustomers: StateFlow<List<CustomerEntity>> = sessionManager.sessionState
@@ -47,7 +68,7 @@ class RemindersViewModel @Inject constructor(
         .map { list ->
             list.filter { it.balance < 0.0 }
                 .sortedBy {
-                    when (val status = DateUtils.getDueDateStatus(it.dueDate)) {
+                    when (DateUtils.getDueDateStatus(it.dueDate)) {
                         is DueStatus.DueToday -> 0
                         is DueStatus.Overdue -> 1
                         is DueStatus.DueSoon -> 2
@@ -56,6 +77,27 @@ class RemindersViewModel @Inject constructor(
                     }
                 }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val filteredCustomers: StateFlow<List<CustomerEntity>> = kotlinx.coroutines.flow.combine(
+        dueCustomers,
+        _searchQuery,
+        _selectedFilter
+    ) { list, query, filter ->
+        list.filter { customer ->
+            val dueStatus = DateUtils.getDueDateStatus(customer.dueDate)
+            val matchesFilter = when (filter) {
+                ReminderFilter.ALL -> true
+                ReminderFilter.OVERDUE -> dueStatus is DueStatus.Overdue
+                ReminderFilter.DUE_TODAY -> dueStatus is DueStatus.DueToday
+                ReminderFilter.DUE_SOON -> dueStatus is DueStatus.DueSoon
+            }
+            val cleanQuery = query.trim()
+            val matchesQuery = cleanQuery.isBlank() ||
+                    customer.name.contains(cleanQuery, ignoreCase = true) ||
+                    customer.phone.contains(cleanQuery, ignoreCase = true)
+            matchesFilter && matchesQuery
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun sendWhatsAppReminder(context: Context, customer: CustomerEntity) {
         val cleanPhone = customer.phone.replace("+", "").replace(" ", "").replace("-", "").trim()
