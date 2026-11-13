@@ -87,20 +87,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.material3.MaterialTheme
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
 import com.sumanonline.hisabkhata.core.common.ImageUtils
 import kotlinx.coroutines.launch
-
-private val SectionHeaderBg = Color(0xFFF4F5F7)
-private val SectionHeaderText = Color(0xFF757575)
-private val RowLabelColor = Color(0xFF757575)
-private val RowValueColor = Color(0xFF1E293B)
-private val RowIconTint = Color(0xFF616161)
-private val BlueChevronTint = Color(0xFF0052CC)
-private val DividerColor = Color(0xFFEEEEEE)
 
 private data class EditFieldSpec(
     val key: String,
@@ -175,7 +168,7 @@ fun AccountProfileSettingsScreen(
                 }
             }
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -187,7 +180,7 @@ fun AccountProfileSettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(top = 22.dp, bottom = 14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -207,7 +200,7 @@ fun AccountProfileSettingsScreen(
                             modifier = Modifier
                                 .size(108.dp)
                                 .clip(CircleShape)
-                                .border(2.dp, Color(0xFFE2E8F0), CircleShape)
+                                .border(2.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
                         )
                     } else {
                         CustomerAvatar(
@@ -226,7 +219,7 @@ fun AccountProfileSettingsScreen(
                             .size(34.dp)
                             .clip(CircleShape)
                             .background(BrandBlue)
-                            .border(2.dp, Color.White, CircleShape)
+                            .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
                             .clickable { showPhotoOptionsDialog = true },
                         contentAlignment = Alignment.Center
                     ) {
@@ -966,14 +959,14 @@ private fun SectionHeader(title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SectionHeaderBg)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 16.dp, vertical = 9.dp)
     ) {
         Text(
             text = title,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            color = SectionHeaderText
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -997,7 +990,7 @@ private fun SettingsRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = RowIconTint,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp)
         )
 
@@ -1008,7 +1001,7 @@ private fun SettingsRow(
             Text(
                 text = label,
                 fontSize = 12.sp,
-                color = RowLabelColor,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Normal
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -1016,7 +1009,7 @@ private fun SettingsRow(
                 text = value,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
-                color = RowValueColor,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -1027,7 +1020,7 @@ private fun SettingsRow(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = BlueChevronTint,
+                tint = BrandBlue,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -1039,6 +1032,6 @@ private fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 54.dp),
         thickness = 0.7.dp,
-        color = DividerColor
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
     )
 }

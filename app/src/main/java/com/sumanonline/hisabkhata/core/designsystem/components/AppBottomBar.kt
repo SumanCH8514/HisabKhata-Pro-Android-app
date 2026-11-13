@@ -20,21 +20,19 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
-import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
-import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 
 enum class BottomTab(val title: String, val icon: ImageVector) {
     CUSTOMERS("Parties", Icons.Default.People),
@@ -49,6 +47,10 @@ fun AppBottomBar(
     currentTab: BottomTab,
     onTabSelected: (BottomTab) -> Unit
 ) {
+    val activeColor = MaterialTheme.colorScheme.primary
+    val activeBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+    val inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -80,14 +82,14 @@ fun AppBottomBar(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFFDBEAFE))
+                                .background(activeBg)
                                 .padding(horizontal = 16.dp, vertical = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = tab.icon,
                                 contentDescription = tab.title,
-                                tint = Color(0xFF073B7E),
+                                tint = activeColor,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -99,7 +101,7 @@ fun AppBottomBar(
                             Icon(
                                 imageVector = tab.icon,
                                 contentDescription = tab.title,
-                                tint = Color(0xFF64748B),
+                                tint = inactiveColor,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -108,7 +110,7 @@ fun AppBottomBar(
                         text = tab.title,
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Color(0xFF073B7E) else Color(0xFF64748B),
+                        color = if (isSelected) activeColor else inactiveColor,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }

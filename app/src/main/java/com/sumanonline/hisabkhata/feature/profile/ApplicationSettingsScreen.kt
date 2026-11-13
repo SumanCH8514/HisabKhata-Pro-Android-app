@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.CleaningServices
 import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -47,7 +46,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -74,10 +73,6 @@ import com.sumanonline.hisabkhata.core.common.AppPreferencesManager
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.sync.SyncWorker
-
-private val SectionHeaderBg = Color(0xFFF4F5F7)
-private val SectionHeaderText = Color(0xFF757575)
-private val DividerColor = Color(0xFFEEEEEE)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,7 +123,7 @@ fun ApplicationSettingsScreen(
                 }
             }
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -316,7 +311,14 @@ fun ApplicationSettingsScreen(
     if (showTimeoutDialog) {
         AlertDialog(
             onDismissRequest = { showTimeoutDialog = false },
-            title = { Text("Select Lock Timeout", fontWeight = FontWeight.Bold) },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = {
+                Text(
+                    "Select Lock Timeout",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
             text = {
                 Column {
                     timeoutOptions.forEach { option ->
@@ -339,7 +341,11 @@ fun ApplicationSettingsScreen(
                                 colors = RadioButtonDefaults.colors(selectedColor = BrandBlue)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = option, fontSize = 15.sp, color = Color(0xFF1E293B))
+                            Text(
+                                text = option,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }
@@ -357,6 +363,7 @@ fun ApplicationSettingsScreen(
         val targetEmail = session.email.ifBlank { "your registered email" }
         AlertDialog(
             onDismissRequest = { showPasswordResetDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -366,7 +373,12 @@ fun ApplicationSettingsScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Reset Password", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        "Reset Password",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             },
             text = {
@@ -374,19 +386,22 @@ fun ApplicationSettingsScreen(
                     Text(
                         text = "We will send password reset instructions to your registered email address:",
                         fontSize = 14.sp,
-                        color = Color(0xFF475569)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                RoundedCornerShape(8.dp)
+                            )
                             .padding(12.dp)
                     ) {
                         Text(
                             text = targetEmail,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF0F172A),
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp
                         )
                     }
@@ -394,7 +409,7 @@ fun ApplicationSettingsScreen(
                     Text(
                         text = "Click the link in the received email to securely choose your new password.",
                         fontSize = 12.5.sp,
-                        color = Color(0xFF64748B)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             },
@@ -417,7 +432,7 @@ fun ApplicationSettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showPasswordResetDialog = false }) {
-                    Text("Cancel", color = Color(0xFF64748B))
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -432,6 +447,7 @@ fun ApplicationSettingsScreen(
 
         AlertDialog(
             onDismissRequest = { showTwoFactorDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -441,7 +457,12 @@ fun ApplicationSettingsScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Google Authenticator 2FA", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        "Google Authenticator 2FA",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             },
             text = {
@@ -449,7 +470,7 @@ fun ApplicationSettingsScreen(
                     Text(
                         text = "Protect your ledger account by verifying a 6-digit Time-based One-Time Password (TOTP) from Google Authenticator on sign-in.",
                         fontSize = 13.5.sp,
-                        color = Color(0xFF475569),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
                     )
 
@@ -459,7 +480,7 @@ fun ApplicationSettingsScreen(
                         text = "YOUR AUTHENTICATOR SECRET KEY",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 0.5.sp
                     )
 
@@ -468,8 +489,8 @@ fun ApplicationSettingsScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                     ) {
                         Row(
                             modifier = Modifier
@@ -523,7 +544,7 @@ fun ApplicationSettingsScreen(
                             text = "Enable 2FA Protection",
                             fontSize = 14.5.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1E293B)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Switch(
                             checked = preferences.twoFactorEnabled,
@@ -534,7 +555,10 @@ fun ApplicationSettingsScreen(
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
-                                checkedTrackColor = BrandBlue
+                                checkedTrackColor = BrandBlue,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                             )
                         )
                     }
@@ -557,14 +581,14 @@ private fun SectionHeader(title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SectionHeaderBg)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 16.dp, vertical = 9.dp)
     ) {
         Text(
             text = title,
             fontSize = 12.5.sp,
             fontWeight = FontWeight.SemiBold,
-            color = SectionHeaderText,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = 0.5.sp
         )
     }
@@ -588,7 +612,7 @@ private fun SettingToggleRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF616161),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp)
         )
 
@@ -599,13 +623,13 @@ private fun SettingToggleRow(
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1E293B)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = Color(0xFF64748B),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 16.sp
             )
         }
@@ -618,9 +642,9 @@ private fun SettingToggleRow(
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = BrandBlue,
-                uncheckedThumbColor = Color(0xFF94A3B8),
-                uncheckedTrackColor = Color(0xFFF1F5F9),
-                uncheckedBorderColor = Color(0xFFCBD5E1)
+                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
             )
         )
     }
@@ -644,7 +668,7 @@ private fun SettingActionRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF616161),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp)
         )
 
@@ -655,13 +679,13 @@ private fun SettingActionRow(
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1E293B)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = Color(0xFF64748B),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 16.sp
             )
         }
@@ -702,7 +726,7 @@ private fun SettingExportRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF616161),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp)
         )
 
@@ -713,13 +737,13 @@ private fun SettingExportRow(
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1E293B)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = Color(0xFF64748B),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 16.sp
             )
         }
@@ -773,7 +797,7 @@ private fun SettingInfoRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF616161),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp)
         )
 
@@ -783,14 +807,14 @@ private fun SettingInfoRow(
             Text(
                 text = title,
                 fontSize = 12.sp,
-                color = Color(0xFF757575)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = value,
                 fontSize = 14.5.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1E293B)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -801,6 +825,6 @@ private fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 54.dp),
         thickness = 0.7.dp,
-        color = DividerColor
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
     )
 }

@@ -19,7 +19,7 @@ fun getAccentColor(name: String): Color {
         "Amber Gold" -> Color(0xFFD97706)
         "Crimson Red" -> Color(0xFFDC2626)
         "Teal Ocean" -> Color(0xFF0D9488)
-        else -> BrandBlue
+        else -> DefaultBrandBlue
     }
 }
 
@@ -37,52 +37,51 @@ fun HisabKhataTheme(
         else -> isSystemInDarkTheme()
     }
     val primaryColor = getAccentColor(accentColor)
-    val primaryDark = primaryColor.copy(alpha = 0.8f)
     val primaryLight = primaryColor.copy(alpha = 0.12f)
 
     val colorScheme = if (isDark) {
         darkColorScheme(
             primary = primaryColor,
-            onPrimary = SurfaceWhite,
-            primaryContainer = primaryDark,
-            onPrimaryContainer = SurfaceWhite,
+            onPrimary = Color.White,
+            primaryContainer = Color(0xFF1E293B),
+            onPrimaryContainer = Color(0xFFF8FAFC),
             secondary = GotGreen,
-            onSecondary = SurfaceWhite,
+            onSecondary = Color.White,
             secondaryContainer = GotGreenDark,
             onSecondaryContainer = GotGreenLight,
             tertiary = GiveRed,
-            onTertiary = SurfaceWhite,
-            background = Color(0xFF111827),
-            onBackground = Color(0xFFF9FAFB),
-            surface = Color(0xFF1F2937),
-            onSurface = Color(0xFFF9FAFB),
-            surfaceVariant = Color(0xFF374151),
-            onSurfaceVariant = Color(0xFF9CA3AF),
-            outline = Color(0xFF4B5563),
-            outlineVariant = Color(0xFF374151)
+            onTertiary = Color.White,
+            background = Color(0xFF0F172A),
+            onBackground = Color(0xFFF8FAFC),
+            surface = Color(0xFF1E293B),
+            onSurface = Color(0xFFF8FAFC),
+            surfaceVariant = Color(0xFF334155),
+            onSurfaceVariant = Color(0xFF94A3B8),
+            outline = Color(0xFF334155),
+            outlineVariant = Color(0xFF475569)
         )
     } else {
         lightColorScheme(
             primary = primaryColor,
-            onPrimary = SurfaceWhite,
+            onPrimary = Color.White,
             primaryContainer = primaryLight,
             onPrimaryContainer = primaryColor,
             secondary = GotGreen,
-            onSecondary = SurfaceWhite,
+            onSecondary = Color.White,
             secondaryContainer = GotGreenLight,
             onSecondaryContainer = GotGreenDark,
             tertiary = GiveRed,
-            onTertiary = SurfaceWhite,
+            onTertiary = Color.White,
             tertiaryContainer = GiveRedLight,
             onTertiaryContainer = GiveRedDark,
-            background = PageBackground,
-            onBackground = TextPrimary,
-            surface = SurfaceWhite,
-            onSurface = TextPrimary,
-            surfaceVariant = PageBackground,
-            onSurfaceVariant = TextSecondary,
-            outline = BorderLight,
-            outlineVariant = BorderMedium
+            background = DefaultPageBackground,
+            onBackground = DefaultTextPrimary,
+            surface = DefaultSurfaceWhite,
+            onSurface = DefaultTextPrimary,
+            surfaceVariant = Color(0xFFF1F5F9),
+            onSurfaceVariant = DefaultTextSecondary,
+            outline = DefaultBorderLight,
+            outlineVariant = DefaultBorderMedium
         )
     }
 
@@ -90,8 +89,10 @@ fun HisabKhataTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = if (isDark) Color(0xFF111827).toArgb() else primaryColor.toArgb()
+            window.statusBarColor = if (isDark) Color(0xFF0F172A).toArgb() else primaryColor.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            window.navigationBarColor = if (isDark) Color(0xFF0F172A).toArgb() else Color.White.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !isDark
         }
     }
 

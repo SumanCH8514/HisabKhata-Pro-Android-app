@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +44,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -69,10 +70,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sumanonline.hisabkhata.core.common.AppPreferencesManager
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
-
-private val SectionHeaderBg = Color(0xFFF4F5F7)
-private val SectionHeaderText = Color(0xFF757575)
-private val DividerColor = Color(0xFFEEEEEE)
 
 private data class AccentColorItem(
     val name: String,
@@ -114,6 +111,11 @@ fun PreferencesSettingsScreen(
     val currencies = listOf("Indian Rupee (₹ INR)", "US Dollar ($ USD)", "Euro (€ EUR)", "British Pound (£ GBP)")
     val dateFormats = listOf("dd MMM yyyy", "dd/MM/yyyy", "yyyy-MM-dd")
 
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val outlineColor = MaterialTheme.colorScheme.outline
+
     Scaffold(
         topBar = {
             Column(
@@ -145,7 +147,7 @@ fun PreferencesSettingsScreen(
                 }
             }
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -195,7 +197,7 @@ fun PreferencesSettingsScreen(
                     Icon(
                         imageVector = Icons.Outlined.CurrencyRupee,
                         contentDescription = null,
-                        tint = Color(0xFF616161),
+                        tint = onSurfaceVariantColor,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
@@ -204,13 +206,13 @@ fun PreferencesSettingsScreen(
                             text = "Currency Format",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1E293B)
+                            color = onSurfaceColor
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = preferences.currencyFormat,
                             fontSize = 12.sp,
-                            color = Color(0xFF64748B)
+                            color = onSurfaceVariantColor
                         )
                     }
                 }
@@ -233,8 +235,10 @@ fun PreferencesSettingsScreen(
                             },
                             label = { Text(curr, fontSize = 12.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0xFFEFF6FF),
-                                selectedLabelColor = BrandBlue
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                labelColor = onSurfaceColor,
+                                selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                selectedLabelColor = primaryColor
                             )
                         )
                     }
@@ -277,7 +281,7 @@ fun PreferencesSettingsScreen(
                 selected = preferences.themeMode == "Dark",
                 onClick = {
                     preferencesManager.setThemeMode("Dark")
-                    Toast.makeText(context, "Dark theme preference saved", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Dark theme preference applied", Toast.LENGTH_SHORT).show()
                 }
             )
 
@@ -296,7 +300,7 @@ fun PreferencesSettingsScreen(
                     Icon(
                         imageVector = Icons.Outlined.ColorLens,
                         contentDescription = null,
-                        tint = Color(0xFF616161),
+                        tint = onSurfaceVariantColor,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(14.dp))
@@ -305,12 +309,12 @@ fun PreferencesSettingsScreen(
                             text = "Selected Accent: ${preferences.accentColor}",
                             fontSize = 14.5.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1E293B)
+                            color = onSurfaceColor
                         )
                         Text(
-                            text = "Applied to primary buttons, active tabs & ledger badges",
+                            text = "Applied to top app bar, primary buttons, active tabs & ledger badges",
                             fontSize = 11.5.sp,
-                            color = Color(0xFF64748B)
+                            color = onSurfaceVariantColor
                         )
                     }
                 }
@@ -331,12 +335,12 @@ fun PreferencesSettingsScreen(
                                 .background(item.color)
                                 .border(
                                     width = if (isSelected) 3.dp else 1.dp,
-                                    color = if (isSelected) Color(0xFF1E293B) else Color.White,
+                                    color = if (isSelected) onSurfaceColor else Color.Transparent,
                                     shape = CircleShape
                                 )
                                 .clickable {
                                     preferencesManager.setAccentColor(item.name)
-                                    Toast.makeText(context, "${item.name} selected", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "${item.name} applied", Toast.LENGTH_SHORT).show()
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -366,7 +370,7 @@ fun PreferencesSettingsScreen(
                     Icon(
                         imageVector = Icons.Outlined.FormatSize,
                         contentDescription = null,
-                        tint = Color(0xFF616161),
+                        tint = onSurfaceVariantColor,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(14.dp))
@@ -374,7 +378,7 @@ fun PreferencesSettingsScreen(
                         text = "Font Scale: ${preferences.fontSize}",
                         fontSize = 14.5.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1E293B)
+                        color = onSurfaceColor
                     )
                 }
 
@@ -393,8 +397,10 @@ fun PreferencesSettingsScreen(
                             onClick = { preferencesManager.setFontSize(size) },
                             label = { Text(size, fontSize = 12.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0xFFEFF6FF),
-                                selectedLabelColor = BrandBlue
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                labelColor = onSurfaceColor,
+                                selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                selectedLabelColor = primaryColor
                             )
                         )
                     }
@@ -407,7 +413,7 @@ fun PreferencesSettingsScreen(
                     Icon(
                         imageVector = Icons.Outlined.FontDownload,
                         contentDescription = null,
-                        tint = Color(0xFF616161),
+                        tint = onSurfaceVariantColor,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(14.dp))
@@ -415,7 +421,7 @@ fun PreferencesSettingsScreen(
                         text = "Font Style: ${preferences.fontFamily}",
                         fontSize = 14.5.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1E293B)
+                        color = onSurfaceColor
                     )
                 }
 
@@ -434,8 +440,10 @@ fun PreferencesSettingsScreen(
                             onClick = { preferencesManager.setFontFamily(family) },
                             label = { Text(family, fontSize = 12.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0xFFEFF6FF),
-                                selectedLabelColor = BrandBlue
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                labelColor = onSurfaceColor,
+                                selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                selectedLabelColor = primaryColor
                             )
                         )
                     }
@@ -447,15 +455,15 @@ fun PreferencesSettingsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, outlineColor.copy(alpha = 0.3f))
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
                             text = "LIVE TYPOGRAPHY PREVIEW",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF94A3B8),
+                            color = onSurfaceVariantColor,
                             letterSpacing = 0.5.sp
                         )
                         Spacer(modifier = Modifier.height(6.dp))
@@ -476,7 +484,7 @@ fun PreferencesSettingsScreen(
                             fontSize = previewScale,
                             fontFamily = previewFamily,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
+                            color = onSurfaceColor
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
@@ -502,7 +510,7 @@ fun PreferencesSettingsScreen(
                     Icon(
                         imageVector = Icons.Outlined.CalendarToday,
                         contentDescription = null,
-                        tint = Color(0xFF616161),
+                        tint = onSurfaceVariantColor,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(14.dp))
@@ -510,7 +518,7 @@ fun PreferencesSettingsScreen(
                         text = "Display Format: ${preferences.dateFormat}",
                         fontSize = 14.5.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1E293B)
+                        color = onSurfaceColor
                     )
                 }
 
@@ -529,8 +537,10 @@ fun PreferencesSettingsScreen(
                             onClick = { preferencesManager.setDateFormat(fmt) },
                             label = { Text(fmt, fontSize = 12.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0xFFEFF6FF),
-                                selectedLabelColor = BrandBlue
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                labelColor = onSurfaceColor,
+                                selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                selectedLabelColor = primaryColor
                             )
                         )
                     }
@@ -545,6 +555,7 @@ fun PreferencesSettingsScreen(
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -554,7 +565,12 @@ fun PreferencesSettingsScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Select App Language", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        "Select App Language",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = onSurfaceColor
+                    )
                 }
             },
             text = {
@@ -581,7 +597,7 @@ fun PreferencesSettingsScreen(
                                 colors = RadioButtonDefaults.colors(selectedColor = BrandBlue)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = lang, fontSize = 15.sp, color = Color(0xFF1E293B))
+                            Text(text = lang, fontSize = 15.sp, color = onSurfaceColor)
                         }
                     }
                 }
@@ -600,14 +616,14 @@ private fun SectionHeader(title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SectionHeaderBg)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 16.dp, vertical = 9.dp)
     ) {
         Text(
             text = title,
             fontSize = 12.5.sp,
             fontWeight = FontWeight.SemiBold,
-            color = SectionHeaderText,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = 0.5.sp
         )
     }
@@ -630,7 +646,7 @@ private fun SettingActionRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF616161),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp)
         )
 
@@ -641,13 +657,13 @@ private fun SettingActionRow(
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1E293B)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = Color(0xFF64748B)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -671,7 +687,7 @@ private fun SettingToggleRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF616161),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp)
         )
 
@@ -682,13 +698,13 @@ private fun SettingToggleRow(
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1E293B)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = Color(0xFF64748B),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 16.sp
             )
         }
@@ -701,9 +717,9 @@ private fun SettingToggleRow(
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = BrandBlue,
-                uncheckedThumbColor = Color(0xFF94A3B8),
-                uncheckedTrackColor = Color(0xFFF1F5F9),
-                uncheckedBorderColor = Color(0xFFCBD5E1)
+                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
             )
         )
     }
@@ -727,7 +743,7 @@ private fun ThemeOptionRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF616161),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp)
         )
 
@@ -738,13 +754,13 @@ private fun ThemeOptionRow(
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1E293B)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = Color(0xFF64748B)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -761,6 +777,6 @@ private fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 54.dp),
         thickness = 0.7.dp,
-        color = DividerColor
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
     )
 }
