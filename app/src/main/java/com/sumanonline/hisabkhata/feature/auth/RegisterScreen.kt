@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -317,7 +318,7 @@ fun RegisterScreen(
                             name = it
                             if (uiState is Resource.Error) viewModel.clearError()
                         },
-                        label = { Text("Your Full Name") },
+                        label = { Text("Your Full Name", maxLines = 1) },
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = TextTertiary)
                         },
@@ -339,7 +340,7 @@ fun RegisterScreen(
                             businessName = it
                             if (uiState is Resource.Error) viewModel.clearError()
                         },
-                        label = { Text("Business / Shop Name") },
+                        label = { Text("Business / Shop Name", maxLines = 1) },
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Storefront, contentDescription = null, tint = TextTertiary)
                         },
@@ -361,7 +362,7 @@ fun RegisterScreen(
                             phone = it
                             if (uiState is Resource.Error) viewModel.clearError()
                         },
-                        label = { Text("Mobile Phone Number") },
+                        label = { Text("Mobile Phone Number", maxLines = 1) },
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Phone, contentDescription = null, tint = TextTertiary)
                         },
@@ -386,7 +387,7 @@ fun RegisterScreen(
                             email = it
                             if (uiState is Resource.Error) viewModel.clearError()
                         },
-                        label = { Text("Email Address") },
+                        label = { Text("Email Address", maxLines = 1) },
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Email, contentDescription = null, tint = TextTertiary)
                         },
@@ -411,7 +412,7 @@ fun RegisterScreen(
                             password = it
                             if (uiState is Resource.Error) viewModel.clearError()
                         },
-                        label = { Text("Password (Min 6 chars)") },
+                        label = { Text("Enter Password", maxLines = 1) },
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = TextTertiary)
                         },
@@ -428,6 +429,9 @@ fun RegisterScreen(
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { viewModel.register(name, email, password, phone, businessName) }
                         ),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
