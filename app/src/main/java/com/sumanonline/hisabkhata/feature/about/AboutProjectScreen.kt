@@ -143,11 +143,11 @@ fun AboutProjectScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.hisabkhata_logo),
-                            contentDescription = "App Logo",
+                            painter = painterResource(id = R.drawable.app_logo_round),
+                            contentDescription = "HisabKhata Logo",
                             modifier = Modifier
-                                .size(88.dp)
-                                .clip(RoundedCornerShape(20.dp))
+                                .size(92.dp)
+                                .clip(CircleShape)
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
@@ -472,20 +472,21 @@ private fun InfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 5.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            fontSize = 12.5.sp,
-            color = TextTertiary,
-            fontWeight = FontWeight.Medium
+            fontSize = 13.sp,
+            color = TextSecondary,
+            fontWeight = FontWeight.SemiBold
         )
         Text(
             text = value,
-            fontSize = 12.5.sp,
+            fontSize = 13.sp,
             color = TextPrimary,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.Bold
         )
     }
 }
