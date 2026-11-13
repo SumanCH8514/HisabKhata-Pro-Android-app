@@ -1,0 +1,24 @@
+# HisabKhata PRO - Development & Security Rules
+
+## 1. ABSOLUTE SECURITY MANDATE: NEVER HARDCODE SECRETS OR KEYS
+- **Zero Hardcoded Secrets**: You must NEVER hardcode API keys, secret tokens, private keys, client secrets, passwords, or cloud credentials in any source code (`.kt`, `.java`), build scripts (`*.gradle.kts`, `build.gradle`), XML resources, or documentation.
+- **Dynamic Credential Resolution**: Always retrieve credentials through safe, externalized channels:
+  1. `local.properties` via `localProperties.getProperty("KEY_NAME")` for local development.
+  2. System Environment Variables via `System.getenv("KEY_NAME")` for CI/CD runners (e.g. GitHub Actions).
+  3. Gitignored configuration files (such as `app/google-services.json`).
+- **Never Commit Sensitive Files**: Ensure the following remain strictly in `.gitignore`:
+  - `local.properties`
+  - `google-services.json`
+  - `*.jks`, `*.keystore`
+  - `.env`, `.env.local`
+- **Automated Verification**: The project enforces the `verifyNoHardcodedSecrets` Gradle task hooked into `preBuild`. Any build containing hardcoded keys like `AIzaSy...` will immediately fail.
+
+## 2. PRODUCTION-GRADE ANDROID BEST PRACTICES
+- **Modern Jetpack Compose & Material 3**:
+  - Use M3 components with appropriate typography, content padding, and rounded shapes.
+  - Maintain smooth 60/120fps scrolling with lightweight items and stable keys.
+- **Design System Consistency**:
+  - Always reuse project theme tokens: `BrandBlue`, `SurfaceWhite`, `PageBackground`, `BorderLight`, `GiveRed`, `GotGreen`, `TextPrimary`, `TextSecondary`, `TextTertiary`.
+- **Offline-First Architecture**:
+  - Room database is the single source of truth for UI state.
+  - Background synchronization is managed via `SyncEngine` and WorkManager.

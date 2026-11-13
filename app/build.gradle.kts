@@ -136,3 +136,52 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
+
+// Automated enforcement rule: fail the build if any hardcoded secret or API key is detected
+tasks.register("verifyNoHardcodedSecrets") {
+    description = "Enforces zero-hardcoded-secrets policy across project source code and build files."
+    group = "verification"
+
+    doLast {
+        val secretPatterns = listOf(
+            Regex("""AIza[0-9A-Za-z-_]{35}"""),
+            Regex("""(?i)(api[_-]?key|secret[_-]?key|client[_-]?secret)\s*[:=]\s*["'][A-Za-z0-9_\-]{16,}["']""")
+        )
+
+        val scannedFiles = fileTree(projectDir) {
+            include("src/**/*.kt", "src/**/*.java", "*.gradle.kts")
+            exclude("**/build/**", "google-services.json")
+        }
+
+        val violations = mutableListOf<String>()
+
+        scannedFiles.forEach { file ->
+            val lines = file.readLines()
+            lines.forEachIndexed { index, line ->
+                secretPatterns.forEach { pattern ->
+                    if (pattern.containsMatchIn(line)) {
+                        violations.add("${file.relativeTo(rootDir)}:${index + 1} -> Detected potential hardcoded secret/API key: ${line.trim()}")
+                    }
+                }
+            }
+        }
+
+        if (violations.isNotEmpty()) {
+            throw GradleException(
+                """
+                SECURITY VIOLATION: Hardcoded secret or API key detected!
+                The project strictly enforces that secrets, credentials, and API keys must NOT be hardcoded.
+                Found violations:
+                ${violations.joinToString("\n")}
+
+                Please resolve credentials dynamically via local.properties, environment variables, or gitignored files.
+                """.trimIndent()
+            )
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("verifyNoHardcodedSecrets")
+}
+
