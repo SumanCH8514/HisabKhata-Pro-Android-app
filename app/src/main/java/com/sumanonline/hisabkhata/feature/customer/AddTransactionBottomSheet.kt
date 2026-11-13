@@ -82,6 +82,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sumanonline.hisabkhata.core.common.ImageUtils
+import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
@@ -221,8 +222,6 @@ fun AddTransactionBottomSheet(
     // Color theme mappings matching reference screenshots
     val pageBgColor = if (isGave) Color(0xFFFAF5F6) else Color(0xFFF6FBF8)
     val headerTint = if (isGave) Color(0xFF5A1A1A) else Color(0xFF0F5132)
-    val avatarBg = if (isGave) Color(0xFFDEC5C8) else Color(0xFF2E7D32)
-    val avatarText = if (isGave) Color(0xFF5A1A1A) else Color.White
     val amountBoxBg = if (isGave) Color(0xFFF2D9DB) else Color(0xFFD7F4E5)
     val amountLabel = if (isGave) "Amount (₹)" else "Amount"
     val saveButtonActiveBg = if (isGave) Color(0xFF7F1D1D) else Color(0xFF0F5132)
@@ -236,18 +235,6 @@ fun AddTransactionBottomSheet(
     } else {
         "You got ₹ $dynamicTitleAmount from $customerName"
     }
-
-    val customerInitials = remember(customerName) {
-        val parts = customerName.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
-        when {
-            parts.isEmpty() -> "C"
-            parts.size == 1 -> parts[0].take(2).uppercase()
-            else -> "${parts[0].take(1)}${parts[1].take(1)}".uppercase()
-        }
-    }
-
-    val sanitizedPhoto = remember(customerPhotoUrl) { ImageUtils.sanitizeImageSource(customerPhotoUrl) }
-    var photoLoadFailed by remember(sanitizedPhoto) { mutableStateOf(false) }
 
     // Intercept back navigation
     BackHandler { onDismiss() }
@@ -281,36 +268,12 @@ fun AddTransactionBottomSheet(
 
                     Spacer(modifier = Modifier.width(4.dp))
 
-                    // Circular Avatar with Profile Picture or Initials
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(avatarBg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (sanitizedPhoto != null && !photoLoadFailed) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(sanitizedPhoto)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = customerName,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape),
-                                onError = { photoLoadFailed = true }
-                            )
-                        } else {
-                            Text(
-                                text = customerInitials,
-                                color = avatarText,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                    CustomerAvatar(
+                        name = customerName,
+                        photoUrl = customerPhotoUrl,
+                        size = 38.dp,
+                        showActiveBadge = false
+                    )
 
                     Spacer(modifier = Modifier.width(10.dp))
 

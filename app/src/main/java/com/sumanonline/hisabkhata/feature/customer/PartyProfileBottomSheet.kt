@@ -185,26 +185,12 @@ fun PartyProfileBottomSheet(
                             .padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (!customer.photoURL.isNullOrBlank()) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(ImageUtils.sanitizeImageSource(customer.photoURL))
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = customer.name,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape)
-                            )
-                        } else {
-                            CustomerAvatar(
-                                name = customer.name,
-                                photoUrl = customer.photoURL,
-                                size = 56.dp,
-                                showActiveBadge = false
-                            )
-                        }
+                        CustomerAvatar(
+                            name = customer.name,
+                            photoUrl = customer.photoURL,
+                            size = 56.dp,
+                            showActiveBadge = false
+                        )
 
                         Spacer(modifier = Modifier.width(14.dp))
 

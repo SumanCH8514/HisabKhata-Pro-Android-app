@@ -316,6 +316,8 @@ fun ProfileScreen(
                             model = ImageRequest.Builder(context)
                                 .data(ImageUtils.sanitizeImageSource(session.photoURL))
                                 .crossfade(true)
+                                .error(R.drawable.no_contact_image)
+                                .fallback(R.drawable.no_contact_image)
                                 .build(),
                             contentDescription = session.businessName,
                             contentScale = ContentScale.Crop,

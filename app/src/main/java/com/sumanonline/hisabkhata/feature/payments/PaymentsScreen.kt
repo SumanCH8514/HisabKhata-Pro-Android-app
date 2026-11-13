@@ -100,6 +100,7 @@ import coil.request.ImageRequest
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.common.ImageUtils
+import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
 import com.sumanonline.hisabkhata.core.database.entity.PendingPaymentEntity
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BorderMedium
@@ -1286,44 +1287,12 @@ private fun CustomerAvatarBadge(
     name: String,
     photoUrl: String?
 ) {
-    if (!photoUrl.isNullOrBlank()) {
-        val context = LocalContext.current
-        val sanitized = remember(photoUrl) { ImageUtils.sanitizeImageSource(photoUrl) }
-        val imageRequest = remember(sanitized) {
-            ImageRequest.Builder(context)
-                .data(sanitized)
-                .size(132, 132)
-                .crossfade(true)
-                .build()
-        }
-        AsyncImage(
-            model = imageRequest,
-            contentDescription = name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-        )
-    } else {
-        val initial = remember(name) {
-            name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
-        }
-        val bgColor = remember(name) { getAvatarPaletteColor(name) }
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(bgColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = initial,
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
+    CustomerAvatar(
+        name = name,
+        photoUrl = photoUrl,
+        size = 44.dp,
+        showActiveBadge = false
+    )
 }
 
 private fun getAvatarPaletteColor(name: String): Color {

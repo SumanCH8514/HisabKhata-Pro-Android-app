@@ -273,36 +273,12 @@ fun CustomerLedgerScreen(
 
                         Spacer(modifier = Modifier.width(2.dp))
 
-                        Box(modifier = Modifier.size(42.dp)) {
-                            if (!customer.photoURL.isNullOrBlank()) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .data(ImageUtils.sanitizeImageSource(customer.photoURL))
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = customer.name,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(CircleShape)
-                                )
-                            } else {
-                                CustomerAvatar(
-                                    name = customer.name,
-                                    photoUrl = customer.photoURL,
-                                    size = 42.dp,
-                                    showActiveBadge = false
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .size(11.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF22C55E))
-                                    .border(1.5.dp, Color.White, CircleShape)
-                                    .align(Alignment.BottomEnd)
-                            )
-                        }
+                        CustomerAvatar(
+                            name = customer.name,
+                            photoUrl = customer.photoURL,
+                            size = 42.dp,
+                            showActiveBadge = true
+                        )
 
                         Spacer(modifier = Modifier.width(10.dp))
 

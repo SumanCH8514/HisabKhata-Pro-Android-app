@@ -90,6 +90,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.sumanonline.hisabkhata.R
 import androidx.compose.material3.MaterialTheme
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
@@ -211,6 +212,8 @@ fun AccountProfileSettingsScreen(
                             model = ImageRequest.Builder(context)
                                 .data(ImageUtils.sanitizeImageSource(session.photoURL))
                                 .crossfade(true)
+                                .error(R.drawable.no_contact_image)
+                                .fallback(R.drawable.no_contact_image)
                                 .build(),
                             contentDescription = "Profile Photo",
                             contentScale = ContentScale.Crop,
