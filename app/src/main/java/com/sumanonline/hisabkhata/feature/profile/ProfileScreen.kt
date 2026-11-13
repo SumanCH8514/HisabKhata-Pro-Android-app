@@ -59,7 +59,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -71,11 +70,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.sumanonline.hisabkhata.core.common.Constants
+import java.util.Calendar
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -520,7 +524,11 @@ fun ProfileScreen(
                         onCheckedChange = { viewModel.setBiometricLock(it) },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
-                            checkedTrackColor = BrandBlue
+                            checkedTrackColor = BrandBlue,
+                            checkedBorderColor = Color.Transparent,
+                            uncheckedThumbColor = Color(0xFF94A3B8),
+                            uncheckedTrackColor = Color(0xFFF1F5F9),
+                            uncheckedBorderColor = Color(0xFFCBD5E1)
                         )
                     )
                 }
@@ -608,7 +616,7 @@ fun ProfileScreen(
                 ) {
                     Column {
                         Text(
-                            text = "HISABKHATA PRO",
+                            text = "HISABKHATA WEBSITE",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White,
@@ -616,16 +624,17 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Install and use the HisabKhata Ledger for free",
+                            text = "Access your cloud ledger online, download desktop tools & get GST-ready reports",
                             fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.9f)
+                            color = Color.White.copy(alpha = 0.9f),
+                            lineHeight = 16.sp
                         )
                         Spacer(modifier = Modifier.height(14.dp))
                         Button(
                             onClick = {
                                 val intent = Intent(
                                     Intent.ACTION_VIEW,
-                                    Uri.parse("https://github.com/SumanCH8514/HisabKhata-Pro-Android-app/raw/main/apk/app-debug.apk")
+                                    Uri.parse(Constants.WEB_PORTAL_BASE_URL)
                                 )
                                 try { context.startActivity(intent) } catch (_: Exception) {}
                             },
@@ -651,7 +660,7 @@ fun ProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Column(
                 modifier = Modifier
@@ -659,6 +668,36 @@ fun ProfileScreen(
                     .padding(vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Privacy Policy & Terms of Service Row
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Privacy Policy",
+                        fontSize = 12.sp,
+                        color = Color(0xFF64748B),
+                        modifier = Modifier.clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sumanonline.com/privacy"))
+                            try { context.startActivity(intent) } catch (_: Exception) {}
+                        }
+                    )
+                    Text(
+                        text = "   •   ",
+                        fontSize = 11.sp,
+                        color = Color(0xFFCBD5E1)
+                    )
+                    Text(
+                        text = "Terms of Service",
+                        fontSize = 12.sp,
+                        color = Color(0xFF64748B),
+                        modifier = Modifier.clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sumanonline.com/terms"))
+                            try { context.startActivity(intent) } catch (_: Exception) {}
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // HisabKhata Brand & Version Badge (Below Privacy Policy & Terms of Service)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { onNavigateToAboutProject() }
@@ -698,34 +737,7 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Privacy Policy",
-                        fontSize = 12.sp,
-                        color = Color(0xFF64748B),
-                        modifier = Modifier.clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sumanonline.com/privacy"))
-                            try { context.startActivity(intent) } catch (_: Exception) {}
-                        }
-                    )
-                    Text(
-                        text = "   •   ",
-                        fontSize = 11.sp,
-                        color = Color(0xFFCBD5E1)
-                    )
-                    Text(
-                        text = "Terms of Service",
-                        fontSize = 12.sp,
-                        color = Color(0xFF64748B),
-                        modifier = Modifier.clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sumanonline.com/terms"))
-                            try { context.startActivity(intent) } catch (_: Exception) {}
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
+                // Maintained by SumanOnline.Com
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable {
@@ -745,6 +757,17 @@ fun ProfileScreen(
                         color = BrandBlue
                     )
                 }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Dynamic Copyright: © currentYear SumanOnline Web Services.
+                val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR) }
+                Text(
+                    text = "© $currentYear SumanOnline Web Services.",
+                    fontSize = 11.5.sp,
+                    color = Color(0xFF94A3B8),
+                    textAlign = TextAlign.Center
+                )
             }
 
             Spacer(modifier = Modifier.height(80.dp))
