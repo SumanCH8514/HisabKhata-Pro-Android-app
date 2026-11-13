@@ -92,6 +92,8 @@ data class FirebaseUserDto(
     val accountNumber: String = "",
     val ifscCode: String = "",
     val photoURL: String = "",
+    val emailOtpVerification: Boolean = false,
+    val twoFactorEnabled: Boolean = false,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
 )

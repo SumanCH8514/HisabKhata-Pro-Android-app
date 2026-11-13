@@ -62,6 +62,12 @@ class ProfileViewModel @Inject constructor(
                                 bankAccount = profile.accountNumber.ifBlank { current.bankAccount }
                             )
                         )
+                        if (profile.emailOtpVerification != preferencesManager.preferences.value.emailOtpVerification) {
+                            preferencesManager.setEmailOtpVerification(profile.emailOtpVerification)
+                        }
+                        if (profile.twoFactorEnabled != preferencesManager.preferences.value.twoFactorEnabled) {
+                            preferencesManager.setTwoFactorEnabled(profile.twoFactorEnabled)
+                        }
                     }
                 }
             } catch (_: Exception) {
@@ -128,6 +134,40 @@ class ProfileViewModel @Inject constructor(
 
     fun setBiometricLock(enabled: Boolean) {
         sessionManager.setBiometricEnabled(enabled)
+    }
+
+    fun setEmailOtpVerification(enabled: Boolean) {
+        preferencesManager.setEmailOtpVerification(enabled)
+        viewModelScope.launch {
+            try {
+                val token = sessionManager.getIdToken()
+                val userId = sessionManager.getUserId()
+                if (token.isNotBlank() && userId.isNotBlank()) {
+                    val updates = kotlinx.serialization.json.buildJsonObject {
+                        put("emailOtpVerification", kotlinx.serialization.json.JsonPrimitive(enabled))
+                        put("updatedAt", kotlinx.serialization.json.JsonPrimitive(System.currentTimeMillis()))
+                    }
+                    firebaseApi.patchUserProfile(userId, updates, token)
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun setTwoFactorEnabled(enabled: Boolean) {
+        preferencesManager.setTwoFactorEnabled(enabled)
+        viewModelScope.launch {
+            try {
+                val token = sessionManager.getIdToken()
+                val userId = sessionManager.getUserId()
+                if (token.isNotBlank() && userId.isNotBlank()) {
+                    val updates = kotlinx.serialization.json.buildJsonObject {
+                        put("twoFactorEnabled", kotlinx.serialization.json.JsonPrimitive(enabled))
+                        put("updatedAt", kotlinx.serialization.json.JsonPrimitive(System.currentTimeMillis()))
+                    }
+                    firebaseApi.patchUserProfile(userId, updates, token)
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     fun sendPasswordReset(email: String, onResult: (Boolean, String) -> Unit) {

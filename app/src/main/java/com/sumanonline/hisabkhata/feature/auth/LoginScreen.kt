@@ -63,6 +63,7 @@ import java.util.Calendar
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.input.ImeAction
@@ -100,6 +101,7 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val pendingVerification by viewModel.pendingLoginVerification.collectAsState()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -182,12 +184,30 @@ fun LoginScreen(
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is AuthEvent.LoginSuccess -> onLoginSuccess()
+                is AuthEvent.OtpRequired -> {
+                    Toast.makeText(context, "Verification code sent to ${event.email}", Toast.LENGTH_SHORT).show()
+                }
                 is AuthEvent.Error -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
                 else -> Unit
             }
         }
+    }
+
+    pendingVerification?.let { pending ->
+        LoginOtpVerificationDialog(
+            email = pending.email,
+            onVerify = { code, onResult ->
+                viewModel.verifyLoginOtp(code, onResult)
+            },
+            onResend = { onResult ->
+                viewModel.resendLoginOtp(onResult)
+            },
+            onDismiss = {
+                viewModel.cancelLoginOtp()
+            }
+        )
     }
 
     if (showConfigHelpDialog) {
@@ -533,3 +553,224 @@ fun LoginScreen(
         }
     }
 }
+
+@Composable
+fun LoginOtpVerificationDialog(
+    email: String,
+    onVerify: (String, (Boolean, String) -> Unit) -> Unit,
+    onResend: ((Boolean, String) -> Unit) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var otpCode by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isVerifying by remember { mutableStateOf(false) }
+    var isResending by remember { mutableStateOf(false) }
+    var resendCooldown by remember { mutableStateOf(45) }
+
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = isResending) {
+        if (resendCooldown > 0) {
+            while (resendCooldown > 0) {
+                kotlinx.coroutines.delay(1000L)
+                resendCooldown--
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(BrandBlue.copy(alpha = 0.12f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.MarkEmailRead,
+                        contentDescription = null,
+                        tint = BrandBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Column {
+                    Text(
+                        text = "Verify Your Identity",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Two-Step Verification",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "A 6-digit verification code was sent to:",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = email,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandBlue,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                OutlinedTextField(
+                    value = otpCode,
+                    onValueChange = { input ->
+                        val filtered = input.filter { it.isDigit() }.take(6)
+                        otpCode = filtered
+                        if (errorMessage != null) errorMessage = null
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = {
+                        Text(
+                            text = "• • • • • •",
+                            fontSize = 24.sp,
+                            letterSpacing = 8.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                        )
+                    },
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 8.sp,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (otpCode.length == 6 && !isVerifying) {
+                                isVerifying = true
+                                onVerify(otpCode) { success, msg ->
+                                    isVerifying = false
+                                    if (!success) {
+                                        errorMessage = msg
+                                    }
+                                }
+                            }
+                        }
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrandBlue,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        errorBorderColor = GiveRed
+                    ),
+                    isError = errorMessage != null
+                )
+
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = errorMessage ?: "",
+                        color = GiveRed,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Didn't receive the email? ",
+                        fontSize = 12.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (resendCooldown > 0) {
+                        Text(
+                            text = "Resend in ${resendCooldown}s",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            text = if (isResending) "Sending..." else "Resend Code",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandBlue,
+                            modifier = Modifier.clickable(enabled = !isResending) {
+                                isResending = true
+                                onResend { success, msg ->
+                                    isResending = false
+                                    resendCooldown = 60
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (otpCode.length == 6 && !isVerifying) {
+                        isVerifying = true
+                        onVerify(otpCode) { success, msg ->
+                            isVerifying = false
+                            if (!success) {
+                                errorMessage = msg
+                            }
+                        }
+                    }
+                },
+                enabled = otpCode.length == 6 && !isVerifying,
+                colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                if (isVerifying) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text("Verify & Sign In", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    )
+}
+

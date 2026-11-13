@@ -4,6 +4,14 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,10 +27,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.CleaningServices
 import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -55,6 +65,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +73,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -74,7 +87,10 @@ import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
 import com.sumanonline.hisabkhata.core.designsystem.appSwitchColors
+import com.sumanonline.hisabkhata.core.designsystem.components.TwoFactorQrDialog
 import com.sumanonline.hisabkhata.core.sync.SyncWorker
+import java.io.File
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +106,9 @@ fun ApplicationSettingsScreen(
     var showTimeoutDialog by remember { mutableStateOf(false) }
     var showPasswordResetDialog by remember { mutableStateOf(false) }
     var showTwoFactorDialog by remember { mutableStateOf(false) }
+    var showClearCacheDialog by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
+    var cacheSizeBytes by remember { mutableStateOf(getAppCacheBytes(context)) }
 
     val timeoutOptions = listOf("Immediately", "1 Minute", "5 Minutes", "15 Minutes")
 
@@ -168,7 +186,7 @@ fun ApplicationSettingsScreen(
                 },
                 checked = preferences.emailOtpVerification,
                 onCheckedChange = { enabled ->
-                    preferencesManager.setEmailOtpVerification(enabled)
+                    profileViewModel.setEmailOtpVerification(enabled)
                     val msg = if (enabled) "Email OTP verification enabled" else "Email OTP verification disabled"
                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                 }
@@ -277,14 +295,10 @@ fun ApplicationSettingsScreen(
             SettingActionRow(
                 icon = Icons.Outlined.CleaningServices,
                 title = "Clear Temporary Cache",
-                subtitle = "Frees internal storage (~3.8 MB used by reports & previews)",
+                subtitle = "Frees internal storage (${formatStorageSize(cacheSizeBytes)} used by reports & previews)",
+                trailingText = if (cacheSizeBytes <= 0) "Clean" else formatStorageSize(cacheSizeBytes),
                 onClick = {
-                    try {
-                        context.cacheDir.deleteRecursively()
-                        Toast.makeText(context, "App cache cleared", Toast.LENGTH_SHORT).show()
-                    } catch (_: Exception) {
-                        Toast.makeText(context, "Cache already cleared", Toast.LENGTH_SHORT).show()
-                    }
+                    showClearCacheDialog = true
                 }
             )
 
@@ -440,134 +454,35 @@ fun ApplicationSettingsScreen(
         )
     }
 
-    // Dialog: Two-Factor Authentication Setup
+    // Dialog: Two-Factor Authentication Setup with QR Code
     if (showTwoFactorDialog) {
-        val authSecretKey = remember(session.userId) {
-            val keyHash = session.userId.take(8).ifBlank { "8818" }.uppercase()
-            "HKPRO-2FA-$keyHash-AUTH"
-        }
-
-        AlertDialog(
-            onDismissRequest = { showTwoFactorDialog = false },
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.VpnKey,
-                        contentDescription = null,
-                        tint = BrandBlue,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Google Authenticator 2FA",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+        TwoFactorQrDialog(
+            userEmail = session.email,
+            userId = session.userId,
+            isEnabled = preferences.twoFactorEnabled,
+            onToggleEnabled = { enabled ->
+                profileViewModel.setTwoFactorEnabled(enabled)
             },
-            text = {
-                Column {
-                    Text(
-                        text = "Protect your ledger account by verifying a 6-digit Time-based One-Time Password (TOTP) from Google Authenticator on sign-in.",
-                        fontSize = 13.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
-                    )
+            onDismiss = { showTwoFactorDialog = false }
+        )
+    }
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "YOUR AUTHENTICATOR SECRET KEY",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 0.5.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = authSecretKey,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.5.sp,
-                                color = BrandBlue
-                            )
-
-                            IconButton(
-                                onClick = {
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("2FA Key", authSecretKey))
-                                    Toast.makeText(context, "Secret key copied to clipboard", Toast.LENGTH_SHORT).show()
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.ContentCopy,
-                                    contentDescription = "Copy",
-                                    tint = BrandBlue,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val nextState = !preferences.twoFactorEnabled
-                                preferencesManager.setTwoFactorEnabled(nextState)
-                                val msg = if (nextState) "2FA authentication enabled" else "2FA authentication disabled"
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Enable 2FA Protection",
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Switch(
-                            checked = preferences.twoFactorEnabled,
-                            onCheckedChange = { nextState ->
-                                preferencesManager.setTwoFactorEnabled(nextState)
-                                val msg = if (nextState) "2FA authentication enabled" else "2FA authentication disabled"
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            },
-                            colors = appSwitchColors()
-                        )
-                    }
-                }
+    // Dialog: Clear Temporary Cache with Sweeping Animation
+    if (showClearCacheDialog) {
+        ClearCacheAnimatedDialog(
+            initialSizeBytes = cacheSizeBytes,
+            onClearConfirmed = {
+                val freed = cacheSizeBytes
+                try {
+                    context.cacheDir.listFiles()?.forEach { it.deleteRecursively() }
+                    context.externalCacheDir?.listFiles()?.forEach { it.deleteRecursively() }
+                    context.codeCacheDir?.listFiles()?.forEach { it.deleteRecursively() }
+                } catch (_: Exception) {}
+                val updated = getAppCacheBytes(context)
+                cacheSizeBytes = updated
+                freed
             },
-            confirmButton = {
-                Button(
-                    onClick = { showTwoFactorDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
-                ) {
-                    Text("Done", color = Color.White)
-                }
-            }
+            onDismiss = { showClearCacheDialog = false }
         )
     }
 }
@@ -818,3 +733,260 @@ private fun SettingsDivider() {
         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
     )
 }
+
+@Composable
+fun ClearCacheAnimatedDialog(
+    initialSizeBytes: Long,
+    onClearConfirmed: () -> Long,
+    onDismiss: () -> Unit
+) {
+    var isClearing by remember { mutableStateOf(false) }
+    var isDone by remember { mutableStateOf(false) }
+    var clearedBytes by remember { mutableStateOf(0L) }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "broomSweep")
+    val broomAngle by infiniteTransition.animateFloat(
+        initialValue = -25f,
+        targetValue = 25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(350, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "broomRotate"
+    )
+
+    val checkScale by animateFloatAsState(
+        targetValue = if (isDone) 1f else 0.2f,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "checkScale"
+    )
+
+    LaunchedEffect(isClearing) {
+        if (isClearing) {
+            delay(1200L)
+            clearedBytes = onClearConfirmed()
+            isClearing = false
+            isDone = true
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!isClearing) onDismiss()
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            if (isDone) GotGreen.copy(alpha = 0.12f) else BrandBlue.copy(alpha = 0.12f),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isDone) {
+                        Icon(
+                            imageVector = Icons.Outlined.CheckCircle,
+                            contentDescription = null,
+                            tint = GotGreen,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .scale(checkScale)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.CleaningServices,
+                            contentDescription = null,
+                            tint = BrandBlue,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(if (isClearing) broomAngle else 0f)
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        text = if (isDone) "Cache Cleared!" else if (isClearing) "Cleaning Memory..." else "Clear App Cache",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (isDone) "Temporary storage freed" else "Frees internal cache memory",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (isDone) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                GreenPillBg,
+                                RoundedCornerShape(14.dp)
+                            )
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "✨ ${formatStorageSize(if (clearedBytes > 0) clearedBytes else initialSizeBytes)} Freed",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 19.sp,
+                                color = GotGreen
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Temporary cache memory is now 0 B",
+                                fontSize = 12.5.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Report previews, cached statements, and temporary sync images were purged safely without affecting your ledger balances.",
+                        fontSize = 12.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 17.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                } else if (isClearing) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(36.dp),
+                        color = BrandBlue,
+                        strokeWidth = 3.dp
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "Sweeping temporary cache down to 0 B...",
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = BrandBlue
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                RoundedCornerShape(14.dp)
+                            )
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = formatStorageSize(initialSizeBytes),
+                                fontWeight = FontWeight.Black,
+                                fontSize = 24.sp,
+                                color = BrandBlue
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Occupied by temporary files & previews",
+                                fontSize = 12.5.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Clearing the cache frees device memory by removing cached PDF statements, transaction images, and network responses. Your business data remains safe and synchronized in the cloud.",
+                        fontSize = 12.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 17.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (isDone) {
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = GotGreen),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Done", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            } else if (!isClearing) {
+                Button(
+                    onClick = { isClearing = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.CleaningServices,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Clear Now", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            if (!isDone && !isClearing) {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    )
+}
+
+fun getAppCacheBytes(context: Context): Long {
+    var total: Long = 0
+    try {
+        total += calculateDirectorySize(context.cacheDir)
+    } catch (_: Exception) {}
+    try {
+        context.externalCacheDir?.let { total += calculateDirectorySize(it) }
+    } catch (_: Exception) {}
+    try {
+        context.codeCacheDir?.let { total += calculateDirectorySize(it) }
+    } catch (_: Exception) {}
+    return total
+}
+
+private fun calculateDirectorySize(dir: File?): Long {
+    if (dir == null || !dir.exists()) return 0
+    if (dir.isFile) return dir.length()
+    var size: Long = 0
+    val files = dir.listFiles() ?: return 0
+    for (file in files) {
+        size += if (file.isDirectory) calculateDirectorySize(file) else file.length()
+    }
+    return size
+}
+
+fun formatStorageSize(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+    val kb = bytes / 1024.0
+    val mb = kb / 1024.0
+    val gb = mb / 1024.0
+    return when {
+        gb >= 1.0 -> String.format(java.util.Locale.US, "%.2f GB", gb)
+        mb >= 1.0 -> String.format(java.util.Locale.US, "%.1f MB", mb)
+        kb >= 1.0 -> String.format(java.util.Locale.US, "%.1f KB", kb)
+        else -> "$bytes B"
+    }
+}
+

@@ -2,13 +2,18 @@ package com.sumanonline.hisabkhata.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sumanonline.hisabkhata.core.common.AppPreferencesManager
 import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.common.Resource
+import com.sumanonline.hisabkhata.core.network.BackendApiService
 import com.sumanonline.hisabkhata.core.network.FirebaseApiService
+import com.sumanonline.hisabkhata.core.network.model.EmailRequest
+import com.sumanonline.hisabkhata.core.network.model.FirebaseAuthResponse
 import com.sumanonline.hisabkhata.core.network.model.FirebaseAuthSignInRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebaseAuthSignUpRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebasePasswordResetRequest
 import com.sumanonline.hisabkhata.core.network.model.FirebaseSignInWithIdpRequest
+import com.sumanonline.hisabkhata.core.network.model.FirebaseUserDto
 import com.sumanonline.hisabkhata.core.security.SecureSessionManager
 import com.sumanonline.hisabkhata.core.security.UserSession
 import com.sumanonline.hisabkhata.core.sync.SyncEngine
@@ -33,17 +38,31 @@ sealed interface AuthEvent {
     data object LoginSuccess : AuthEvent
     data class Error(val message: String) : AuthEvent
     data class PasswordResetSent(val email: String) : AuthEvent
+    data class OtpRequired(val email: String) : AuthEvent
 }
+
+data class PendingLoginVerification(
+    val authData: FirebaseAuthResponse,
+    val profile: FirebaseUserDto?,
+    val otpCode: String,
+    val email: String,
+    val expiryTimestamp: Long = System.currentTimeMillis() + 5 * 60 * 1000L
+)
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val firebaseApi: FirebaseApiService,
     private val sessionManager: SecureSessionManager,
-    private val syncEngine: SyncEngine
+    private val syncEngine: SyncEngine,
+    private val preferencesManager: AppPreferencesManager,
+    private val backendApi: BackendApiService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<Resource<Unit>>(Resource.Success(Unit))
     val uiState: StateFlow<Resource<Unit>> = _uiState.asStateFlow()
+
+    private val _pendingLoginVerification = MutableStateFlow<PendingLoginVerification?>(null)
+    val pendingLoginVerification: StateFlow<PendingLoginVerification?> = _pendingLoginVerification.asStateFlow()
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -90,27 +109,44 @@ class AuthViewModel @Inject constructor(
                         null
                     }
 
-                    val session = UserSession(
-                        userId = authData.localId,
-                        idToken = authData.idToken,
-                        refreshToken = authData.refreshToken,
-                        email = authData.email,
-                        displayName = profile?.name?.ifBlank { null } ?: authData.email.substringBefore("@"),
-                        businessName = profile?.businessName?.ifBlank { null } ?: "My Shop",
-                        phone = profile?.phone ?: "",
-                        upiId = profile?.upiId ?: "",
-                        role = profile?.role ?: "user",
-                        photoURL = profile?.photoURL ?: ""
-                    )
-                    sessionManager.saveSession(session)
-                    _uiState.value = Resource.Success(Unit)
-                    _eventFlow.emit(AuthEvent.LoginSuccess)
+                    // Check if Login Email OTP Verification is enabled for this account
+                    val isOtpVerificationEnabled = profile?.emailOtpVerification == true ||
+                            preferencesManager.preferences.value.emailOtpVerification
 
-                    viewModelScope.launch {
+                    if (isOtpVerificationEnabled) {
+                        // Generate 6-digit OTP
+                        val generatedOtp = String.format(java.util.Locale.US, "%06d", (100000..999999).random())
+                        _pendingLoginVerification.value = PendingLoginVerification(
+                            authData = authData,
+                            profile = profile,
+                            otpCode = generatedOtp,
+                            email = authData.email
+                        )
+
+                        // Send OTP via Backend Email Service
+                        val recipientName = profile?.name?.ifBlank { null }
+                            ?: authData.email.substringBefore("@")
                         try {
-                            syncEngine.synchronize()
+                            backendApi.sendEmail(
+                                EmailRequest(
+                                    to_email = authData.email,
+                                    customer_name = recipientName,
+                                    merchant_name = "HisabKhata Security",
+                                    subject = "Your Login Verification Code: $generatedOtp",
+                                    message = "Your 6-digit verification code to sign in to HisabKhata is: $generatedOtp. This code is valid for 5 minutes.",
+                                    type = "OTP",
+                                    otp = generatedOtp
+                                )
+                            )
                         } catch (_: Exception) {
+                            // If backend email fails, OTP is still set for fallback
                         }
+
+                        _uiState.value = Resource.Success(Unit)
+                        _eventFlow.emit(AuthEvent.OtpRequired(authData.email))
+                    } else {
+                        // Complete login directly
+                        completeUserLogin(authData, profile)
                     }
                 } else {
                     val rawError = response.errorBody()?.string()
@@ -126,6 +162,99 @@ class AuthViewModel @Inject constructor(
                 }
                 _uiState.value = Resource.Error(msg)
                 _eventFlow.emit(AuthEvent.Error(msg))
+            }
+        }
+    }
+
+    fun verifyLoginOtp(enteredOtp: String, onResult: (Boolean, String) -> Unit) {
+        val pending = _pendingLoginVerification.value
+        if (pending == null) {
+            onResult(false, "No active OTP verification session")
+            return
+        }
+
+        if (System.currentTimeMillis() > pending.expiryTimestamp) {
+            onResult(false, "Verification code has expired. Please request a new code.")
+            return
+        }
+
+        if (enteredOtp.trim() != pending.otpCode) {
+            onResult(false, "Incorrect verification code. Please check your email and try again.")
+            return
+        }
+
+        // OTP Verified successfully! Complete login
+        completeUserLogin(pending.authData, pending.profile)
+        _pendingLoginVerification.value = null
+        onResult(true, "Verified successfully")
+    }
+
+    fun resendLoginOtp(onResult: (Boolean, String) -> Unit) {
+        val pending = _pendingLoginVerification.value
+        if (pending == null) {
+            onResult(false, "No active OTP verification session")
+            return
+        }
+
+        viewModelScope.launch {
+            val newOtp = String.format(java.util.Locale.US, "%06d", (100000..999999).random())
+            _pendingLoginVerification.value = pending.copy(
+                otpCode = newOtp,
+                expiryTimestamp = System.currentTimeMillis() + 5 * 60 * 1000L
+            )
+
+            try {
+                val recipientName = pending.profile?.name?.ifBlank { null }
+                    ?: pending.authData.email.substringBefore("@")
+                val response = backendApi.sendEmail(
+                    EmailRequest(
+                        to_email = pending.authData.email,
+                        customer_name = recipientName,
+                        merchant_name = "HisabKhata Security",
+                        subject = "Your New Login Verification Code: $newOtp",
+                        message = "Your new 6-digit verification code to sign in to HisabKhata is: $newOtp. This code is valid for 5 minutes.",
+                        type = "OTP",
+                        otp = newOtp
+                    )
+                )
+                if (response.isSuccessful && response.body()?.success == true) {
+                    onResult(true, "New verification code sent to ${pending.authData.email}")
+                } else {
+                    onResult(true, "New code generated: check your email")
+                }
+            } catch (e: Exception) {
+                onResult(true, "New code generated: check your email")
+            }
+        }
+    }
+
+    fun cancelLoginOtp() {
+        _pendingLoginVerification.value = null
+    }
+
+    private fun completeUserLogin(
+        authData: FirebaseAuthResponse,
+        profile: FirebaseUserDto?
+    ) {
+        val session = UserSession(
+            userId = authData.localId,
+            idToken = authData.idToken,
+            refreshToken = authData.refreshToken,
+            email = authData.email,
+            displayName = profile?.name?.ifBlank { null } ?: authData.email.substringBefore("@"),
+            businessName = profile?.businessName?.ifBlank { null } ?: "My Shop",
+            phone = profile?.phone ?: "",
+            upiId = profile?.upiId ?: "",
+            role = profile?.role ?: "user",
+            photoURL = profile?.photoURL ?: ""
+        )
+        sessionManager.saveSession(session)
+        _uiState.value = Resource.Success(Unit)
+        viewModelScope.launch {
+            _eventFlow.emit(AuthEvent.LoginSuccess)
+            try {
+                syncEngine.synchronize()
+            } catch (_: Exception) {
             }
         }
     }

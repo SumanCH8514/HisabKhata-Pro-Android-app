@@ -103,6 +103,7 @@ import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
 import com.sumanonline.hisabkhata.core.designsystem.appSwitchColors
 import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
+import com.sumanonline.hisabkhata.core.designsystem.components.TwoFactorQrDialog
 import com.sumanonline.hisabkhata.core.common.ImageUtils
 import kotlinx.coroutines.launch
 
@@ -517,7 +518,7 @@ fun AccountProfileSettingsScreen(
                 isClickable = true,
                 onClick = {
                     val next = !preferences.emailOtpVerification
-                    viewModel.preferencesManager.setEmailOtpVerification(next)
+                    viewModel.setEmailOtpVerification(next)
                     val msg = if (next) "Email OTP verification enabled" else "Email OTP verification disabled"
                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                 }
@@ -873,131 +874,18 @@ fun AccountProfileSettingsScreen(
         )
     }
 
-    // Two-Factor Authentication Dialog
+    // Two-Factor Authentication Dialog with QR Code
     if (showTwoFactorDialog) {
-        val authSecretKey = remember(session.userId) {
-            val keyHash = session.userId.take(8).ifBlank { "8818" }.uppercase()
-            "HKPRO-2FA-$keyHash-AUTH"
-        }
-
-        AlertDialog(
-            onDismissRequest = { showTwoFactorDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.VpnKey,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Google Authenticator 2FA", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
-                }
+        TwoFactorQrDialog(
+            userEmail = session.email,
+            userId = session.userId,
+            isEnabled = preferences.twoFactorEnabled,
+            onToggleEnabled = { enabled ->
+                viewModel.setTwoFactorEnabled(enabled)
+                val msg = if (enabled) "2FA authentication enabled" else "2FA authentication disabled"
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
             },
-            text = {
-                Column {
-                    Text(
-                        text = "Protect your ledger account by verifying a 6-digit Time-based One-Time Password (TOTP) from Google Authenticator on sign-in.",
-                        fontSize = 13.5.sp,
-                        color = TextSecondary,
-                        lineHeight = 18.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "YOUR AUTHENTICATOR SECRET KEY",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextSecondary,
-                        letterSpacing = 0.5.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = authSecretKey,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.5.sp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            IconButton(
-                                onClick = {
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("2FA Key", authSecretKey))
-                                    Toast.makeText(context, "Secret key copied to clipboard", Toast.LENGTH_SHORT).show()
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.ContentCopy,
-                                    contentDescription = "Copy",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val nextState = !preferences.twoFactorEnabled
-                                viewModel.preferencesManager.setTwoFactorEnabled(nextState)
-                                val msg = if (nextState) "2FA authentication enabled" else "2FA authentication disabled"
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Enable 2FA Protection",
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Switch(
-                            checked = preferences.twoFactorEnabled,
-                            onCheckedChange = { nextState ->
-                                viewModel.preferencesManager.setTwoFactorEnabled(nextState)
-                                val msg = if (nextState) "2FA authentication enabled" else "2FA authentication disabled"
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            },
-                            colors = appSwitchColors()
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showTwoFactorDialog = false },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Done", color = Color.White)
-                }
-            }
+            onDismiss = { showTwoFactorDialog = false }
         )
     }
 }
