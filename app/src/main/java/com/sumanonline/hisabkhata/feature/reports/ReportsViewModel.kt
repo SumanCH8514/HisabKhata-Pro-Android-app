@@ -9,6 +9,7 @@ import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.database.dao.CustomerDao
 import com.sumanonline.hisabkhata.core.database.dao.TransactionDao
+import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
 import com.sumanonline.hisabkhata.core.database.entity.TransactionEntity
 import com.sumanonline.hisabkhata.core.security.SecureSessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,14 +25,17 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
-enum class ReportPeriod {
-    THIS_MONTH,
-    LAST_MONTH,
-    LAST_7_DAYS,
-    ALL
+enum class ReportPeriod(val label: String) {
+    ALL("All Time"),
+    THIS_MONTH("This Month"),
+    LAST_MONTH("Last Month"),
+    LAST_7_DAYS("Last 7 Days"),
+    CUSTOM("Custom Range")
 }
 
 @HiltViewModel
@@ -43,11 +47,17 @@ class ReportsViewModel @Inject constructor(
 
     val session = sessionManager.sessionState
 
-    private val _selectedPeriod = MutableStateFlow(ReportPeriod.THIS_MONTH)
+    private val _selectedPeriod = MutableStateFlow(ReportPeriod.ALL)
     val selectedPeriod: StateFlow<ReportPeriod> = _selectedPeriod.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _customStartDate = MutableStateFlow<Long?>(null)
+    val customStartDate: StateFlow<Long?> = _customStartDate.asStateFlow()
+
+    private val _customEndDate = MutableStateFlow<Long?>(null)
+    val customEndDate: StateFlow<Long?> = _customEndDate.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val customers = sessionManager.sessionState
@@ -73,37 +83,92 @@ class ReportsViewModel @Inject constructor(
 
     val filteredTransactions: StateFlow<List<TransactionEntity>> = combine(
         allTransactions,
+        customers,
         _selectedPeriod,
-        _searchQuery
-    ) { txList, period, query ->
-        val now = Calendar.getInstance()
-        val startCal = Calendar.getInstance()
+        _searchQuery,
+        _customStartDate,
+        _customEndDate
+    ) { args: Array<Any?> ->
+        @Suppress("UNCHECKED_CAST")
+        val txList = args[0] as List<TransactionEntity>
+        @Suppress("UNCHECKED_CAST")
+        val custList = args[1] as List<CustomerEntity>
+        val period = args[2] as ReportPeriod
+        val query = (args[3] as String).trim()
+        val customStart = args[4] as Long?
+        val customEnd = args[5] as Long?
 
-        when (period) {
+        val (startMillis, endMillis) = when (period) {
             ReportPeriod.THIS_MONTH -> {
-                startCal.set(Calendar.DAY_OF_MONTH, 1)
-                startCal.set(Calendar.HOUR_OF_DAY, 0)
-                startCal.set(Calendar.MINUTE, 0)
-                startCal.set(Calendar.SECOND, 0)
+                val startCal = Calendar.getInstance().apply {
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val endCal = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 23)
+                    set(Calendar.MINUTE, 59)
+                    set(Calendar.SECOND, 59)
+                    set(Calendar.MILLISECOND, 999)
+                }
+                Pair(startCal.timeInMillis, endCal.timeInMillis)
             }
             ReportPeriod.LAST_MONTH -> {
-                startCal.add(Calendar.MONTH, -1)
-                startCal.set(Calendar.DAY_OF_MONTH, 1)
-                startCal.set(Calendar.HOUR_OF_DAY, 0)
-                startCal.set(Calendar.MINUTE, 0)
-                startCal.set(Calendar.SECOND, 0)
+                val startCal = Calendar.getInstance().apply {
+                    add(Calendar.MONTH, -1)
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val endCal = Calendar.getInstance().apply {
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                    add(Calendar.MILLISECOND, -1)
+                }
+                Pair(startCal.timeInMillis, endCal.timeInMillis)
             }
             ReportPeriod.LAST_7_DAYS -> {
-                startCal.add(Calendar.DAY_OF_YEAR, -7)
+                val startCal = Calendar.getInstance().apply {
+                    add(Calendar.DAY_OF_YEAR, -7)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val endCal = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 23)
+                    set(Calendar.MINUTE, 59)
+                    set(Calendar.SECOND, 59)
+                    set(Calendar.MILLISECOND, 999)
+                }
+                Pair(startCal.timeInMillis, endCal.timeInMillis)
             }
             ReportPeriod.ALL -> {
-                startCal.timeInMillis = 0L
+                Pair(0L, Long.MAX_VALUE)
+            }
+            ReportPeriod.CUSTOM -> {
+                val s = customStart ?: 0L
+                val e = customEnd ?: Long.MAX_VALUE
+                Pair(s, e)
             }
         }
 
+        val customerNameMap = custList.associate { it.id to it.name }
+
         txList.filter { tx ->
-            val inDateRange = tx.timestamp >= startCal.timeInMillis
-            val matchesQuery = query.isBlank() || tx.description.contains(query, ignoreCase = true)
+            val inDateRange = tx.timestamp in startMillis..endMillis
+            val partyName = customerNameMap[tx.customerId].orEmpty()
+            val matchesQuery = query.isBlank() ||
+                partyName.contains(query, ignoreCase = true) ||
+                tx.description.contains(query, ignoreCase = true) ||
+                CurrencyFormatter.formatInrClean(Math.abs(tx.amount), false).contains(query)
             inDateRange && matchesQuery
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -124,6 +189,16 @@ class ReportsViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
+    fun setCustomDateRange(start: Long?, end: Long?) {
+        _customStartDate.value = start
+        _customEndDate.value = end
+    }
+
+    fun clearCustomDates() {
+        _customStartDate.value = null
+        _customEndDate.value = null
+    }
+
     fun sharePdf(context: Context) {
         viewModelScope.launch {
             val customerNameMap = customers.value.associate { it.id to it.name }
@@ -131,12 +206,27 @@ class ReportsViewModel @Inject constructor(
             val merchantName = currentSession.businessName.ifBlank { currentSession.displayName }
             val merchantPhone = currentSession.phone
 
+            val periodLabel = when (selectedPeriod.value) {
+                ReportPeriod.THIS_MONTH -> "This Month"
+                ReportPeriod.LAST_MONTH -> "Last Month"
+                ReportPeriod.LAST_7_DAYS -> "Last 7 Days"
+                ReportPeriod.ALL -> "All Time"
+                ReportPeriod.CUSTOM -> {
+                    val s = _customStartDate.value
+                    val e = _customEndDate.value
+                    val fmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                    val sStr = if (s != null) fmt.format(s) else "Start"
+                    val eStr = if (e != null) fmt.format(e) else DateUtils.todayIso()
+                    "$sStr to $eStr"
+                }
+            }
+
             val pdfFile = PdfGenerator.generateStatementPdf(
                 context = context,
                 merchantName = merchantName,
                 merchantPhone = merchantPhone,
                 customerName = null,
-                startDate = "Recent",
+                startDate = periodLabel,
                 endDate = DateUtils.todayIso(),
                 transactions = filteredTransactions.value,
                 customerNameMap = customerNameMap
