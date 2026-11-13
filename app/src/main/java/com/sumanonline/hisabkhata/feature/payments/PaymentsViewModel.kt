@@ -11,6 +11,9 @@ import com.sumanonline.hisabkhata.core.database.dao.PendingPaymentDao
 import com.sumanonline.hisabkhata.core.database.entity.CustomerEntity
 import com.sumanonline.hisabkhata.core.database.entity.PendingPaymentEntity
 import com.sumanonline.hisabkhata.core.network.FirebaseApiService
+import com.sumanonline.hisabkhata.core.network.BackendApiService
+import com.sumanonline.hisabkhata.core.network.model.EmailRequest
+import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.security.SecureSessionManager
 import com.sumanonline.hisabkhata.core.sync.SyncEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,7 +54,8 @@ class PaymentsViewModel @Inject constructor(
     private val customerDao: CustomerDao,
     private val syncEngine: SyncEngine,
     private val firebaseApi: FirebaseApiService,
-    private val sessionManager: SecureSessionManager
+    private val sessionManager: SecureSessionManager,
+    private val backendApi: BackendApiService
 ) : ViewModel() {
 
     val session = sessionManager.sessionState
@@ -211,9 +215,10 @@ class PaymentsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 // 1. Create offline transaction in Customer Ledger
+                val absAmount = Math.abs(payment.amount)
                 syncEngine.createTransactionOffline(
                     customerId = payment.customerId,
-                    amount = Math.abs(payment.amount),
+                    amount = absAmount,
                     type = "GOT",
                     description = "Online UPI Payment (UTR: ${payment.transactionId ?: "N/A"})",
                     date = com.sumanonline.hisabkhata.core.common.DateUtils.todayIso()
@@ -234,6 +239,44 @@ class PaymentsViewModel @Inject constructor(
 
                 // 4. Push sync to server
                 syncEngine.synchronize()
+
+                // 5. Trigger transaction alert email
+                try {
+                    val customer = customerDao.getCustomerById(payment.customerId)
+                    val customerEmail = customer?.email?.trim()
+                    if (!customerEmail.isNullOrBlank() && customerEmail.contains("@")) {
+                        val sessionVal = sessionManager.sessionState.value
+                        val merchantBusinessName = sessionVal.businessName.ifBlank {
+                            sessionVal.displayName.ifBlank { "HisabKhata Merchant" }
+                        }
+                        val formattedAmt = if (absAmount % 1.0 == 0.0) {
+                            absAmount.toLong().toString()
+                        } else {
+                            String.format(java.util.Locale.US, "%.2f", absAmount)
+                        }
+                        val currentBal = customer.balance
+
+                        val emailReq = EmailRequest(
+                            to_email = customerEmail,
+                            to_name = customer.name,
+                            customer_name = customer.name,
+                            subject = "Transaction Alert: ₹$formattedAmt - $merchantBusinessName",
+                            message = "A new transaction amount of ₹$formattedAmt has been recorded on your account. Please check the details below:",
+                            merchant_name = merchantBusinessName,
+                            merchant_phone = sessionVal.phone,
+                            amount = absAmount,
+                            balance = currentBal,
+                            is_debit = currentBal < 0,
+                            is_due = currentBal < 0,
+                            tx_type = "Payment Received",
+                            description = "Online UPI Payment (UTR: ${payment.transactionId ?: "N/A"})",
+                            action_url = "${Constants.WEB_PORTAL_BASE_URL}customer/share/${payment.customerId}",
+                            type = "TRANSACTION"
+                        )
+                        backendApi.sendEmail(emailReq)
+                    }
+                } catch (_: Exception) {}
+
                 onComplete?.invoke(true)
             } catch (_: Exception) {
                 onComplete?.invoke(false)

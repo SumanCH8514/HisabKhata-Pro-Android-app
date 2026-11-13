@@ -341,6 +341,48 @@ class CustomerViewModel @Inject constructor(
                 attachments = attachments
             )
             triggerSync()
+
+            // Dispatch transaction alert email (matches HisabKhata React project dbService.addTransaction)
+            try {
+                val customer = customerDao.getCustomerById(customerId)
+                val customerEmail = customer?.email?.trim()
+                if (!customerEmail.isNullOrBlank() && customerEmail.contains("@")) {
+                    val session = sessionManager.sessionState.value
+                    val merchantBusinessName = session.businessName.ifBlank {
+                        session.displayName.ifBlank { "HisabKhata Merchant" }
+                    }
+                    val merchantPhone = session.phone
+                    val absAmt = Math.abs(amount)
+                    val formattedAmt = if (absAmt % 1.0 == 0.0) {
+                        absAmt.toLong().toString()
+                    } else {
+                        String.format(java.util.Locale.US, "%.2f", absAmt)
+                    }
+                    val typeStr = if (!isGave) "Payment Received" else "Credit Given"
+                    val currentBal = customer.balance
+
+                    val emailReq = EmailRequest(
+                        to_email = customerEmail,
+                        to_name = customer.name,
+                        customer_name = customer.name,
+                        subject = "Transaction Alert: ₹$formattedAmt - $merchantBusinessName",
+                        message = "A new transaction amount of ₹$formattedAmt has been recorded on your account. Please check the details below:",
+                        merchant_name = merchantBusinessName,
+                        merchant_phone = merchantPhone,
+                        amount = signedAmount,
+                        balance = currentBal,
+                        is_debit = currentBal < 0,
+                        is_due = currentBal < 0,
+                        tx_type = typeStr,
+                        description = description.trim(),
+                        action_url = "${Constants.WEB_PORTAL_BASE_URL}customer/share/$customerId",
+                        type = "TRANSACTION"
+                    )
+                    backendApi.sendEmail(emailReq)
+                }
+            } catch (_: Exception) {
+                // Keep local transaction saving resilient to email/network failures
+            }
         }
     }
 

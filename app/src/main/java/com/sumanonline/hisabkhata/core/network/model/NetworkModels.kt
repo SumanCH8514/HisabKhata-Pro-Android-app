@@ -31,6 +31,8 @@ data class EmailRequest(
     val message: String? = null,
     val amount: Double? = null,
     val balance: Double? = null,
+    val is_debit: Boolean? = null,
+    val is_due: Boolean? = null,
     val tx_type: String? = null,
     val description: String? = null,
     val action_url: String? = null,
