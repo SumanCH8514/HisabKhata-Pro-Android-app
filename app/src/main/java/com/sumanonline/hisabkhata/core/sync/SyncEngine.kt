@@ -152,7 +152,8 @@ class SyncEngine @Inject constructor(
         type: String,
         description: String,
         date: String,
-        attachment: String? = null
+        attachment: String? = null,
+        attachments: List<String> = emptyList()
     ): String = withContext(Dispatchers.IO) {
         val txId = "tx_" + UUID.randomUUID().toString().replace("-", "").take(16)
         val clientTxId = UUID.randomUUID().toString()
@@ -165,6 +166,16 @@ class SyncEngine @Inject constructor(
         val currentBalance = customer.balance
         val newCustomerBalance = currentBalance + amount
 
+        val allAttachments = if (attachments.isNotEmpty()) {
+            attachments
+        } else if (!attachment.isNullOrBlank()) {
+            listOf(attachment)
+        } else {
+            emptyList()
+        }
+        val primaryAttachment = allAttachments.firstOrNull() ?: attachment
+        val attachmentString = if (allAttachments.size > 1) allAttachments.joinToString(",") else primaryAttachment
+
         val transaction = TransactionEntity(
             id = txId,
             clientTxId = clientTxId,
@@ -176,7 +187,7 @@ class SyncEngine @Inject constructor(
             date = date,
             timestamp = now,
             balance = newCustomerBalance,
-            attachment = attachment,
+            attachment = attachmentString,
             syncStatus = Constants.SYNC_STATUS_PENDING
         )
 
@@ -192,8 +203,8 @@ class SyncEngine @Inject constructor(
             date = date,
             timestamp = now,
             balance = newCustomerBalance,
-            attachment = attachment,
-            attachments = if (attachment != null) listOf(attachment) else emptyList(),
+            attachment = primaryAttachment,
+            attachments = allAttachments,
             clientTxId = clientTxId
         )
 

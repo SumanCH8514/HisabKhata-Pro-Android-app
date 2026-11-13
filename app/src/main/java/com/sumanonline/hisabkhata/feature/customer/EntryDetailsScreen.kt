@@ -11,6 +11,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -104,6 +105,7 @@ fun EntryDetailsScreen(
 
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showFullAttachment by remember { mutableStateOf(false) }
+    var fullScreenAttachmentUrl by remember { mutableStateOf<String?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
 
     var currentTransaction by remember(transaction) { mutableStateOf(transaction) }
@@ -311,9 +313,12 @@ fun EntryDetailsScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    val hasAttachment = !currentTransaction.attachment.isNullOrBlank()
+                    val attachmentList = remember(currentTransaction.attachment) {
+                        currentTransaction.attachment?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
+                    }
+                    val hasAttachment = attachmentList.isNotEmpty()
                     Text(
-                        text = "ATTACHMENTS (${if (hasAttachment) 1 else 0})",
+                        text = "ATTACHMENTS (${attachmentList.size})",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextSecondary,
@@ -322,24 +327,37 @@ fun EntryDetailsScreen(
 
                     if (hasAttachment) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Box(
+                        Row(
                             modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .border(1.dp, BorderLight, RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { showFullAttachment = true },
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(ImageUtils.sanitizeImageSource(currentTransaction.attachment))
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Attachment thumbnail",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                            attachmentList.forEach { attUrl ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .border(1.dp, BorderLight, RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .clickable {
+                                            fullScreenAttachmentUrl = attUrl
+                                            showFullAttachment = true
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(context)
+                                            .data(ImageUtils.sanitizeImageSource(attUrl))
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "Attachment thumbnail",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -656,8 +674,12 @@ fun EntryDetailsScreen(
         }
     }
 
-    if (showFullAttachment && !currentTransaction.attachment.isNullOrBlank()) {
-        BackHandler { showFullAttachment = false }
+    val activePreviewUrl = fullScreenAttachmentUrl ?: currentTransaction.attachment
+    if (showFullAttachment && !activePreviewUrl.isNullOrBlank()) {
+        BackHandler {
+            showFullAttachment = false
+            fullScreenAttachmentUrl = null
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -666,7 +688,7 @@ fun EntryDetailsScreen(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(ImageUtils.sanitizeImageSource(currentTransaction.attachment))
+                    .data(ImageUtils.sanitizeImageSource(activePreviewUrl))
                     .crossfade(true)
                     .build(),
                 contentDescription = "Attachment Full View",
@@ -674,7 +696,10 @@ fun EntryDetailsScreen(
                 modifier = Modifier.fillMaxSize()
             )
             IconButton(
-                onClick = { showFullAttachment = false },
+                onClick = {
+                    showFullAttachment = false
+                    fullScreenAttachmentUrl = null
+                },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .statusBarsPadding()

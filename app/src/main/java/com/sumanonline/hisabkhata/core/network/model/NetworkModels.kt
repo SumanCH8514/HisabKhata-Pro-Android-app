@@ -14,6 +14,13 @@ data class UploadResponse(
 )
 
 @Serializable
+data class JsonUploadRequest(
+    val image: String,
+    val folder: String = "transaction_attachments",
+    val filename: String? = null
+)
+
+@Serializable
 data class EmailRequest(
     val to_email: String,
     val to_name: String? = null,

@@ -26,6 +26,11 @@ interface BackendApiService {
         @Part("filename") filename: RequestBody? = null
     ): Response<UploadResponse>
 
+    @POST("api/upload")
+    suspend fun uploadFileJson(
+        @Body request: com.sumanonline.hisabkhata.core.network.model.JsonUploadRequest
+    ): Response<UploadResponse>
+
     @POST("api/send-email")
     suspend fun sendEmail(
         @Body request: EmailRequest

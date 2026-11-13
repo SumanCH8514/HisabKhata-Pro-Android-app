@@ -711,8 +711,9 @@ fun CustomerLedgerScreen(
             customerPhotoUrl = customer.photoURL,
             isGave = true,
             onDismiss = { showAddGaveSheet = false },
-            onSave = { amount, description, date, attachment ->
-                viewModel.addTransaction(customer.id, amount, true, description, date, attachment)
+            onUploadBill = { bytes, ext -> viewModel.uploadBillToR2(bytes, ext, customer.id) },
+            onSave = { amount, description, date, primaryAttachment, allAttachments ->
+                viewModel.addTransaction(customer.id, amount, true, description, date, primaryAttachment, allAttachments)
                 showAddGaveSheet = false
             }
         )
@@ -724,8 +725,9 @@ fun CustomerLedgerScreen(
             customerPhotoUrl = customer.photoURL,
             isGave = false,
             onDismiss = { showAddGotSheet = false },
-            onSave = { amount, description, date, attachment ->
-                viewModel.addTransaction(customer.id, amount, false, description, date, attachment)
+            onUploadBill = { bytes, ext -> viewModel.uploadBillToR2(bytes, ext, customer.id) },
+            onSave = { amount, description, date, primaryAttachment, allAttachments ->
+                viewModel.addTransaction(customer.id, amount, false, description, date, primaryAttachment, allAttachments)
                 showAddGotSheet = false
             }
         )

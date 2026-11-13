@@ -15,6 +15,7 @@ import com.sumanonline.hisabkhata.core.sync.SyncEngine
 import com.sumanonline.hisabkhata.core.network.BackendApiService
 import com.sumanonline.hisabkhata.core.network.model.EmailRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,7 +27,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.math.BigDecimal
+import java.util.UUID
 import javax.inject.Inject
 
 enum class CustomerFilter {
@@ -267,13 +273,55 @@ class CustomerViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     }
 
+    suspend fun uploadBillToR2(
+        imageBytes: ByteArray,
+        extension: String = "jpg",
+        customerId: String? = null
+    ): String? = withContext(Dispatchers.IO) {
+        try {
+            val cleanExt = if (extension.equals("png", ignoreCase = true)) "png" else "jpg"
+            val mime = if (cleanExt == "png") "image/png" else "image/jpeg"
+            val b64 = android.util.Base64.encodeToString(imageBytes, android.util.Base64.NO_WRAP)
+            val dataUri = "data:$mime;base64,$b64"
+            val custPrefix = if (!customerId.isNullOrBlank()) "tx_${customerId}" else "tx"
+            val filename = "${custPrefix}_${System.currentTimeMillis()}_${UUID.randomUUID().toString().take(6)}.$cleanExt"
+
+            // 1. Primary method: JSON upload (exact same as HisabKhata React app)
+            val jsonReq = com.sumanonline.hisabkhata.core.network.model.JsonUploadRequest(
+                image = dataUri,
+                folder = "transaction_attachments",
+                filename = filename
+            )
+            val jsonRes = backendApi.uploadFileJson(jsonReq)
+            if (jsonRes.isSuccessful && jsonRes.body()?.success == true && !jsonRes.body()?.url.isNullOrBlank()) {
+                return@withContext jsonRes.body()?.url
+            }
+
+            // 2. Secondary fallback: Multipart upload
+            val mediaType = mime.toMediaTypeOrNull()
+            val requestBody = imageBytes.toRequestBody(mediaType)
+            val filePart = MultipartBody.Part.createFormData("file", filename, requestBody)
+            val folderPart = "transaction_attachments".toRequestBody("text/plain".toMediaTypeOrNull())
+
+            val mpRes = backendApi.uploadFile(filePart, folderPart)
+            if (mpRes.isSuccessful && mpRes.body()?.success == true && !mpRes.body()?.url.isNullOrBlank()) {
+                return@withContext mpRes.body()?.url
+            }
+
+            null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun addTransaction(
         customerId: String,
         amount: Double,
         isGave: Boolean,
         description: String,
         date: String,
-        attachment: String? = null
+        attachment: String? = null,
+        attachments: List<String> = emptyList()
     ) {
         viewModelScope.launch {
             val signedAmount = if (isGave) {
@@ -289,7 +337,8 @@ class CustomerViewModel @Inject constructor(
                 type = txType,
                 description = description,
                 date = date,
-                attachment = attachment
+                attachment = attachment,
+                attachments = attachments
             )
             triggerSync()
         }

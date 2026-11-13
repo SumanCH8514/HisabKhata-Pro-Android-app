@@ -2,6 +2,7 @@ package com.sumanonline.hisabkhata.feature.customer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,6 +75,7 @@ fun TransactionDetailBottomSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showFullAttachment by remember { mutableStateOf(false) }
+    var fullScreenAttachmentUrl by remember { mutableStateOf<String?>(null) }
 
     val isGave = transaction.amount < 0 || transaction.type == "GAVE"
     val activeColor = if (isGave) GiveRed else GotGreen
@@ -197,55 +199,96 @@ fun TransactionDetailBottomSheet(
                 )
             }
 
-            if (!transaction.attachment.isNullOrBlank()) {
+            val attachmentList = remember(transaction.attachment) {
+                transaction.attachment?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
+            }
+            if (attachmentList.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider(color = BorderLight, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Attachment / Bill Receipt",
+                    text = "Attachment / Bill Receipts (${attachmentList.size})",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextSecondary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                val imageModel = remember(transaction.attachment) {
-                    ImageUtils.sanitizeImageSource(transaction.attachment)
-                }
+                if (attachmentList.size == 1) {
+                    val singleUrl = attachmentList.first()
+                    val imageModel = remember(singleUrl) {
+                        ImageUtils.sanitizeImageSource(singleUrl)
+                    }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(BorderLight.copy(alpha = 0.3f))
-                        .clickable { showFullAttachment = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(imageModel)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Transaction Bill Attachment",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
                     Box(
                         modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(8.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(TextPrimary.copy(alpha = 0.7f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(BorderLight.copy(alpha = 0.3f))
+                            .clickable {
+                                fullScreenAttachmentUrl = singleUrl
+                                showFullAttachment = true
+                            },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Tap to expand",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(imageModel)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Transaction Bill Attachment",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(8.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(TextPrimary.copy(alpha = 0.7f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Tap to expand",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        attachmentList.forEach { attUrl ->
+                            Box(
+                                modifier = Modifier
+                                    .size(110.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(BorderLight.copy(alpha = 0.3f))
+                                    .clickable {
+                                        fullScreenAttachmentUrl = attUrl
+                                        showFullAttachment = true
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(ImageUtils.sanitizeImageSource(attUrl))
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = "Transaction Bill",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -270,9 +313,13 @@ fun TransactionDetailBottomSheet(
         }
     }
 
-    if (showFullAttachment && !transaction.attachment.isNullOrBlank()) {
+    val activeAttachmentUrl = fullScreenAttachmentUrl ?: transaction.attachment
+    if (showFullAttachment && !activeAttachmentUrl.isNullOrBlank()) {
         Dialog(
-            onDismissRequest = { showFullAttachment = false },
+            onDismissRequest = {
+                showFullAttachment = false
+                fullScreenAttachmentUrl = null
+            },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Box(
@@ -280,8 +327,8 @@ fun TransactionDetailBottomSheet(
                     .fillMaxSize()
                     .background(Color.Black)
             ) {
-                val imageModel = remember(transaction.attachment) {
-                    ImageUtils.sanitizeImageSource(transaction.attachment)
+                val imageModel = remember(activeAttachmentUrl) {
+                    ImageUtils.sanitizeImageSource(activeAttachmentUrl)
                 }
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
@@ -295,7 +342,10 @@ fun TransactionDetailBottomSheet(
                         .padding(16.dp)
                 )
                 IconButton(
-                    onClick = { showFullAttachment = false },
+                    onClick = {
+                        showFullAttachment = false
+                        fullScreenAttachmentUrl = null
+                    },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(24.dp)

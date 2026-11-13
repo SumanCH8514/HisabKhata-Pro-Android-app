@@ -13,6 +13,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,6 +41,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
@@ -48,6 +50,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -57,6 +60,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +68,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -77,10 +82,18 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sumanonline.hisabkhata.core.common.ImageUtils
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+
+data class AttachedBillItem(
+    val uri: Uri,
+    val bitmap: Bitmap,
+    val byteArray: ByteArray,
+    val extension: String
+)
 
 @Composable
 fun AddTransactionBottomSheet(
@@ -88,14 +101,17 @@ fun AddTransactionBottomSheet(
     customerPhotoUrl: String? = null,
     isGave: Boolean,
     onDismiss: () -> Unit,
-    onSave: (amount: Double, description: String, date: String, attachment: String?) -> Unit
+    onUploadBill: suspend (imageBytes: ByteArray, extension: String) -> String?,
+    onSave: (amount: Double, description: String, date: String, primaryAttachment: String?, allAttachments: List<String>) -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     var amountText by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var attachmentBase64 by remember { mutableStateOf<String?>(null) }
+    var attachedBills by remember { mutableStateOf<List<AttachedBillItem>>(emptyList()) }
     var selectedCalendar by remember { mutableStateOf(Calendar.getInstance()) }
+    var isSaving by remember { mutableStateOf(false) }
 
     val displayDate = remember(selectedCalendar) {
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(selectedCalendar.time)
@@ -105,37 +121,74 @@ fun AddTransactionBottomSheet(
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            try {
-                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
-                } else {
-                    @Suppress("DEPRECATION")
-                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            val remaining = 4 - attachedBills.size
+            if (remaining <= 0) {
+                Toast.makeText(context, "Maximum 4 bills can be attached", Toast.LENGTH_SHORT).show()
+                return@rememberLauncherForActivityResult
+            }
+
+            val newBills = mutableListOf<AttachedBillItem>()
+            var invalidFormatCount = 0
+
+            for (uri in uris) {
+                if (attachedBills.size + newBills.size >= 4) {
+                    Toast.makeText(context, "Maximum 4 bills limit reached", Toast.LENGTH_SHORT).show()
+                    break
                 }
-                val width = bitmap.width
-                val height = bitmap.height
-                val targetSize = 1024
-                val scaled = if (width > targetSize || height > targetSize) {
-                    val scale = targetSize.toFloat() / maxOf(width, height)
-                    Bitmap.createScaledBitmap(
-                        bitmap,
-                        (width * scale).toInt().coerceAtLeast(1),
-                        (height * scale).toInt().coerceAtLeast(1),
-                        true
-                    )
-                } else {
-                    bitmap
+
+                val mime = context.contentResolver.getType(uri)?.lowercase() ?: ""
+                val uriStr = uri.toString().lowercase()
+                val isImageFormatSupported = mime == "image/jpeg" || mime == "image/jpg" || mime == "image/png" ||
+                        uriStr.endsWith(".jpg") || uriStr.endsWith(".jpeg") || uriStr.endsWith(".png")
+
+                if (!isImageFormatSupported) {
+                    invalidFormatCount++
+                    continue
                 }
-                val baos = ByteArrayOutputStream()
-                scaled.compress(Bitmap.CompressFormat.JPEG, 80, baos)
-                val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
-                attachmentBase64 = "data:image/jpeg;base64,$base64"
-                Toast.makeText(context, "Bill attached", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "Failed to load image: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+
+                try {
+                    val rawBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                    }
+
+                    val maxDim = 1200
+                    val scaled = if (rawBitmap.width > maxDim || rawBitmap.height > maxDim) {
+                        val scale = maxDim.toFloat() / maxOf(rawBitmap.width, rawBitmap.height)
+                        Bitmap.createScaledBitmap(
+                            rawBitmap,
+                            (rawBitmap.width * scale).toInt().coerceAtLeast(1),
+                            (rawBitmap.height * scale).toInt().coerceAtLeast(1),
+                            true
+                        )
+                    } else {
+                        rawBitmap
+                    }
+
+                    val ext = if (mime == "image/png" || uriStr.endsWith(".png")) "png" else "jpg"
+                    val format = if (ext == "png") Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
+                    val baos = ByteArrayOutputStream()
+                    scaled.compress(format, 85, baos)
+                    val bytes = baos.toByteArray()
+
+                    newBills.add(AttachedBillItem(uri, scaled, bytes, ext))
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Failed to load image: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            if (invalidFormatCount > 0) {
+                Toast.makeText(context, "Only JPG, JPEG, and PNG images are supported", Toast.LENGTH_SHORT).show()
+            }
+
+            if (newBills.isNotEmpty()) {
+                attachedBills = attachedBills + newBills
+                Toast.makeText(context, "${newBills.size} bill(s) attached (stored locally)", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -263,11 +316,27 @@ fun AddTransactionBottomSheet(
                     ) {
                         Button(
                             onClick = {
-                                if (isAmountValid) {
-                                    onSave(currentAmount, description.trim(), dateIso, attachmentBase64)
+                                if (isAmountValid && !isSaving) {
+                                    isSaving = true
+                                    coroutineScope.launch {
+                                        val uploadedUrls = mutableListOf<String>()
+                                        for (item in attachedBills) {
+                                            val r2Url = onUploadBill(item.byteArray, item.extension)
+                                            if (r2Url != null) {
+                                                uploadedUrls.add(r2Url)
+                                            } else {
+                                                val b64 = Base64.encodeToString(item.byteArray, Base64.NO_WRAP)
+                                                val mime = if (item.extension == "png") "image/png" else "image/jpeg"
+                                                uploadedUrls.add("data:$mime;base64,$b64")
+                                            }
+                                        }
+                                        val primary = uploadedUrls.firstOrNull()
+                                        onSave(currentAmount, description.trim(), dateIso, primary, uploadedUrls)
+                                        isSaving = false
+                                    }
                                 }
                             },
-                            enabled = isAmountValid,
+                            enabled = isAmountValid && !isSaving,
                             shape = RoundedCornerShape(28.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = saveButtonActiveBg,
@@ -279,12 +348,29 @@ fun AddTransactionBottomSheet(
                                 .fillMaxWidth()
                                 .height(52.dp)
                         ) {
-                            Text(
-                                text = "SAVE",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
+                            if (isSaving) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    CircularProgressIndicator(
+                                        color = Color.White,
+                                        strokeWidth = 2.dp,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = "SAVING & UPLOADING...",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 0.8.sp
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = "SAVE",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -376,7 +462,7 @@ fun AddTransactionBottomSheet(
                             .fillMaxWidth()
                             .padding(14.dp)
                     ) {
-                        // Header row without overlap - clean, modern, and stylish
+                        // Header row without overlap
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -467,7 +553,7 @@ fun AddTransactionBottomSheet(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // 4 Quick action chips
+                        // 5 Quick action chips: Bullet, Bill No, Item List, Note, TNX
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -516,6 +602,18 @@ fun AddTransactionBottomSheet(
                                         description.isBlank() -> "Note: "
                                         description.endsWith("\n") -> "${description}Note: "
                                         else -> "$description\nNote: "
+                                    }
+                                }
+                            )
+
+                            FormatPillChip(
+                                label = "+ TNX",
+                                onClick = {
+                                    val tnxText = "Online payment received with transaction id: xxxx into SBI account xx137."
+                                    description = when {
+                                        description.isBlank() -> tnxText
+                                        description.endsWith("\n") -> "$description$tnxText"
+                                        else -> "$description\n$tnxText"
                                     }
                                 }
                             )
@@ -597,7 +695,11 @@ fun AddTransactionBottomSheet(
                             .border(BorderStroke(1.2.dp, Color(0xFF374151)), RoundedCornerShape(24.dp))
                             .background(Color.White)
                             .clickable {
-                                galleryLauncher.launch("image/*")
+                                if (attachedBills.size < 4) {
+                                    galleryLauncher.launch("image/*")
+                                } else {
+                                    Toast.makeText(context, "Maximum 4 bills attached", Toast.LENGTH_SHORT).show()
+                                }
                             }
                             .padding(horizontal = 12.dp),
                         contentAlignment = Alignment.Center
@@ -609,29 +711,127 @@ fun AddTransactionBottomSheet(
                             Icon(
                                 imageVector = Icons.Default.CameraAlt,
                                 contentDescription = "Attach Bills",
-                                tint = if (attachmentBase64 != null) Color(0xFF0F5132) else Color(0xFF1F2937),
+                                tint = if (attachedBills.isNotEmpty()) Color(0xFF0F5132) else Color(0xFF1F2937),
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (attachmentBase64 != null) "1 Bill Attached" else "Attach Bills",
+                                text = when (attachedBills.size) {
+                                    0 -> "Attach Bills"
+                                    4 -> "4/4 Bills (Max)"
+                                    else -> "${attachedBills.size}/4 Attached"
+                                },
                                 fontSize = 13.5.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (attachmentBase64 != null) Color(0xFF0F5132) else Color(0xFF1F2937),
+                                color = if (attachedBills.isNotEmpty()) Color(0xFF0F5132) else Color(0xFF1F2937),
                                 maxLines = 1
                             )
-                            if (attachmentBase64 != null) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                IconButton(
-                                    onClick = { attachmentBase64 = null },
-                                    modifier = Modifier.size(20.dp)
+                        }
+                    }
+                }
+
+                // 4. Attached Bills Preview Section (Up to 4 images, local until Save)
+                if (attachedBills.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Attached Bills (${attachedBills.size}/4)",
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF374151)
+                            )
+                            Text(
+                                text = "Transferred to R2 on Save",
+                                fontSize = 11.sp,
+                                color = Color(0xFF6B7280)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            attachedBills.forEachIndexed { index, item ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(68.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Remove Bill",
-                                        tint = Color(0xFF991B1B),
-                                        modifier = Modifier.size(14.dp)
+                                    Image(
+                                        bitmap = item.bitmap.asImageBitmap(),
+                                        contentDescription = "Attached Bill ${index + 1}",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .border(BorderStroke(1.dp, Color(0xFFD1D5DB)), RoundedCornerShape(10.dp))
                                     )
+
+                                    // Delete (X) badge button
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(3.dp)
+                                            .size(20.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFDC2626))
+                                            .clickable {
+                                                attachedBills = attachedBills.toMutableList().apply { removeAt(index) }
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Remove bill",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (attachedBills.size < 4) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(68.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .border(
+                                            BorderStroke(1.2.dp, Color(0xFF9CA3AF)),
+                                            RoundedCornerShape(10.dp)
+                                        )
+                                        .background(Color.White)
+                                        .clickable {
+                                            galleryLauncher.launch("image/*")
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = "Add bill",
+                                            tint = Color(0xFF4B5563),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "Add",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color(0xFF4B5563)
+                                        )
+                                    }
                                 }
                             }
                         }
