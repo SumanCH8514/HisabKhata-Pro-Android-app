@@ -7,6 +7,13 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -140,6 +147,17 @@ fun PaymentsScreen(
     var selectedProofPayment by remember { mutableStateOf<PendingPaymentEntity?>(null) }
     var showStoreQrSheet by remember { mutableStateOf(false) }
 
+    val infiniteTransition = rememberInfiniteTransition(label = "refresh_spin")
+    val refreshRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "refresh_rotation"
+    )
+
     Scaffold(
         bottomBar = {
             AppBottomBar(
@@ -166,33 +184,31 @@ fun PaymentsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Payments & Collections",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        if (isRefreshing) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+                    Text(
+                        text = "Payments & Collections",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         IconButton(
                             onClick = { viewModel.refreshPayments() },
+                            enabled = !isRefreshing,
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Refresh,
                                 contentDescription = "Refresh",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(20.dp)
+                                tint = if (isRefreshing) MaterialTheme.colorScheme.primary else TextSecondary,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .graphicsLayer {
+                                        rotationZ = if (isRefreshing) refreshRotation else 0f
+                                    }
                             )
                         }
 
