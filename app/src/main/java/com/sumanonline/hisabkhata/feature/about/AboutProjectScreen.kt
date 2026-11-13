@@ -337,7 +337,7 @@ fun AboutProjectScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Changelog Card (What's New in v1.1.0)
+                // Changelog Card (What's New in v1.2.0)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),

@@ -674,7 +674,7 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Version 1.1.0 • Changelog & Architecture",
+                            text = "Version ${Constants.APP_VERSION} • Changelog & Architecture",
                             fontSize = 11.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -821,7 +821,7 @@ fun ProfileScreen(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "v1.1.0",
+                            text = "v${Constants.APP_VERSION}",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = TextSecondary

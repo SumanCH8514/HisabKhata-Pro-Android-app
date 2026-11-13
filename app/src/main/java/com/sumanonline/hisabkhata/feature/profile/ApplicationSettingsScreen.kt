@@ -83,6 +83,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sumanonline.hisabkhata.core.common.AppPreferencesManager
+import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.GreenPillBg
@@ -317,7 +318,7 @@ fun ApplicationSettingsScreen(
             SettingInfoRow(
                 icon = Icons.Outlined.Info,
                 title = "Application Version",
-                value = "1.1.0 (Production Build 88)"
+                value = "${Constants.APP_VERSION} (Production Build ${Constants.APP_BUILD_NUMBER})"
             )
 
             SettingsDivider()
