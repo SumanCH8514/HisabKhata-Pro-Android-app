@@ -114,19 +114,13 @@ fun ProfileScreen(
     viewModel: ProfileViewModel,
     onTabSelected: (BottomTab) -> Unit,
     onLogoutSuccess: () -> Unit,
-    onNavigateToAboutProject: () -> Unit = {}
+    onNavigateToAboutProject: () -> Unit = {},
+    onNavigateToAccountSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val session by viewModel.session.collectAsState()
-    val isSaving by viewModel.isSaving.collectAsState()
 
-    var showEditProfileSheet by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
-
-    var editName by remember(session) { mutableStateOf(session.displayName) }
-    var editBusinessName by remember(session) { mutableStateOf(session.businessName) }
-    var editPhone by remember(session) { mutableStateOf(session.phone) }
-    var editUpiId by remember(session) { mutableStateOf(session.upiId) }
 
     val ecosystemItems = listOf(
         EcosystemItem(
@@ -332,7 +326,7 @@ fun ProfileScreen(
                     }
 
                     OutlinedButton(
-                        onClick = { showEditProfileSheet = true },
+                        onClick = onNavigateToAccountSettings,
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, BrandBlue),
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White),
@@ -417,7 +411,7 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { showEditProfileSheet = true },
+                    .clickable { onNavigateToAccountSettings() },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
@@ -616,7 +610,7 @@ fun ProfileScreen(
                 ) {
                     Column {
                         Text(
-                            text = "HISABKHATA WEBSITE",
+                            text = "HisabKhata pro Website",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White,
@@ -624,7 +618,7 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Access your cloud ledger online, download desktop tools & get GST-ready reports",
+                            text = "Access your HisabKhata pro Website on browser, advance desktop version tools & get GST-ready reports",
                             fontSize = 12.sp,
                             color = Color.White.copy(alpha = 0.9f),
                             lineHeight = 16.sp
@@ -650,7 +644,7 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "INSTALL NOW",
+                                text = "OPEN IN BROWSER",
                                 fontSize = 12.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1D4ED8)
@@ -668,14 +662,13 @@ fun ProfileScreen(
                     .padding(vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Privacy Policy & Terms of Service Row
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "Privacy Policy",
                         fontSize = 12.sp,
                         color = Color(0xFF64748B),
                         modifier = Modifier.clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sumanonline.com/privacy"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://hisabkhata.sumanonline.com/privacy-policy"))
                             try { context.startActivity(intent) } catch (_: Exception) {}
                         }
                     )
@@ -689,7 +682,7 @@ fun ProfileScreen(
                         fontSize = 12.sp,
                         color = Color(0xFF64748B),
                         modifier = Modifier.clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sumanonline.com/terms"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://hisabkhata.sumanonline.com/terms-of-condition"))
                             try { context.startActivity(intent) } catch (_: Exception) {}
                         }
                     )
@@ -697,7 +690,6 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // HisabKhata Brand & Version Badge (Below Privacy Policy & Terms of Service)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { onNavigateToAboutProject() }
@@ -709,7 +701,7 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "HisabKhata",
+                        text = "HisabKhata Pro",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E293B)
@@ -737,7 +729,6 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Maintained by SumanOnline.Com
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable {
@@ -760,7 +751,6 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Dynamic Copyright: © currentYear SumanOnline Web Services.
                 val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR) }
                 Text(
                     text = "© $currentYear SumanOnline Web Services.",
@@ -771,185 +761,6 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(80.dp))
-        }
-    }
-
-    if (showEditProfileSheet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-        ModalBottomSheet(
-            onDismissRequest = { showEditProfileSheet = false },
-            sheetState = sheetState,
-            containerColor = Color.White,
-            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-            dragHandle = {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 10.dp, bottom = 4.dp)
-                        .size(width = 44.dp, height = 4.dp)
-                        .background(Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
-                )
-            }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .background(Color(0xFFEFF6FF), CircleShape)
-                            .border(1.dp, Color(0xFFDBEAFE), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = null,
-                            tint = BrandBlue,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Account & Settings",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
-                        )
-                        Text(
-                            text = session.email,
-                            fontSize = 12.sp,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { showEditProfileSheet = false },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = Color(0xFF64748B),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-                HorizontalDivider(
-                    color = Color(0xFFF1F5F9),
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(top = 6.dp)
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 14.dp)
-                ) {
-                    Text(
-                        text = "BUSINESS INFORMATION",
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
-                        letterSpacing = 0.5.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = editName,
-                        onValueChange = { editName = it },
-                        label = { Text("Merchant / Contact Name") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandBlue),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = editBusinessName,
-                        onValueChange = { editBusinessName = it },
-                        label = { Text("Shop / Business Name") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandBlue),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = editPhone,
-                        onValueChange = { editPhone = it },
-                        label = { Text("Phone Number") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandBlue),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = editUpiId,
-                        onValueChange = { editUpiId = it },
-                        label = { Text("UPI ID for Receiving Payments (e.g. mobile@upi)") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandBlue),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    Button(
-                        onClick = {
-                            viewModel.updateProfile(editName, editBusinessName, editPhone, editUpiId)
-                            showEditProfileSheet = false
-                            Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
-                        },
-                        enabled = !isSaving,
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
-                    ) {
-                        Text("Save Profile Changes", fontWeight = FontWeight.Bold, fontSize = 14.5.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedButton(
-                        onClick = {
-                            showEditProfileSheet = false
-                            showLogoutConfirm = true
-                        },
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = GiveRed),
-                        border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
-                    ) {
-                        Icon(Icons.Default.Logout, contentDescription = null, tint = GiveRed, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Sign Out", fontWeight = FontWeight.Bold, fontSize = 14.5.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
-            }
         }
     }
 

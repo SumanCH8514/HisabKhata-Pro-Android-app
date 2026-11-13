@@ -21,7 +21,13 @@ data class UserSession(
     val upiId: String = "",
     val role: String = "user",
     val biometricEnabled: Boolean = false,
-    val photoURL: String = ""
+    val photoURL: String = "",
+    val businessAddress: String = "",
+    val businessCategory: String = "",
+    val businessType: String = "",
+    val gstin: String = "",
+    val bankAccount: String = "",
+    val staffCount: String = "0"
 )
 
 @Singleton
@@ -55,6 +61,12 @@ class SecureSessionManager @Inject constructor(
         val role = prefs.getString("role", "user") ?: "user"
         val biometric = prefs.getBoolean("biometric_enabled", false)
         val photoURL = prefs.getString("photo_url", "") ?: ""
+        val businessAddress = prefs.getString("business_address", "") ?: ""
+        val businessCategory = prefs.getString("business_category", "") ?: ""
+        val businessType = prefs.getString("business_type", "") ?: ""
+        val gstin = prefs.getString("gstin", "") ?: ""
+        val bankAccount = prefs.getString("bank_account", "") ?: ""
+        val staffCount = prefs.getString("staff_count", "0") ?: "0"
 
         return UserSession(
             userId = userId,
@@ -67,7 +79,13 @@ class SecureSessionManager @Inject constructor(
             upiId = upiId,
             role = role,
             biometricEnabled = biometric,
-            photoURL = photoURL
+            photoURL = photoURL,
+            businessAddress = businessAddress,
+            businessCategory = businessCategory,
+            businessType = businessType,
+            gstin = gstin,
+            bankAccount = bankAccount,
+            staffCount = staffCount
         )
     }
 
@@ -84,6 +102,12 @@ class SecureSessionManager @Inject constructor(
             .putString("role", session.role)
             .putBoolean("biometric_enabled", session.biometricEnabled)
             .putString("photo_url", session.photoURL)
+            .putString("business_address", session.businessAddress)
+            .putString("business_category", session.businessCategory)
+            .putString("business_type", session.businessType)
+            .putString("gstin", session.gstin)
+            .putString("bank_account", session.bankAccount)
+            .putString("staff_count", session.staffCount)
             .apply()
 
         _sessionState.value = session
@@ -109,6 +133,25 @@ class SecureSessionManager @Inject constructor(
             upiId = upiId,
             photoURL = photoURL ?: current.photoURL
         )
+        saveSession(updated)
+    }
+
+    fun updateField(key: String, value: String) {
+        val current = _sessionState.value
+        val updated = when (key) {
+            "displayName" -> current.copy(displayName = value)
+            "phone" -> current.copy(phone = value)
+            "businessName" -> current.copy(businessName = value)
+            "businessAddress" -> current.copy(businessAddress = value)
+            "businessCategory" -> current.copy(businessCategory = value)
+            "businessType" -> current.copy(businessType = value)
+            "gstin" -> current.copy(gstin = value)
+            "bankAccount" -> current.copy(bankAccount = value)
+            "upiId" -> current.copy(upiId = value)
+            "staffCount" -> current.copy(staffCount = value)
+            "photoURL" -> current.copy(photoURL = value)
+            else -> current
+        }
         saveSession(updated)
     }
 

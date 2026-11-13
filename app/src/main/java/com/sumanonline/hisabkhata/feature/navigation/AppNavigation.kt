@@ -19,6 +19,7 @@ import com.sumanonline.hisabkhata.feature.customer.CustomerListScreen
 import com.sumanonline.hisabkhata.feature.customer.CustomerViewModel
 import com.sumanonline.hisabkhata.feature.payments.PaymentsScreen
 import com.sumanonline.hisabkhata.feature.payments.PaymentsViewModel
+import com.sumanonline.hisabkhata.feature.profile.AccountSettingsScreen
 import com.sumanonline.hisabkhata.feature.profile.ProfileScreen
 import com.sumanonline.hisabkhata.feature.profile.ProfileViewModel
 import com.sumanonline.hisabkhata.feature.reminders.RemindersScreen
@@ -183,6 +184,25 @@ fun AppNavigation(
                 },
                 onNavigateToAboutProject = {
                     navController.navigate(Screen.AboutProject.route)
+                },
+                onNavigateToAccountSettings = {
+                    navController.navigate(Screen.AccountSettings.route)
+                }
+            )
+        }
+
+        composable(Screen.AccountSettings.route) {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+            AccountSettingsScreen(
+                viewModel = profileViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onTabSelected = { tab ->
+                    handleBottomNavigation(navController, tab)
+                },
+                onLogoutSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

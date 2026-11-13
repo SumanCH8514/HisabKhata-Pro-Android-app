@@ -38,18 +38,62 @@ class ProfileViewModel @Inject constructor(
                     if (res.isSuccessful && res.body() != null) {
                         val profile = res.body()!!
                         val current = sessionManager.sessionState.value
+                        val bankDesc = if (profile.accountNumber.isNotBlank()) {
+                            "${profile.bankName} ${profile.accountNumber}".trim()
+                        } else current.bankAccount
+
                         sessionManager.saveSession(
                             current.copy(
                                 displayName = profile.name.ifBlank { current.displayName },
                                 businessName = profile.businessName.ifBlank { current.businessName },
                                 phone = profile.phone.ifBlank { current.phone },
                                 upiId = profile.upiId.ifBlank { current.upiId },
-                                photoURL = profile.photoURL.ifBlank { current.photoURL }
+                                photoURL = profile.photoURL.ifBlank { current.photoURL },
+                                businessAddress = profile.businessAddress.ifBlank { current.businessAddress },
+                                businessCategory = profile.businessCategory.ifBlank { current.businessCategory },
+                                businessType = profile.businessType.ifBlank { current.businessType },
+                                gstin = profile.gst.ifBlank { current.gstin },
+                                bankAccount = bankDesc
                             )
                         )
                     }
                 }
             } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun updateSingleField(fieldKey: String, value: String) {
+        viewModelScope.launch {
+            _isSaving.value = true
+            sessionManager.updateField(fieldKey, value.trim())
+
+            try {
+                val token = sessionManager.getIdToken()
+                val userId = sessionManager.getUserId()
+                if (token.isNotBlank() && userId.isNotBlank()) {
+                    val firebaseKey = when (fieldKey) {
+                        "displayName" -> "name"
+                        "phone" -> "phone"
+                        "businessName" -> "businessName"
+                        "businessAddress" -> "businessAddress"
+                        "businessCategory" -> "businessCategory"
+                        "businessType" -> "businessType"
+                        "gstin" -> "gst"
+                        "bankAccount" -> "accountNumber"
+                        "upiId" -> "upiId"
+                        "photoURL" -> "photoURL"
+                        else -> fieldKey
+                    }
+                    val updates = kotlinx.serialization.json.buildJsonObject {
+                        put(firebaseKey, kotlinx.serialization.json.JsonPrimitive(value.trim()))
+                        put("updatedAt", kotlinx.serialization.json.JsonPrimitive(System.currentTimeMillis()))
+                    }
+                    firebaseApi.patchUserProfile(userId, updates, token)
+                }
+            } catch (_: Exception) {
+            } finally {
+                _isSaving.value = false
             }
         }
     }
