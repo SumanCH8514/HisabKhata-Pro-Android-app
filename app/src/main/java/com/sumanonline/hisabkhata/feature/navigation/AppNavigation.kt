@@ -20,6 +20,8 @@ import com.sumanonline.hisabkhata.feature.customer.CustomerViewModel
 import com.sumanonline.hisabkhata.feature.payments.PaymentsScreen
 import com.sumanonline.hisabkhata.feature.payments.PaymentsViewModel
 import com.sumanonline.hisabkhata.feature.profile.AccountProfileSettingsScreen
+import com.sumanonline.hisabkhata.feature.profile.ApplicationSettingsScreen
+import com.sumanonline.hisabkhata.feature.profile.PreferencesSettingsScreen
 import com.sumanonline.hisabkhata.feature.profile.ProfileScreen
 import com.sumanonline.hisabkhata.feature.profile.ProfileViewModel
 import com.sumanonline.hisabkhata.feature.reminders.RemindersScreen
@@ -187,6 +189,12 @@ fun AppNavigation(
                 },
                 onNavigateToAccountSettings = {
                     navController.navigate(Screen.AccountSettings.route)
+                },
+                onNavigateToApplicationSettings = {
+                    navController.navigate(Screen.ApplicationSettings.route)
+                },
+                onNavigateToPreferencesSettings = {
+                    navController.navigate(Screen.PreferencesSettings.route)
                 }
             )
         }
@@ -201,6 +209,23 @@ fun AppNavigation(
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(Screen.ApplicationSettings.route) {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+            ApplicationSettingsScreen(
+                profileViewModel = profileViewModel,
+                preferencesManager = profileViewModel.preferencesManager,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.PreferencesSettings.route) {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+            PreferencesSettingsScreen(
+                preferencesManager = profileViewModel.preferencesManager,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

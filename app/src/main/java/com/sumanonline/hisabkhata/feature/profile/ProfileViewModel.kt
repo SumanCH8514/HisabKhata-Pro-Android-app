@@ -2,6 +2,7 @@ package com.sumanonline.hisabkhata.feature.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sumanonline.hisabkhata.core.common.AppPreferencesManager
 import com.sumanonline.hisabkhata.core.network.FirebaseApiService
 import com.sumanonline.hisabkhata.core.network.model.FirebaseUserDto
 import com.sumanonline.hisabkhata.core.security.SecureSessionManager
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val firebaseApi: FirebaseApiService,
-    private val sessionManager: SecureSessionManager
+    private val sessionManager: SecureSessionManager,
+    val preferencesManager: AppPreferencesManager
 ) : ViewModel() {
 
     val session: StateFlow<UserSession> = sessionManager.sessionState

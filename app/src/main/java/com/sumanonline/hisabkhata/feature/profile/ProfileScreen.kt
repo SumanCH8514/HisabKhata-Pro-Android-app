@@ -37,7 +37,9 @@ import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.ManageAccounts
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Security
@@ -115,7 +117,9 @@ fun ProfileScreen(
     onTabSelected: (BottomTab) -> Unit,
     onLogoutSuccess: () -> Unit,
     onNavigateToAboutProject: () -> Unit = {},
-    onNavigateToAccountSettings: () -> Unit = {}
+    onNavigateToAccountSettings: () -> Unit = {},
+    onNavigateToApplicationSettings: () -> Unit = {},
+    onNavigateToPreferencesSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val session by viewModel.session.collectAsState()
@@ -415,6 +419,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // 1. Account Profile Setting
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -442,7 +447,7 @@ fun ProfileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Settings,
+                                imageVector = Icons.Outlined.ManageAccounts,
                                 contentDescription = null,
                                 tint = BrandBlue,
                                 modifier = Modifier.size(22.dp)
@@ -451,12 +456,20 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.width(14.dp))
 
-                        Text(
-                            text = "Account & Ledger Settings",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
-                        )
+                        Column {
+                            Text(
+                                text = "Account Profile Setting",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1E293B)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Personal & business profile, GSTIN & bank details",
+                                fontSize = 11.5.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        }
                     }
 
                     Icon(
@@ -470,8 +483,11 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            // 2. Application Setting
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onNavigateToApplicationSettings),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
@@ -480,9 +496,9 @@ fun ProfileScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -495,10 +511,10 @@ fun ProfileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Fingerprint,
+                                imageVector = Icons.Outlined.Security,
                                 contentDescription = null,
                                 tint = BrandBlue,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
 
@@ -506,31 +522,89 @@ fun ProfileScreen(
 
                         Column {
                             Text(
-                                text = "Biometric App Lock",
-                                fontSize = 14.5.sp,
+                                text = "Application Setting",
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1E293B)
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Require fingerprint to open app",
+                                text = "Biometric lock, security timeout & sync controls",
                                 fontSize = 11.5.sp,
                                 color = Color(0xFF64748B)
                             )
                         }
                     }
 
-                    Switch(
-                        checked = session.biometricEnabled,
-                        onCheckedChange = { viewModel.setBiometricLock(it) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = BrandBlue,
-                            checkedBorderColor = Color.Transparent,
-                            uncheckedThumbColor = Color(0xFF94A3B8),
-                            uncheckedTrackColor = Color(0xFFF1F5F9),
-                            uncheckedBorderColor = Color(0xFFCBD5E1)
-                        )
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = Color(0xFF94A3B8),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 3. Preferences Setting
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onNavigateToPreferencesSettings),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(Color(0xFFEFF6FF), RoundedCornerShape(10.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Palette,
+                                contentDescription = null,
+                                tint = BrandBlue,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column {
+                            Text(
+                                text = "Preferences Setting",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1E293B)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Theme mode, brand accent color, font scale & family",
+                                fontSize = 11.5.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = Color(0xFF94A3B8),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
