@@ -211,6 +211,7 @@ fun AutoReminderScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // 1. Automated Daily Dues Reminder Card
@@ -877,10 +878,12 @@ private fun SegmentedTabRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "📊 Mail Reports",
+                text = "Mail Reports",
                 fontSize = 13.sp,
                 fontWeight = if (isTab1) FontWeight.Bold else FontWeight.Medium,
-                color = if (isTab1) BrandBlue else TextSecondary
+                color = if (isTab1) BrandBlue else TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.width(6.dp))
             Box(
@@ -911,10 +914,12 @@ private fun SegmentedTabRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "👥 Awaiting Reminders",
+                text = "Awaiting Reminders",
                 fontSize = 13.sp,
                 fontWeight = if (isTab2) FontWeight.Bold else FontWeight.Medium,
-                color = if (isTab2) BrandBlue else TextSecondary
+                color = if (isTab2) BrandBlue else TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.width(6.dp))
             Box(
@@ -1081,7 +1086,9 @@ private fun DispatchedMailReportCard(
 ) {
     val dateStr = remember(log.timestamp) {
         val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
-        sdf.format(Date(log.timestamp))
+        val formatted = sdf.format(Date(log.timestamp))
+        val relative = DateUtils.formatRelativeTime(log.timestamp)
+        "$formatted • $relative"
     }
 
     Card(
@@ -1114,12 +1121,24 @@ private fun DispatchedMailReportCard(
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = dateStr,
-                        fontSize = 11.sp,
-                        color = TextTertiary
-                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = null,
+                            tint = BrandBlue,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = dateStr,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSecondary
+                        )
+                    }
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
