@@ -3,6 +3,8 @@ package com.sumanonline.hisabkhata.feature.reports
 import android.app.DatePickerDialog
 import android.content.Context
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -47,18 +50,20 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sumanonline.hisabkhata.R
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
-import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
@@ -74,6 +79,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ReportsScreen(
     viewModel: ReportsViewModel,
@@ -97,7 +103,16 @@ fun ReportsScreen(
         topBar = {
             AppTopBar(
                 title = "Reports & Statements",
-                subtitle = "Download GST-ready statements"
+                subtitle = "Download GST-ready statements",
+                leadingContent = {
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo_round),
+                        contentDescription = "HisabKhata Logo",
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                    )
+                }
             )
         },
         bottomBar = {
@@ -108,481 +123,496 @@ fun ReportsScreen(
         },
         containerColor = PageBackground
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Search Input Container
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .background(SurfaceWhite, RoundedCornerShape(12.dp))
-                    .border(1.dp, BorderLight, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
-            ) {
+            // 1. Period Filter Chips Row (Scrollable - does not stick)
+            item(key = "period_filters") {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = BrandBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    BasicTextField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.setSearchQuery(it) },
-                        singleLine = true,
-                        textStyle = TextStyle(
-                            fontSize = 13.sp,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        cursorBrush = SolidColor(BrandBlue),
-                        modifier = Modifier.weight(1f),
-                        decorationBox = { innerTextField ->
-                            if (searchQuery.isEmpty()) {
+                    ReportPeriod.entries.forEach { period ->
+                        val isSelected = selectedPeriod == period
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.setPeriod(period) },
+                            label = {
                                 Text(
-                                    text = "Search by party, note or amount...",
-                                    color = TextTertiary,
-                                    fontSize = 13.sp
+                                    text = period.label,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
-                            }
-                            innerTextField()
-                        }
-                    )
-                    if (searchQuery.isNotEmpty()) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear Search",
-                            tint = TextTertiary,
-                            modifier = Modifier
-                                .size(18.dp)
-                                .clickable { viewModel.setSearchQuery("") }
+                            },
+                            leadingIcon = if (period == ReportPeriod.CUSTOM) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarToday,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = if (isSelected) SurfaceWhite else BrandBlue
+                                    )
+                                }
+                            } else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = SurfaceWhite,
+                                labelColor = TextPrimary,
+                                selectedContainerColor = BrandBlue,
+                                selectedLabelColor = SurfaceWhite
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) BrandBlue else BorderLight,
+                                selectedBorderColor = BrandBlue,
+                                borderWidth = 1.dp
+                            ),
+                            shape = RoundedCornerShape(20.dp)
                         )
                     }
                 }
             }
 
-            // Period Filter Chips
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ReportPeriod.entries.forEach { period ->
-                    val isSelected = selectedPeriod == period
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.setPeriod(period) },
-                        label = {
-                            Text(
-                                text = period.label,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                            )
-                        },
-                        leadingIcon = if (period == ReportPeriod.CUSTOM) {
-                            {
+            // 2. Custom Date Range Selector (visible when CUSTOM is selected - does not stick)
+            if (selectedPeriod == ReportPeriod.CUSTOM) {
+                item(key = "custom_date_range") {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        border = BorderStroke(1.dp, BorderLight),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Start Date Box
+                            Row(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .clickable {
+                                        showDatePickerDialog(context, customStartDate) { picked ->
+                                            viewModel.setCustomDateRange(picked, customEndDate)
+                                        }
+                                    }
+                                    .padding(horizontal = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.CalendarToday,
                                     contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = if (isSelected) SurfaceWhite else BrandBlue
+                                    tint = BrandBlue,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (customStartDate != null) dateDisplayFormat.format(customStartDate!!) else "FROM DATE",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (customStartDate != null) TextPrimary else TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
-                        } else null,
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = SurfaceWhite,
-                            labelColor = TextPrimary,
-                            selectedContainerColor = BrandBlue,
-                            selectedLabelColor = SurfaceWhite
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = if (isSelected) BrandBlue else BorderLight,
-                            selectedBorderColor = BrandBlue,
-                            borderWidth = 1.dp
-                        ),
-                        shape = RoundedCornerShape(20.dp)
-                    )
+
+                            // Divider
+                            Box(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .fillMaxHeight(0.6f)
+                                    .background(BorderLight)
+                            )
+
+                            // End Date Box
+                            Row(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .clickable {
+                                        showDatePickerDialog(context, customEndDate) { picked ->
+                                            val endCal = Calendar.getInstance().apply {
+                                                timeInMillis = picked
+                                                set(Calendar.HOUR_OF_DAY, 23)
+                                                set(Calendar.MINUTE, 59)
+                                                set(Calendar.SECOND, 59)
+                                                set(Calendar.MILLISECOND, 999)
+                                            }
+                                            viewModel.setCustomDateRange(customStartDate, endCal.timeInMillis)
+                                        }
+                                    }
+                                    .padding(horizontal = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarToday,
+                                    contentDescription = null,
+                                    tint = BrandBlue,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (customEndDate != null) dateDisplayFormat.format(customEndDate!!) else "TO DATE",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (customEndDate != null) TextPrimary else TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            if (customStartDate != null || customEndDate != null) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear Dates",
+                                    tint = TextTertiary,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clickable { viewModel.clearCustomDates() }
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            // Custom Date Range Selector (visible when CUSTOM is selected)
-            if (selectedPeriod == ReportPeriod.CUSTOM) {
+            // 3. Summary Card (Scrollable - does not stick)
+            item(key = "summary_card") {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(12.dp),
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                    border = BorderStroke(1.dp, BorderLight),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(44.dp)
-                            .padding(horizontal = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(16.dp)
                     ) {
-                        // Start Date Box
+                        // 3-Column Summary
                         Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .clickable {
-                                    showDatePickerDialog(context, customStartDate) { picked ->
-                                        viewModel.setCustomDateRange(picked, customEndDate)
-                                    }
-                                }
-                                .padding(horizontal = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CalendarToday,
-                                contentDescription = null,
-                                tint = BrandBlue,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (customStartDate != null) dateDisplayFormat.format(customStartDate!!) else "FROM DATE",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (customStartDate != null) TextPrimary else TextSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                Text(
+                                    text = "TOTAL DEBIT (-)",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = CurrencyFormatter.formatInrClean(totalDebit, false),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = GiveRed,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "TOTAL CREDIT (+)",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = CurrencyFormatter.formatInrClean(totalCredit, false),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = GotGreen,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                Text(
+                                    text = "NET BALANCE",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                val netLabel = if (netBalance < 0) "Dr" else "Cr"
+                                Text(
+                                    text = "${CurrencyFormatter.formatInrClean(Math.abs(netBalance), false)} $netLabel",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (netBalance < 0) GiveRed else GotGreen,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
 
-                        // Divider
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .fillMaxHeight(0.6f)
-                                .background(BorderLight)
-                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        HorizontalDivider(color = BorderLight, thickness = 0.5.dp)
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        // End Date Box
+                        // Action Buttons Row
                         Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .clickable {
-                                    showDatePickerDialog(context, customEndDate) { picked ->
-                                        val endCal = Calendar.getInstance().apply {
-                                            timeInMillis = picked
-                                            set(Calendar.HOUR_OF_DAY, 23)
-                                            set(Calendar.MINUTE, 59)
-                                            set(Calendar.SECOND, 59)
-                                            set(Calendar.MILLISECOND, 999)
-                                        }
-                                        viewModel.setCustomDateRange(customStartDate, endCal.timeInMillis)
-                                    }
-                                }
-                                .padding(horizontal = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CalendarToday,
-                                contentDescription = null,
-                                tint = BrandBlue,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (customEndDate != null) dateDisplayFormat.format(customEndDate!!) else "TO DATE",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (customEndDate != null) TextPrimary else TextSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        if (customStartDate != null || customEndDate != null) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear Dates",
-                                tint = TextTertiary,
+                            Button(
+                                onClick = { viewModel.sharePdf(context) },
+                                colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                                 modifier = Modifier
-                                    .size(18.dp)
-                                    .clickable { viewModel.clearCustomDates() }
-                            )
+                                    .weight(1f)
+                                    .height(46.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PictureAsPdf,
+                                    contentDescription = null,
+                                    tint = SurfaceWhite,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "PDF Statement",
+                                    color = SurfaceWhite,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            OutlinedButton(
+                                onClick = { viewModel.shareCsv(context) },
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.5.dp, BrandBlue),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceWhite),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(46.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FileDownload,
+                                    contentDescription = null,
+                                    tint = BrandBlue,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Excel / CSV",
+                                    color = BrandBlue,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // Summary Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
+            // 4. Sticky Header: Search Bar + Transactions and Period Headers
+            stickyHeader(key = "sticky_search_and_headers") {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .background(PageBackground)
+                        .padding(bottom = 4.dp)
                 ) {
-                    // 3-Column Summary
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    // Search Input Container
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .background(SurfaceWhite, RoundedCornerShape(12.dp))
+                            .border(1.dp, BorderLight, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 10.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.Start
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "TOTAL DEBIT (-)",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = BrandBlue,
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = CurrencyFormatter.formatInrClean(totalDebit, false),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Black,
-                                color = GiveRed,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                            Spacer(modifier = Modifier.width(8.dp))
+                            BasicTextField(
+                                value = searchQuery,
+                                onValueChange = { viewModel.setSearchQuery(it) },
+                                singleLine = true,
+                                textStyle = TextStyle(
+                                    fontSize = 13.sp,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                cursorBrush = SolidColor(BrandBlue),
+                                modifier = Modifier.weight(1f),
+                                decorationBox = { innerTextField ->
+                                    if (searchQuery.isEmpty()) {
+                                        Text(
+                                            text = "Search by party, note or amount...",
+                                            color = TextTertiary,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                    innerTextField()
+                                }
                             )
-                        }
-
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "TOTAL CREDIT (+)",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = CurrencyFormatter.formatInrClean(totalCredit, false),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Black,
-                                color = GotGreen,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.End
-                        ) {
-                            Text(
-                                text = "NET BALANCE",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            val netLabel = if (netBalance < 0) "Dr" else "Cr"
-                            Text(
-                                text = "${CurrencyFormatter.formatInrClean(Math.abs(netBalance), false)} $netLabel",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Black,
-                                color = if (netBalance < 0) GiveRed else GotGreen,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            if (searchQuery.isNotEmpty()) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear Search",
+                                    tint = TextTertiary,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clickable { viewModel.setSearchQuery("") }
+                                )
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = BorderLight, thickness = 0.5.dp)
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Action Buttons Row
+                    // Transactions Count & Active Filter Indicator (Sticking with Search Bar)
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
-                            onClick = { viewModel.sharePdf(context) },
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PictureAsPdf,
-                                contentDescription = null,
-                                tint = SurfaceWhite,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "PDF Statement",
-                                color = SurfaceWhite,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        OutlinedButton(
-                            onClick = { viewModel.shareCsv(context) },
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.5.dp, BrandBlue),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceWhite),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FileDownload,
-                                contentDescription = null,
-                                tint = BrandBlue,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Excel / CSV",
-                                color = BrandBlue,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        Text(
+                            text = "TRANSACTIONS (${transactions.size})",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary
+                        )
+                        Text(
+                            text = selectedPeriod.label,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = BrandBlue
+                        )
                     }
                 }
             }
 
-            // Entries Count & Active Filter Indicator
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "TRANSACTIONS (${transactions.size})",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextSecondary
-                )
-                Text(
-                    text = selectedPeriod.label,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = BrandBlue
-                )
-            }
-
+            // 5. Transactions List or Empty State
             if (transactions.isEmpty()) {
-                EmptyStateView(
-                    title = "No entries found",
-                    message = if (searchQuery.isNotBlank()) {
-                        "No transactions matching \"$searchQuery\" in this period."
-                    } else {
-                        "Transactions recorded for this date range will appear here."
-                    }
-                )
+                item(key = "empty_state") {
+                    EmptyStateView(
+                        title = "No entries found",
+                        message = if (searchQuery.isNotBlank()) {
+                            "No transactions matching \"$searchQuery\" in this period."
+                        } else {
+                            "Transactions recorded for this date range will appear here."
+                        }
+                    )
+                }
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    items(transactions, key = { it.id }, contentType = { "report_tx_item" }) { tx ->
-                        val isDebit = tx.amount < 0 || tx.type == "GAVE"
-                        val party = customerNameMap[tx.customerId] ?: "Party"
-                        val cleanNote = tx.description
-                            .trim()
-                            .removePrefix("•")
-                            .removePrefix("-")
-                            .trim()
+                items(transactions, key = { it.id }, contentType = { "report_tx_item" }) { tx ->
+                    val isDebit = tx.amount < 0 || tx.type == "GAVE"
+                    val party = customerNameMap[tx.customerId] ?: "Party"
+                    val cleanNote = tx.description
+                        .trim()
+                        .removePrefix("•")
+                        .removePrefix("-")
+                        .trim()
 
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 3.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = party,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(3.dp))
+                                val subtitle = "${DateUtils.formatDisplayDate(tx.timestamp)}${if (cleanNote.isNotBlank()) " • $cleanNote" else if (isDebit) " • Debit" else " • Credit"}"
+                                Text(
+                                    text = subtitle,
+                                    fontSize = 11.sp,
+                                    color = TextSecondary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = CurrencyFormatter.formatInr(Math.abs(tx.amount)),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (isDebit) GiveRed else GotGreen
+                                )
+                                if (tx.balance != 0.0) {
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = party,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        text = "Bal: ${CurrencyFormatter.formatInrClean(Math.abs(tx.balance), false)}",
+                                        fontSize = 10.sp,
+                                        color = TextTertiary
                                     )
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    val subtitle = "${DateUtils.formatDisplayDate(tx.timestamp)}${if (cleanNote.isNotBlank()) " • $cleanNote" else if (isDebit) " • Debit" else " • Credit"}"
-                                    Text(
-                                        text = subtitle,
-                                        fontSize = 11.sp,
-                                        color = TextSecondary,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text(
-                                        text = CurrencyFormatter.formatInr(Math.abs(tx.amount)),
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (isDebit) GiveRed else GotGreen
-                                    )
-                                    if (tx.balance != 0.0) {
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = "Bal: ${CurrencyFormatter.formatInrClean(Math.abs(tx.balance), false)}",
-                                            fontSize = 10.sp,
-                                            color = TextTertiary
-                                        )
-                                    }
                                 }
                             }
                         }
                     }
-                    item {
-                        Spacer(modifier = Modifier.height(80.dp))
-                    }
+                }
+
+                item(key = "bottom_spacer") {
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
         }

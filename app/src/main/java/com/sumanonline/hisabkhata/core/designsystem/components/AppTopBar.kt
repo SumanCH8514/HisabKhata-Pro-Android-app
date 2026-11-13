@@ -42,6 +42,7 @@ fun AppTopBar(
     subtitle: String? = null,
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
+    leadingContent: (@Composable () -> Unit)? = null,
     syncPendingCount: Int = 0,
     isSyncing: Boolean = false,
     onSyncClick: () -> Unit = {},
@@ -77,6 +78,9 @@ fun AppTopBar(
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
+                } else if (leadingContent != null) {
+                    leadingContent()
+                    Spacer(modifier = Modifier.width(10.dp))
                 }
 
                 Column {
