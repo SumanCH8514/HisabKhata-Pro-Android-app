@@ -1,6 +1,8 @@
 package com.sumanonline.hisabkhata.feature.customer
 
+import android.app.Activity
 import android.app.DatePickerDialog
+import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
@@ -57,6 +59,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,8 +72,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -79,6 +84,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sumanonline.hisabkhata.core.common.ImageUtils
@@ -245,6 +251,8 @@ fun AddTransactionBottomSheet(
     // Color theme mappings matching reference screenshots
     val pageBgColor = if (isGave) Color(0xFFFAF5F6) else Color(0xFFF6FBF8)
     val headerTint = if (isGave) Color(0xFF5A1A1A) else Color(0xFF0F5132)
+    val headerBgColor = if (isGave) Color(0xFFF8D7DA) else Color(0xFFD7F4E5)
+    val headerBorderColor = if (isGave) Color(0xFFF4C7C3) else Color(0xFFB7E1CD)
     val amountBoxBg = if (isGave) Color(0xFFF2D9DB) else Color(0xFFD7F4E5)
     val amountLabel = if (isGave) "Amount (₹)" else "Amount"
     val saveButtonActiveBg = if (isGave) Color(0xFF7F1D1D) else Color(0xFF0F5132)
@@ -262,6 +270,37 @@ fun AddTransactionBottomSheet(
     // Intercept back navigation
     BackHandler { onDismiss() }
 
+    val activity = remember(context) {
+        var cur = context
+        while (cur is ContextWrapper) {
+            if (cur is Activity) return@remember cur
+            cur = cur.baseContext
+        }
+        null
+    }
+
+    val view = LocalView.current
+    DisposableEffect(isGave, headerBgColor) {
+        val window = activity?.window
+        val insetsController = window?.let { WindowCompat.getInsetsController(it, view) }
+        val prevStatusBarColor = window?.statusBarColor
+        val prevLightStatusBars = insetsController?.isAppearanceLightStatusBars
+
+        if (window != null) {
+            window.statusBarColor = headerBgColor.toArgb()
+        }
+        insetsController?.isAppearanceLightStatusBars = true
+
+        onDispose {
+            if (window != null && prevStatusBarColor != null) {
+                window.statusBarColor = prevStatusBarColor
+            }
+            if (insetsController != null && prevLightStatusBars != null) {
+                insetsController.isAppearanceLightStatusBars = prevLightStatusBars
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -271,45 +310,53 @@ fun AddTransactionBottomSheet(
         Scaffold(
             containerColor = pageBgColor,
             topBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 8.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    color = headerBgColor,
+                    shadowElevation = 2.dp,
+                    border = BorderStroke(1.dp, headerBorderColor.copy(alpha = 0.6f)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(40.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(horizontal = 6.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = headerTint
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = headerTint
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        CustomerAvatar(
+                            name = customerName,
+                            photoUrl = customerPhotoUrl,
+                            size = 40.dp,
+                            showActiveBadge = false,
+                            modifier = Modifier.border(1.5.dp, Color.White.copy(alpha = 0.9f), CircleShape)
+                        )
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Text(
+                            text = dynamicTitle,
+                            color = headerTint,
+                            fontSize = 16.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            lineHeight = 21.sp,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    CustomerAvatar(
-                        name = customerName,
-                        photoUrl = customerPhotoUrl,
-                        size = 38.dp,
-                        showActiveBadge = false
-                    )
-
-                    Spacer(modifier = Modifier.width(10.dp))
-
-                    Text(
-                        text = dynamicTitle,
-                        color = headerTint,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        lineHeight = 21.sp,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
                 }
             },
             bottomBar = {
