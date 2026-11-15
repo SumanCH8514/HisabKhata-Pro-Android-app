@@ -91,6 +91,9 @@ class CustomerViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            syncEngine.repairMismatchedTransactionDates()
+        }
+        viewModelScope.launch {
             rawCustomers.collect {
                 _isLoading.value = false
             }
@@ -321,7 +324,8 @@ class CustomerViewModel @Inject constructor(
         description: String,
         date: String,
         attachment: String? = null,
-        attachments: List<String> = emptyList()
+        attachments: List<String> = emptyList(),
+        timestamp: Long? = null
     ) {
         viewModelScope.launch {
             val signedAmount = if (isGave) {
@@ -338,7 +342,8 @@ class CustomerViewModel @Inject constructor(
                 description = description,
                 date = date,
                 attachment = attachment,
-                attachments = attachments
+                attachments = attachments,
+                timestamp = timestamp
             )
             triggerSync()
 
@@ -402,7 +407,8 @@ class CustomerViewModel @Inject constructor(
         description: String,
         date: String,
         attachment: String? = null,
-        attachments: List<String> = emptyList()
+        attachments: List<String> = emptyList(),
+        timestamp: Long? = null
     ) {
         viewModelScope.launch {
             val signedNewAmount = if (isGave) -Math.abs(newAmount) else Math.abs(newAmount)
@@ -417,7 +423,8 @@ class CustomerViewModel @Inject constructor(
                 description = description,
                 date = date,
                 attachment = attachment,
-                attachments = attachments
+                attachments = attachments,
+                timestamp = timestamp
             )
             triggerSync()
         }

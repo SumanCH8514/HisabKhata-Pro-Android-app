@@ -237,9 +237,15 @@ fun CustomerLedgerScreen(
         containerColor = PageBackground
     ) { innerPadding ->
         val groupedTransactions = remember(transactions) {
-            transactions.groupBy { tx ->
-                if (tx.date.isNotBlank()) tx.date else DateUtils.formatIsoDate(Date(tx.timestamp))
-            }
+            transactions
+                .sortedWith(
+                    compareByDescending<TransactionEntity> {
+                        DateUtils.getResolvedTimestamp(it.date, it.timestamp)
+                    }.thenByDescending { it.id }
+                )
+                .groupBy { tx ->
+                    if (tx.date.isNotBlank()) tx.date else DateUtils.formatIsoDate(Date(tx.timestamp))
+                }
         }
 
         LazyColumn(
@@ -581,8 +587,9 @@ fun CustomerLedgerScreen(
                                     .border(1.dp, BorderLight, RoundedCornerShape(50))
                                     .padding(horizontal = 16.dp, vertical = 6.dp)
                             ) {
+                                val pillTs = txList.firstOrNull()?.let { DateUtils.getResolvedTimestamp(it.date, it.timestamp) } ?: System.currentTimeMillis()
                                 Text(
-                                    text = DateUtils.formatDatePill(dateKey, txList.firstOrNull()?.timestamp ?: System.currentTimeMillis()),
+                                    text = DateUtils.formatDatePill(dateKey, pillTs),
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextSecondary,
@@ -688,8 +695,8 @@ fun CustomerLedgerScreen(
             isGave = true,
             onDismiss = { showAddGaveSheet = false },
             onUploadBill = { bytes, ext -> viewModel.uploadBillToR2(bytes, ext, customer.id) },
-            onSave = { amount, description, date, primaryAttachment, allAttachments ->
-                viewModel.addTransaction(customer.id, amount, true, description, date, primaryAttachment, allAttachments)
+            onSave = { amount, description, date, primaryAttachment, allAttachments, timestamp ->
+                viewModel.addTransaction(customer.id, amount, true, description, date, primaryAttachment, allAttachments, timestamp)
                 showAddGaveSheet = false
             }
         )
@@ -702,8 +709,8 @@ fun CustomerLedgerScreen(
             isGave = false,
             onDismiss = { showAddGotSheet = false },
             onUploadBill = { bytes, ext -> viewModel.uploadBillToR2(bytes, ext, customer.id) },
-            onSave = { amount, description, date, primaryAttachment, allAttachments ->
-                viewModel.addTransaction(customer.id, amount, false, description, date, primaryAttachment, allAttachments)
+            onSave = { amount, description, date, primaryAttachment, allAttachments, timestamp ->
+                viewModel.addTransaction(customer.id, amount, false, description, date, primaryAttachment, allAttachments, timestamp)
                 showAddGotSheet = false
             }
         )
@@ -927,8 +934,9 @@ private fun LedgerTableRowItem(
                         .weight(1.4f)
                         .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
                 ) {
+                    val rowTimestamp = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
                     Text(
-                        text = DateUtils.formatDisplayDateTime(tx.timestamp),
+                        text = DateUtils.formatDisplayDateTime(rowTimestamp),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextSecondary

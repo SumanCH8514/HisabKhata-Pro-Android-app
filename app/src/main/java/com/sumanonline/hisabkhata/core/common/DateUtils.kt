@@ -35,9 +35,20 @@ object DateUtils {
         return displayDateTimeFormat.format(Date(timestamp))
     }
 
+    fun formatDisplayDateTime(dateIso: String?, timestamp: Long): String {
+        val resolved = getResolvedTimestamp(dateIso, timestamp)
+        return displayDateTimeFormat.format(Date(resolved))
+    }
+
     fun formatEntryDetailsDateTime(timestamp: Long): String {
         val sdf = SimpleDateFormat("dd MMM yy • hh:mm a", Locale.getDefault())
         return sdf.format(Date(timestamp))
+    }
+
+    fun formatEntryDetailsDateTime(dateIso: String?, timestamp: Long): String {
+        val resolved = getResolvedTimestamp(dateIso, timestamp)
+        val sdf = SimpleDateFormat("dd MMM yy • hh:mm a", Locale.getDefault())
+        return sdf.format(Date(resolved))
     }
 
     fun formatDatePill(dateIso: String, timestamp: Long): String {
@@ -52,11 +63,41 @@ object DateUtils {
         return timeOnlyFormat.format(Date(timestamp))
     }
 
+    fun getResolvedTimestamp(dateIso: String?, timestamp: Long): Long {
+        if (dateIso.isNullOrBlank()) {
+            return if (timestamp > 0L) timestamp else System.currentTimeMillis()
+        }
+        val dateFromIso = parseIsoDate(dateIso.trim()) ?: return if (timestamp > 0L) timestamp else System.currentTimeMillis()
+        val targetCal = Calendar.getInstance().apply { time = dateFromIso }
+        val baseCal = Calendar.getInstance().apply {
+            timeInMillis = if (timestamp > 0L) timestamp else System.currentTimeMillis()
+        }
+
+        val sameDay = targetCal.get(Calendar.YEAR) == baseCal.get(Calendar.YEAR) &&
+                targetCal.get(Calendar.DAY_OF_YEAR) == baseCal.get(Calendar.DAY_OF_YEAR)
+
+        if (sameDay && timestamp > 0L) {
+            return baseCal.timeInMillis
+        }
+
+        targetCal.set(Calendar.HOUR_OF_DAY, baseCal.get(Calendar.HOUR_OF_DAY))
+        targetCal.set(Calendar.MINUTE, baseCal.get(Calendar.MINUTE))
+        targetCal.set(Calendar.SECOND, baseCal.get(Calendar.SECOND))
+        targetCal.set(Calendar.MILLISECOND, baseCal.get(Calendar.MILLISECOND))
+
+        return targetCal.timeInMillis
+    }
+
     fun parseIsoDate(isoString: String): Date? {
+        val clean = isoString.trim().take(10)
         return try {
-            isoDateFormat.parse(isoString)
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(clean)
         } catch (_: Exception) {
-            null
+            try {
+                isoDateFormat.parse(clean)
+            } catch (_: Exception) {
+                null
+            }
         }
     }
 

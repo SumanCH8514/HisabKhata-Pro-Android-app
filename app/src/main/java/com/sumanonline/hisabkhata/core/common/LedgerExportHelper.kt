@@ -56,7 +56,8 @@ object LedgerExportHelper {
                 val balanceStr = String.format(Locale.US, "%.2f", tx.balance)
                 val cleanDesc = tx.description.replace("\"", "\"\"")
                 val clientRef = tx.clientTxId.replace("\"", "\"\"")
-                val displayDate = if (tx.timestamp > 0) DateUtils.formatDisplayDate(tx.timestamp) else tx.date
+                val resolvedTs = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
+                val displayDate = DateUtils.formatDisplayDate(resolvedTs)
 
                 sb.appendLine("\"$displayDate\",\"$partyName\",\"$partyPhone\",\"$txTypeLabel\",\"$debitStr\",\"$creditStr\",\"$balanceStr\",\"$cleanDesc\",\"$clientRef\"")
             }

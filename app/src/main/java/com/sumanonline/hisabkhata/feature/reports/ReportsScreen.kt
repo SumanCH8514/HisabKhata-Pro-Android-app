@@ -582,7 +582,8 @@ fun ReportsScreen(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Spacer(modifier = Modifier.height(3.dp))
-                                val subtitle = "${DateUtils.formatDisplayDate(tx.timestamp)}${if (cleanNote.isNotBlank()) " • $cleanNote" else if (isDebit) " • Debit" else " • Credit"}"
+                                val txTime = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
+                                val subtitle = "${DateUtils.formatDisplayDate(txTime)}${if (cleanNote.isNotBlank()) " • $cleanNote" else if (isDebit) " • Debit" else " • Credit"}"
                                 Text(
                                     text = subtitle,
                                     fontSize = 11.sp,

@@ -218,7 +218,7 @@ fun EntryDetailsScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = DateUtils.formatEntryDetailsDateTime(currentTransaction.timestamp),
+                                    text = DateUtils.formatEntryDetailsDateTime(currentTransaction.date, currentTransaction.timestamp),
                                     fontSize = 13.sp,
                                     color = TextSecondary
                                 )
@@ -721,11 +721,12 @@ fun EntryDetailsScreen(
             initialAmount = Math.abs(currentTransaction.amount),
             initialDescription = currentTransaction.description,
             initialDate = currentTransaction.date,
+            initialTimestamp = currentTransaction.timestamp,
             initialAttachments = existingAttachments,
             isEditMode = true,
             onDismiss = { showEditDialog = false },
             onUploadBill = { bytes, ext -> viewModel.uploadBillToR2(bytes, ext, customer.id) },
-            onSave = { newAmount, newDescription, newDate, primaryAttachment, allAttachments ->
+            onSave = { newAmount, newDescription, newDate, primaryAttachment, allAttachments, newTimestamp ->
                 val signedNewAmount = if (isGave) -newAmount else newAmount
                 val attachmentStr = if (allAttachments.size > 1) allAttachments.joinToString(",") else primaryAttachment
 
@@ -738,12 +739,14 @@ fun EntryDetailsScreen(
                     description = newDescription,
                     date = newDate,
                     attachment = primaryAttachment,
-                    attachments = allAttachments
+                    attachments = allAttachments,
+                    timestamp = newTimestamp
                 )
                 currentTransaction = currentTransaction.copy(
                     amount = signedNewAmount,
                     description = newDescription,
                     date = newDate,
+                    timestamp = newTimestamp,
                     attachment = attachmentStr
                 )
                 showEditDialog = false

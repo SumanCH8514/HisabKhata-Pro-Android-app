@@ -140,11 +140,12 @@ fun CustomerReportScreen(
     // Filter transactions by date range and search query
     val filteredTransactions = remember(transactions, startDate, endDate, searchQuery) {
         transactions.filter { tx ->
-            val matchesDate = (startDate == null || tx.timestamp >= startDate!!.time) &&
-                    (endDate == null || tx.timestamp <= endDate!!.time)
+            val txTime = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
+            val matchesDate = (startDate == null || txTime >= startDate!!.time) &&
+                    (endDate == null || txTime <= endDate!!.time)
             val matchesSearch = searchQuery.isBlank() ||
                     tx.description.contains(searchQuery, ignoreCase = true) ||
-                    shortDateFormat.format(Date(tx.timestamp)).contains(searchQuery, ignoreCase = true) ||
+                    shortDateFormat.format(Date(txTime)).contains(searchQuery, ignoreCase = true) ||
                     Math.abs(tx.amount).toString().contains(searchQuery)
             matchesDate && matchesSearch
         }
@@ -765,8 +766,9 @@ fun CustomerReportScreen(
                                     .weight(1f)
                                     .padding(end = 12.dp)
                             ) {
+                                val txTime = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
                                 Text(
-                                    text = shortDateFormat.format(Date(tx.timestamp)),
+                                    text = shortDateFormat.format(Date(txTime)),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary

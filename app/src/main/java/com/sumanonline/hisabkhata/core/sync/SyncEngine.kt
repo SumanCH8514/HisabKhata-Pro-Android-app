@@ -1,6 +1,7 @@
 package com.sumanonline.hisabkhata.core.sync
 
 import com.sumanonline.hisabkhata.core.common.Constants
+import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.database.dao.CustomerDao
 import com.sumanonline.hisabkhata.core.database.dao.OutboxDao
 import com.sumanonline.hisabkhata.core.database.dao.PendingPaymentDao
@@ -153,12 +154,14 @@ class SyncEngine @Inject constructor(
         description: String,
         date: String,
         attachment: String? = null,
-        attachments: List<String> = emptyList()
+        attachments: List<String> = emptyList(),
+        timestamp: Long? = null
     ): String = withContext(Dispatchers.IO) {
         val txId = "tx_" + UUID.randomUUID().toString().replace("-", "").take(16)
         val clientTxId = UUID.randomUUID().toString()
         val userId = sessionManager.getUserId()
         val now = System.currentTimeMillis()
+        val txTimestamp = DateUtils.getResolvedTimestamp(date, timestamp ?: now)
 
         val customer = customerDao.getCustomerById(customerId)
             ?: throw IllegalStateException("Customer not found")
@@ -185,7 +188,7 @@ class SyncEngine @Inject constructor(
             type = type,
             description = description.trim(),
             date = date,
-            timestamp = now,
+            timestamp = txTimestamp,
             balance = newCustomerBalance,
             attachment = attachmentString,
             syncStatus = Constants.SYNC_STATUS_PENDING
@@ -201,7 +204,7 @@ class SyncEngine @Inject constructor(
             type = type,
             description = description.trim(),
             date = date,
-            timestamp = now,
+            timestamp = txTimestamp,
             balance = newCustomerBalance,
             attachment = primaryAttachment,
             attachments = allAttachments,
@@ -255,7 +258,8 @@ class SyncEngine @Inject constructor(
         description: String,
         date: String,
         attachment: String? = null,
-        attachments: List<String> = emptyList()
+        attachments: List<String> = emptyList(),
+        timestamp: Long? = null
     ) = withContext(Dispatchers.IO) {
         val userId = sessionManager.getUserId()
         val now = System.currentTimeMillis()
@@ -279,6 +283,8 @@ class SyncEngine @Inject constructor(
 
         val existing = transactionDao.getTransactionById(txId)
         val clientTxId = existing?.clientTxId ?: UUID.randomUUID().toString()
+        val baseTs = timestamp ?: existing?.timestamp ?: now
+        val txTimestamp = DateUtils.getResolvedTimestamp(date, baseTs)
 
         val updated = (existing ?: TransactionEntity(
             id = txId,
@@ -289,7 +295,7 @@ class SyncEngine @Inject constructor(
             type = type,
             description = description.trim(),
             date = date,
-            timestamp = now,
+            timestamp = txTimestamp,
             balance = newCustomerBalance,
             attachment = attachmentString,
             syncStatus = Constants.SYNC_STATUS_PENDING
@@ -298,6 +304,7 @@ class SyncEngine @Inject constructor(
             type = type,
             description = description.trim(),
             date = date,
+            timestamp = txTimestamp,
             balance = newCustomerBalance,
             attachment = attachmentString,
             syncStatus = Constants.SYNC_STATUS_PENDING
@@ -312,7 +319,7 @@ class SyncEngine @Inject constructor(
             type = type,
             description = description.trim(),
             date = date,
-            timestamp = existing?.timestamp ?: now,
+            timestamp = txTimestamp,
             balance = newCustomerBalance,
             attachment = primaryAttachment,
             attachments = allAttachments,
@@ -509,6 +516,7 @@ class SyncEngine @Inject constructor(
             }
             if (txRes.isSuccessful && txRes.body() != null) {
                 val cloudTxs = txRes.body()!!.map { (key, dto) ->
+                    val resolvedTs = DateUtils.getResolvedTimestamp(dto.date, dto.timestamp)
                     TransactionEntity(
                         id = key,
                         clientTxId = dto.clientTxId ?: key,
@@ -518,7 +526,7 @@ class SyncEngine @Inject constructor(
                         type = dto.type,
                         description = dto.description,
                         date = dto.date,
-                        timestamp = dto.timestamp,
+                        timestamp = resolvedTs,
                         balance = dto.balance,
                         attachment = dto.attachment ?: dto.attachments.firstOrNull(),
                         syncStatus = Constants.SYNC_STATUS_SYNCED
@@ -526,6 +534,10 @@ class SyncEngine @Inject constructor(
                 }
                 transactionDao.insertOrUpdateAll(cloudTxs)
             }
+
+            try {
+                repairMismatchedTransactionDates()
+            } catch (_: Exception) {}
 
             try {
                 var paymentsRes = firebaseApi.getPendingPaymentsByMerchant(equalTo = "\"$userId\"", auth = token)
@@ -561,5 +573,22 @@ class SyncEngine @Inject constructor(
             }
         } catch (_: Exception) {
         }
+    }
+
+    suspend fun repairMismatchedTransactionDates() = withContext(Dispatchers.IO) {
+        try {
+            val userId = sessionManager.getUserId()
+            if (userId.isBlank()) return@withContext
+            val txs = transactionDao.getAllTransactionsByUser(userId)
+            val mismatched = txs.filter { tx ->
+                tx.date.isNotBlank() && DateUtils.getResolvedTimestamp(tx.date, tx.timestamp) != tx.timestamp
+            }
+            if (mismatched.isNotEmpty()) {
+                val repaired = mismatched.map { tx ->
+                    tx.copy(timestamp = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp))
+                }
+                transactionDao.insertOrUpdateAll(repaired)
+            }
+        } catch (_: Exception) {}
     }
 }

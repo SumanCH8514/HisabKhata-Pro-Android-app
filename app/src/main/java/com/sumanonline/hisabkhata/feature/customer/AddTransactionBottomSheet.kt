@@ -104,11 +104,12 @@ fun AddTransactionBottomSheet(
     initialAmount: Double? = null,
     initialDescription: String = "",
     initialDate: String? = null,
+    initialTimestamp: Long? = null,
     initialAttachments: List<String> = emptyList(),
     isEditMode: Boolean = false,
     onDismiss: () -> Unit,
     onUploadBill: suspend (imageBytes: ByteArray, extension: String) -> String?,
-    onSave: (amount: Double, description: String, date: String, primaryAttachment: String?, allAttachments: List<String>) -> Unit
+    onSave: (amount: Double, description: String, date: String, primaryAttachment: String?, allAttachments: List<String>, timestamp: Long) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -123,13 +124,35 @@ fun AddTransactionBottomSheet(
     var description by remember(initialDescription) { mutableStateOf(initialDescription) }
     var existingAttachments by remember(initialAttachments) { mutableStateOf(initialAttachments) }
     var attachedBills by remember { mutableStateOf<List<AttachedBillItem>>(emptyList()) }
-    var selectedCalendar by remember(initialDate) {
+    var selectedCalendar by remember(initialDate, initialTimestamp) {
         mutableStateOf(
             Calendar.getInstance().apply {
-                if (!initialDate.isNullOrBlank()) {
+                if (initialTimestamp != null && initialTimestamp > 0L) {
+                    timeInMillis = initialTimestamp
+                    if (!initialDate.isNullOrBlank()) {
+                        try {
+                            val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(initialDate.trim())
+                            if (parsed != null) {
+                                val cal = Calendar.getInstance().apply { time = parsed }
+                                set(Calendar.YEAR, cal.get(Calendar.YEAR))
+                                set(Calendar.MONTH, cal.get(Calendar.MONTH))
+                                set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH))
+                            }
+                        } catch (_: Exception) {}
+                    }
+                } else if (!initialDate.isNullOrBlank()) {
                     try {
-                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                        sdf.parse(initialDate)?.let { time = it }
+                        val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(initialDate.trim())
+                        if (parsed != null) {
+                            val cal = Calendar.getInstance().apply { time = parsed }
+                            val nowCal = Calendar.getInstance()
+                            set(Calendar.YEAR, cal.get(Calendar.YEAR))
+                            set(Calendar.MONTH, cal.get(Calendar.MONTH))
+                            set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH))
+                            set(Calendar.HOUR_OF_DAY, nowCal.get(Calendar.HOUR_OF_DAY))
+                            set(Calendar.MINUTE, nowCal.get(Calendar.MINUTE))
+                            set(Calendar.SECOND, nowCal.get(Calendar.SECOND))
+                        }
                     } catch (_: Exception) {}
                 }
             }
@@ -320,7 +343,8 @@ fun AddTransactionBottomSheet(
                                             }
                                         }
                                         val primary = uploadedUrls.firstOrNull()
-                                        onSave(currentAmount, description.trim(), dateIso, primary, uploadedUrls)
+                                        val currentTimestamp = selectedCalendar.timeInMillis
+                                        onSave(currentAmount, description.trim(), dateIso, primary, uploadedUrls, currentTimestamp)
                                         isSaving = false
                                     }
                                 }
@@ -628,13 +652,23 @@ fun AddTransactionBottomSheet(
                                 DatePickerDialog(
                                     context,
                                     { _, year, month, dayOfMonth ->
+                                        val nowCal = Calendar.getInstance()
+                                        val currentHour = selectedCalendar.get(Calendar.HOUR_OF_DAY).let {
+                                            if (it == 0 && selectedCalendar.get(Calendar.MINUTE) == 0) nowCal.get(Calendar.HOUR_OF_DAY) else it
+                                        }
+                                        val currentMinute = selectedCalendar.get(Calendar.MINUTE).let {
+                                            if (selectedCalendar.get(Calendar.HOUR_OF_DAY) == 0 && it == 0) nowCal.get(Calendar.MINUTE) else it
+                                        }
+                                        val currentSecond = selectedCalendar.get(Calendar.SECOND).let {
+                                            if (it == 0) nowCal.get(Calendar.SECOND) else it
+                                        }
                                         val newCal = Calendar.getInstance().apply {
                                             set(Calendar.YEAR, year)
                                             set(Calendar.MONTH, month)
                                             set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                                            set(Calendar.HOUR_OF_DAY, 0)
-                                            set(Calendar.MINUTE, 0)
-                                            set(Calendar.SECOND, 0)
+                                            set(Calendar.HOUR_OF_DAY, currentHour)
+                                            set(Calendar.MINUTE, currentMinute)
+                                            set(Calendar.SECOND, currentSecond)
                                             set(Calendar.MILLISECOND, 0)
                                         }
                                         selectedCalendar = newCal

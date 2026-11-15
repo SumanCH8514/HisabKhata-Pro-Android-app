@@ -146,7 +146,7 @@ fun TransactionDetailBottomSheet(
             ) {
                 Text(text = "Date & Time", fontSize = 13.sp, color = TextSecondary)
                 Text(
-                    text = DateUtils.formatDisplayDateTime(transaction.timestamp),
+                    text = DateUtils.formatDisplayDateTime(transaction.date, transaction.timestamp),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary

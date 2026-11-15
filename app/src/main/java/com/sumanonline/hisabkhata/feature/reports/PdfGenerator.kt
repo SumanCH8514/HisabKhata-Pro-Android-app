@@ -119,7 +119,8 @@ object PdfGenerator {
             val partyName = customerName ?: customerNameMap[tx.customerId] ?: "Party"
 
             paint.color = Color.parseColor("#0F172A")
-            canvas.drawText(DateUtils.formatDisplayDate(tx.timestamp), 32f, y, paint)
+            val resolvedTs = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
+            canvas.drawText(DateUtils.formatDisplayDate(resolvedTs), 32f, y, paint)
 
             val detail = if (tx.description.isNotBlank()) "$partyName (${tx.description})" else partyName
             canvas.drawText(detail.take(28), 120f, y, paint)

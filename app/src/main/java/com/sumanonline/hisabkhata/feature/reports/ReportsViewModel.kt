@@ -163,7 +163,8 @@ class ReportsViewModel @Inject constructor(
         val customerNameMap = custList.associate { it.id to it.name }
 
         txList.filter { tx ->
-            val inDateRange = tx.timestamp in startMillis..endMillis
+            val resolvedTs = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
+            val inDateRange = resolvedTs in startMillis..endMillis
             val partyName = customerNameMap[tx.customerId].orEmpty()
             val matchesQuery = query.isBlank() ||
                 partyName.contains(query, ignoreCase = true) ||
@@ -257,7 +258,8 @@ class ReportsViewModel @Inject constructor(
                 val party = customerNameMap[tx.customerId] ?: "Party"
                 val debit = if (tx.amount < 0 || tx.type == "GAVE") Math.abs(tx.amount).toString() else ""
                 val credit = if (tx.amount > 0 || tx.type == "GOT") tx.amount.toString() else ""
-                sb.append("\"${DateUtils.formatDisplayDate(tx.timestamp)}\",\"$party\",\"${tx.description}\",\"$debit\",\"$credit\",\"${Math.abs(tx.balance)}\"\n")
+                val resolvedTs = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
+                sb.append("\"${DateUtils.formatDisplayDate(resolvedTs)}\",\"$party\",\"${tx.description}\",\"$debit\",\"$credit\",\"${Math.abs(tx.balance)}\"\n")
             }
 
             val file = File(context.cacheDir, "statement_${System.currentTimeMillis()}.csv")
