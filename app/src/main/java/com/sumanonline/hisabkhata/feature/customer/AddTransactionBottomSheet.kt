@@ -758,23 +758,12 @@ fun AddTransactionBottomSheet(
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Attached Bills ($totalBillsCount/4)",
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF374151)
-                            )
-                            Text(
-                                text = "Transferred to R2 on Save",
-                                fontSize = 11.sp,
-                                color = Color(0xFF6B7280)
-                            )
-                        }
+                        Text(
+                            text = "Attached Bills ($totalBillsCount/4)",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF374151)
+                        )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
