@@ -1308,6 +1308,10 @@ fun FullScreenPaymentDetectedPreview(
     }
     val upiIdDisplay = formatMaskedUpiId(rawUpi)
 
+    val rawSender = detected?.senderName?.trim()?.ifBlank { null }
+        ?: parseSenderFromNotification(detected?.rawTitle.orEmpty(), detected?.rawText.orEmpty())
+    val senderNameDisplay = rawSender ?: customer.name.ifBlank { "N/A" }
+
     val timeFormatted = remember(detected?.timestamp) {
         val ts = detected?.timestamp ?: System.currentTimeMillis()
         SimpleDateFormat("dd-MMM-yyyy, hh:mm a", Locale.ENGLISH).format(Date(ts))
@@ -1348,21 +1352,31 @@ fun FullScreenPaymentDetectedPreview(
         onDismissRequest = { },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = true
+            decorFitsSystemWindows = false
         )
     ) {
+        val view = LocalView.current
+        DisposableEffect(view) {
+            val window = (view.parent as? DialogWindowProvider)?.window
+                ?: (view as? DialogWindowProvider)?.window
+            if (window != null) {
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+            }
+            onDispose {}
+        }
+
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = PageBackground
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1386,18 +1400,18 @@ fun FullScreenPaymentDetectedPreview(
                     modifier = Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 4.dp),
+                        .padding(horizontal = 20.dp, vertical = 2.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Box(
-                        modifier = Modifier.size(110.dp),
+                        modifier = Modifier.size(92.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(110.dp)
+                                .size(92.dp)
                                 .scale(pulseScale)
                                 .alpha(pulseAlpha)
                                 .clip(CircleShape)
@@ -1405,13 +1419,13 @@ fun FullScreenPaymentDetectedPreview(
                         )
                         Box(
                             modifier = Modifier
-                                .size(92.dp)
+                                .size(78.dp)
                                 .clip(CircleShape)
                                 .background(GotGreen.copy(alpha = 0.15f))
                         )
                         Box(
                             modifier = Modifier
-                                .size(74.dp)
+                                .size(64.dp)
                                 .scale(checkScale.value)
                                 .clip(CircleShape)
                                 .background(
@@ -1425,31 +1439,31 @@ fun FullScreenPaymentDetectedPreview(
                                 imageVector = Icons.Filled.Check,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(42.dp)
+                                modifier = Modifier.size(36.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
                         text = "Payment Successfully Detected",
-                        fontSize = 21.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
 
                     Text(
                         text = "Incoming UPI payment matched to customer request",
-                        fontSize = 12.5.sp,
+                        fontSize = 12.sp,
                         color = TextSecondary,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -1461,7 +1475,7 @@ fun FullScreenPaymentDetectedPreview(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(18.dp)
+                                .padding(horizontal = 16.dp, vertical = 14.dp)
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -1469,45 +1483,45 @@ fun FullScreenPaymentDetectedPreview(
                             ) {
                                 Text(
                                     text = "Amount",
-                                    fontSize = 13.sp,
+                                    fontSize = 12.5.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF334155)
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = CurrencyFormatter.formatInr(amount),
-                                    fontSize = 34.sp,
+                                    fontSize = 30.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = GotGreen
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(1.dp)
                                     .background(BorderLight)
                             )
-                            Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
                             PaymentDetailRow(label = "Amount:", value = "₹${String.format(Locale.US, "%.2f", amount)}")
-                            Spacer(modifier = Modifier.height(11.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             PaymentDetailRow(label = "Source:", value = source)
-                            Spacer(modifier = Modifier.height(11.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             PaymentDetailRow(label = "Ref / UTR:", value = utr)
-                            Spacer(modifier = Modifier.height(11.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             PaymentDetailRow(label = "Bank:", value = bankDisplay)
-                            Spacer(modifier = Modifier.height(11.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             PaymentDetailRow(label = "UPI ID:", value = upiIdDisplay)
-                            Spacer(modifier = Modifier.height(11.dp))
-                            PaymentDetailRow(label = "Customer:", value = customer.name)
-                            Spacer(modifier = Modifier.height(11.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            PaymentDetailRow(label = "Sender Name:", value = senderNameDisplay)
+                            Spacer(modifier = Modifier.height(8.dp))
                             PaymentDetailRow(label = "Date & Time:", value = timeFormatted)
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -1516,7 +1530,7 @@ fun FullScreenPaymentDetectedPreview(
                         border = BorderStroke(1.dp, WarningAmber.copy(alpha = 0.35f))
                     ) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -1530,12 +1544,12 @@ fun FullScreenPaymentDetectedPreview(
                                 text = "Verify in your bank or UPI app that money is credited before approving into ledger.",
                                 fontSize = 11.5.sp,
                                 color = Color(0xFF92400E),
-                                lineHeight = 16.sp
+                                lineHeight = 15.sp
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 Surface(
@@ -1548,7 +1562,7 @@ fun FullScreenPaymentDetectedPreview(
                         modifier = Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp),
+                            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1590,22 +1604,49 @@ fun FullScreenPaymentDetectedPreview(
     }
 }
 
+private fun parseSenderFromNotification(title: String, text: String): String? {
+    val fullText = "$title $text"
+    val fromPattern = java.util.regex.Pattern.compile(
+        """(?:from|by|transfer\s+from)\s+([A-Za-z0-9\s.]+?)(?:\s+(?:via|into|to|using|on|Ref|UTR|UPI|\(|\.)|$)""",
+        java.util.regex.Pattern.CASE_INSENSITIVE
+    )
+    val fromMatcher = fromPattern.matcher(fullText)
+    if (fromMatcher.find()) {
+        val s = fromMatcher.group(1)?.trim()?.trimEnd('.', ',', '!', ':', '-')
+        if (!s.isNullOrBlank() && s.length in 2..50 && !s.contains("account", ignoreCase = true)) {
+            return s
+        }
+    }
+    val sentPattern = java.util.regex.Pattern.compile(
+        """^([A-Za-z0-9\s.]+?)\s+(?:sent you|has paid you|paid you|transferred)""",
+        java.util.regex.Pattern.CASE_INSENSITIVE
+    )
+    val sentMatcher = sentPattern.matcher(title)
+    if (sentMatcher.find()) {
+        val s = sentMatcher.group(1)?.trim()?.trimEnd('.', ',', '!', ':', '-')
+        if (!s.isNullOrBlank() && s.length in 2..50) {
+            return s
+        }
+    }
+    return null
+}
+
 private fun formatMaskedUpiId(rawUpi: String): String {
     val clean = rawUpi.trim()
-    if (clean.isBlank()) return "xxxx4jio@axl"
+    if (clean.isBlank()) return "XXXX4jio@axl"
     if (!clean.contains("@")) {
-        return if (clean.startsWith("xxxx", ignoreCase = true)) clean else "xxxx$clean"
+        return if (clean.startsWith("XXXX", ignoreCase = true)) clean else "XXXX$clean"
     }
     val parts = clean.split("@", limit = 2)
     val handle = parts[0]
     val provider = parts[1]
 
-    return if (handle.startsWith("xxxx", ignoreCase = true)) {
+    return if (handle.startsWith("XXXX", ignoreCase = true)) {
         "$handle@$provider"
-    } else if (handle.startsWith("xx", ignoreCase = true)) {
-        "xx$handle@$provider"
+    } else if (handle.startsWith("XX", ignoreCase = true)) {
+        "XX$handle@$provider"
     } else {
-        "xxxx$handle@$provider"
+        "XXXX$handle@$provider"
     }
 }
 
@@ -1629,7 +1670,9 @@ private fun PaymentDetailRow(label: String, value: String) {
             color = TextPrimary,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f, fill = false)
         )
     }
 }
