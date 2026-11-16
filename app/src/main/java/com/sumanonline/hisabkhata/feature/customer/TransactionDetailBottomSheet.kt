@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.sumanonline.hisabkhata.core.database.entity.attachmentList
+import com.sumanonline.hisabkhata.core.designsystem.components.AttachmentPreviewViewer
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
@@ -315,52 +317,20 @@ fun TransactionDetailBottomSheet(
 
     val activeAttachmentUrl = fullScreenAttachmentUrl ?: transaction.attachment
     if (showFullAttachment && !activeAttachmentUrl.isNullOrBlank()) {
-        Dialog(
-            onDismissRequest = {
+        val allAtts = remember(transaction.attachment, activeAttachmentUrl) {
+            val list = transaction.attachmentList
+            if (list.isNotEmpty()) list else listOf(activeAttachmentUrl)
+        }
+        val currentIdx = allAtts.indexOf(activeAttachmentUrl).coerceAtLeast(0)
+        AttachmentPreviewViewer(
+            attachments = allAtts,
+            initialIndex = currentIdx,
+            title = "Bill Receipt",
+            onDismiss = {
                 showFullAttachment = false
                 fullScreenAttachmentUrl = null
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-            ) {
-                val imageModel = remember(activeAttachmentUrl) {
-                    ImageUtils.sanitizeImageSource(activeAttachmentUrl)
-                }
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageModel)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Full Attachment",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                )
-                IconButton(
-                    onClick = {
-                        showFullAttachment = false
-                        fullScreenAttachmentUrl = null
-                    },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(24.dp)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.6f))
-                ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Close Fullscreen",
-                        tint = Color.White
-                    )
-                }
             }
-        }
+        )
     }
 
     if (showDeleteConfirm) {

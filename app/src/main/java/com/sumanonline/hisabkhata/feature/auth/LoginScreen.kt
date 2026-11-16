@@ -82,15 +82,29 @@ import com.sumanonline.hisabkhata.core.common.Constants
 import com.sumanonline.hisabkhata.core.common.Resource
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlueLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GiveRedLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
+import com.sumanonline.hisabkhata.core.designsystem.NavyBluePrimary
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun LoginScreen(
@@ -106,6 +120,7 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var isGoogleSignInInProgress by remember { mutableStateOf(false) }
 
     var showConfigHelpDialog by remember { mutableStateOf(false) }
     var configHelpTitle by remember { mutableStateOf("") }
@@ -129,9 +144,11 @@ fun LoginScreen(
                         fallbackPhotoUrl = account.photoUrl?.toString()
                     )
                 } else {
+                    isGoogleSignInInProgress = false
                     viewModel.onGoogleSignInError("Google account selected but ID token was missing. Please try again.")
                 }
             } catch (e: ApiException) {
+                isGoogleSignInInProgress = false
                 when (e.statusCode) {
                     GoogleSignInStatusCodes.SIGN_IN_CANCELLED, 16 -> {
                         // User cancelled / dismissed the account picker; do nothing
@@ -173,26 +190,39 @@ fun LoginScreen(
                     }
                 }
             } catch (e: Exception) {
+                isGoogleSignInInProgress = false
                 viewModel.onGoogleSignInError(e.localizedMessage ?: "Failed to sign in with Google")
             }
-        } else if (result.resultCode != Activity.RESULT_CANCELED) {
-            viewModel.onGoogleSignInError("Google Sign-In returned with no data (Result: ${result.resultCode})")
+        } else {
+            isGoogleSignInInProgress = false
+            if (result.resultCode != Activity.RESULT_CANCELED) {
+                viewModel.onGoogleSignInError("Google Sign-In returned with no data (Result: ${result.resultCode})")
+            }
         }
     }
 
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
             when (event) {
-                is AuthEvent.LoginSuccess -> onLoginSuccess()
+                is AuthEvent.LoginSuccess -> {
+                    isGoogleSignInInProgress = false
+                    onLoginSuccess()
+                }
                 is AuthEvent.OtpRequired -> {
+                    isGoogleSignInInProgress = false
                     Toast.makeText(context, "Verification code sent to ${event.email}", Toast.LENGTH_SHORT).show()
                 }
                 is AuthEvent.Error -> {
+                    isGoogleSignInInProgress = false
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
                 else -> Unit
             }
         }
+    }
+
+    if (uiState is Resource.Error && isGoogleSignInInProgress) {
+        isGoogleSignInInProgress = false
     }
 
     pendingVerification?.let { pending ->
@@ -255,21 +285,33 @@ fun LoginScreen(
         )
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(PageBackground)
-            .statusBarsPadding()
-            .imePadding()
     ) {
-        Column(
+        // Status bar area with instant brand color
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .background(NavyBluePrimary)
+                .statusBarsPadding()
+        )
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .imePadding()
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
             Image(
                 painter = painterResource(id = R.drawable.app_logo_round),
                 contentDescription = "HisabKhata Logo",
@@ -476,6 +518,7 @@ fun LoginScreen(
 
                     OutlinedButton(
                         onClick = {
+                            isGoogleSignInInProgress = true
                             try {
                                 val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                                     .requestIdToken(Constants.GOOGLE_WEB_CLIENT_ID)
@@ -487,6 +530,7 @@ fun LoginScreen(
                                     googleSignInLauncher.launch(googleSignInClient.signInIntent)
                                 }
                             } catch (e: Exception) {
+                                isGoogleSignInInProgress = false
                                 viewModel.onGoogleSignInError(e.localizedMessage ?: "Failed to launch Google Sign-In")
                             }
                         },
@@ -551,7 +595,19 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+
+        // Modern Animated Loading Overlay
+        androidx.compose.animation.AnimatedVisibility(
+            visible = uiState is Resource.Loading,
+            enter = fadeIn(animationSpec = tween(durationMillis = 250)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 200))
+        ) {
+            AuthLoadingOverlay(
+                isGoogleSignIn = isGoogleSignInInProgress
+            )
+        }
     }
+}
 }
 
 @Composable
@@ -772,5 +828,158 @@ fun LoginOtpVerificationDialog(
             }
         }
     )
+}
+
+@Composable
+fun AuthLoadingOverlay(
+    isGoogleSignIn: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "authLoadingPulse")
+
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowAlpha"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(SurfaceWhite.copy(alpha = 0.96f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {}
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(120.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(110.dp)
+                        .graphicsLayer {
+                            scaleX = pulseScale
+                            scaleY = pulseScale
+                        }
+                        .clip(CircleShape)
+                        .background(BrandBlue.copy(alpha = glowAlpha))
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(92.dp)
+                        .clip(CircleShape)
+                        .background(BrandBlueLight)
+                )
+
+                Image(
+                    painter = painterResource(id = R.drawable.app_logo_round),
+                    contentDescription = "HisabKhata Logo",
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                )
+
+                if (isGoogleSignIn) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceWhite)
+                            .border(1.dp, BorderLight, CircleShape)
+                            .padding(4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_google_logo),
+                            contentDescription = "Google",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = if (isGoogleSignIn) "Signing in with Google…" else "Signing in…",
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = if (isGoogleSignIn)
+                    "Authenticating your Google account & preparing ledger…"
+                else
+                    "Verifying your credentials & syncing your data…",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Normal,
+                color = TextSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            CircularProgressIndicator(
+                modifier = Modifier.size(36.dp),
+                color = BrandBlue,
+                strokeWidth = 3.5.dp,
+                strokeCap = StrokeCap.Round
+            )
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(BrandBlueLight)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = BrandBlue,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "End-to-End Encrypted & Secure",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = BrandBlue
+                )
+            }
+        }
+    }
 }
 

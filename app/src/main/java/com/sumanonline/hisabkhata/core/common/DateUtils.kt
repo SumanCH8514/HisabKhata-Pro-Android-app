@@ -4,40 +4,49 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 object DateUtils {
 
-    private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    private val displayDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    private val displayDateTimeFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
-    private val timeOnlyFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+    private val isoFormatThreadLocal = ThreadLocal.withInitial {
+        SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    }
+    private val displayDateFormatThreadLocal = ThreadLocal.withInitial {
+        SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    }
+    private val displayDateTimeFormatThreadLocal = ThreadLocal.withInitial {
+        SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+    }
+    private val timeOnlyFormatThreadLocal = ThreadLocal.withInitial {
+        SimpleDateFormat("hh:mm a", Locale.getDefault())
+    }
 
     @Volatile
     var activeDateFormat: String = "dd MMM yyyy"
 
     fun todayIso(): String {
-        return isoDateFormat.format(Date())
+        return isoFormatThreadLocal.get()?.format(Date()) ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
     }
 
     fun formatIsoDate(date: Date): String {
-        return isoDateFormat.format(date)
+        return isoFormatThreadLocal.get()?.format(date) ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date)
     }
 
     fun formatDisplayDate(timestamp: Long): String {
         return try {
             SimpleDateFormat(activeDateFormat, Locale.getDefault()).format(Date(timestamp))
         } catch (_: Exception) {
-            displayDateFormat.format(Date(timestamp))
+            displayDateFormatThreadLocal.get()?.format(Date(timestamp)) ?: ""
         }
     }
 
     fun formatDisplayDateTime(timestamp: Long): String {
-        return displayDateTimeFormat.format(Date(timestamp))
+        return displayDateTimeFormatThreadLocal.get()?.format(Date(timestamp)) ?: ""
     }
 
     fun formatDisplayDateTime(dateIso: String?, timestamp: Long): String {
         val resolved = getResolvedTimestamp(dateIso, timestamp)
-        return displayDateTimeFormat.format(Date(resolved))
+        return displayDateTimeFormatThreadLocal.get()?.format(Date(resolved)) ?: ""
     }
 
     fun formatEntryDetailsDateTime(timestamp: Long): String {
@@ -60,7 +69,7 @@ object DateUtils {
     }
 
     fun formatTime(timestamp: Long): String {
-        return timeOnlyFormat.format(Date(timestamp))
+        return timeOnlyFormatThreadLocal.get()?.format(Date(timestamp)) ?: ""
     }
 
     fun getResolvedTimestamp(dateIso: String?, timestamp: Long): Long {
@@ -91,20 +100,16 @@ object DateUtils {
     fun parseIsoDate(isoString: String): Date? {
         val clean = isoString.trim().take(10)
         return try {
-            SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(clean)
+            isoFormatThreadLocal.get()?.parse(clean)
         } catch (_: Exception) {
-            try {
-                isoDateFormat.parse(clean)
-            } catch (_: Exception) {
-                null
-            }
+            null
         }
     }
 
     fun addDaysToToday(days: Int): String {
         val calendar = Calendar.getInstance()
         calendar.add(Calendar.DAY_OF_YEAR, days)
-        return isoDateFormat.format(calendar.time)
+        return isoFormatThreadLocal.get()?.format(calendar.time) ?: ""
     }
 
     fun formatRelativeTime(timestamp: Long): String {
@@ -130,21 +135,12 @@ object DateUtils {
     fun getDueDateStatus(dueDateIso: String?): DueStatus {
         if (dueDateIso.isNullOrBlank()) return DueStatus.None
         val due = parseIsoDate(dueDateIso) ?: return DueStatus.None
-        val todayCalendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val dueCalendar = Calendar.getInstance().apply {
-            time = due
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val diffMs = dueCalendar.timeInMillis - todayCalendar.timeInMillis
-        val diffDays = (diffMs / (24 * 60 * 60 * 1000)).toInt()
+        val now = System.currentTimeMillis()
+        val timeZone = TimeZone.getDefault()
+        val offset = timeZone.getOffset(now)
+        val todayDayNumber = (now + offset) / (24 * 60 * 60 * 1000L)
+        val dueDayNumber = (due.time + offset) / (24 * 60 * 60 * 1000L)
+        val diffDays = (dueDayNumber - todayDayNumber).toInt()
 
         return when {
             diffDays < 0 -> DueStatus.Overdue(Math.abs(diffDays))

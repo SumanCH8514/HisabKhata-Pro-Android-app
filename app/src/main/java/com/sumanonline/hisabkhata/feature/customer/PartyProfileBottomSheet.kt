@@ -35,6 +35,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,10 +56,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -195,37 +198,26 @@ fun PartyProfileBottomSheet(
                         Spacer(modifier = Modifier.width(14.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = customer.name,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                            val typeLabel = if (customer.type.equals("Supplier", ignoreCase = true)) "SUPPLIER" else "CUSTOMER"
+                            NameWithBadgeRow(
+                                name = customer.name,
+                                badgeText = "• $typeLabel",
+                                modifier = Modifier.fillMaxWidth()
                             )
 
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                val typeLabel = if (customer.type.equals("Supplier", ignoreCase = true)) "SUPPLIER" else "CUSTOMER"
-                                Box(
-                                    modifier = Modifier
-                                        .background(BrandBlueLight, RoundedCornerShape(12.dp))
-                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                            if (customer.phone.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text(
-                                        text = "• $typeLabel",
-                                        fontSize = 10.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                    Icon(
+                                        imageVector = Icons.Outlined.Phone,
+                                        contentDescription = null,
+                                        tint = TextSecondary,
+                                        modifier = Modifier.size(13.dp)
                                     )
-                                }
-
-                                if (customer.phone.isNotBlank()) {
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     val displayPhone = if (customer.phone.startsWith("+")) customer.phone else "+91  ${customer.phone}"
                                     Text(
                                         text = displayPhone,
@@ -239,7 +231,7 @@ fun PartyProfileBottomSheet(
                             }
 
                             if (customer.email.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(5.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.fillMaxWidth()
@@ -247,7 +239,7 @@ fun PartyProfileBottomSheet(
                                     Icon(
                                         imageVector = Icons.Outlined.Email,
                                         contentDescription = null,
-                                        tint = TextTertiary,
+                                        tint = TextSecondary,
                                         modifier = Modifier.size(13.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -365,7 +357,7 @@ fun PartyProfileBottomSheet(
                                 text = "PHONE NUMBER",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextTertiary,
+                                color = TextSecondary,
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
@@ -376,7 +368,7 @@ fun PartyProfileBottomSheet(
                                 text = phoneDisplay,
                                 fontSize = 14.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (customer.phone.isNotBlank()) TextPrimary else TextTertiary
+                                color = if (customer.phone.isNotBlank()) TextPrimary else TextSecondary
                             )
                         }
 
@@ -461,7 +453,7 @@ fun PartyProfileBottomSheet(
                                 text = "EMAIL ADDRESS",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextTertiary,
+                                color = TextSecondary,
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
@@ -469,7 +461,7 @@ fun PartyProfileBottomSheet(
                                 text = if (customer.email.isNotBlank()) customer.email else "Not added",
                                 fontSize = 14.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (customer.email.isNotBlank()) TextPrimary else TextTertiary,
+                                color = if (customer.email.isNotBlank()) TextPrimary else TextSecondary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -562,7 +554,7 @@ fun PartyProfileBottomSheet(
                                 text = "GSTIN / TAX ID",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextTertiary,
+                                color = TextSecondary,
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
@@ -571,7 +563,7 @@ fun PartyProfileBottomSheet(
                                 text = customer.gst?.ifBlank { "Not added" } ?: "Not added",
                                 fontSize = 14.sp,
                                 fontStyle = if (!hasGst) FontStyle.Italic else FontStyle.Normal,
-                                color = if (hasGst) TextPrimary else TextTertiary
+                                color = if (hasGst) TextPrimary else TextSecondary
                             )
                         }
                     }
@@ -608,3 +600,69 @@ fun PartyProfileBottomSheet(
         }
     }
 }
+
+@Composable
+private fun NameWithBadgeRow(
+    name: String,
+    badgeText: String,
+    modifier: Modifier = Modifier
+) {
+    Layout(
+        modifier = modifier,
+        content = {
+            Text(
+                text = name,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Box(
+                modifier = Modifier
+                    .background(BrandBlueLight, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = badgeText,
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    ) { measurables, constraints ->
+        val nameMeasurable = measurables[0]
+        val badgeMeasurable = measurables[1]
+        val spacing = 8.dp.roundToPx()
+
+        val badgePlaceable = badgeMeasurable.measure(Constraints())
+        val nameIntrinsicWidth = nameMeasurable.maxIntrinsicWidth(constraints.maxHeight)
+
+        val canFitBadge = (nameIntrinsicWidth + spacing + badgePlaceable.width) <= constraints.maxWidth
+
+        if (canFitBadge) {
+            val maxNameWidth = (constraints.maxWidth - spacing - badgePlaceable.width).coerceAtLeast(0)
+            val namePlaceable = nameMeasurable.measure(
+                constraints.copy(minWidth = 0, maxWidth = maxNameWidth)
+            )
+            val height = maxOf(namePlaceable.height, badgePlaceable.height)
+            val totalWidth = namePlaceable.width + spacing + badgePlaceable.width
+            layout(totalWidth.coerceIn(constraints.minWidth, constraints.maxWidth), height) {
+                val nameY = (height - namePlaceable.height) / 2
+                val badgeY = (height - badgePlaceable.height) / 2
+                namePlaceable.placeRelative(0, nameY)
+                badgePlaceable.placeRelative(namePlaceable.width + spacing, badgeY)
+            }
+        } else {
+            val namePlaceable = nameMeasurable.measure(
+                constraints.copy(minWidth = 0, maxWidth = constraints.maxWidth)
+            )
+            val height = namePlaceable.height
+            layout(namePlaceable.width.coerceIn(constraints.minWidth, constraints.maxWidth), height) {
+                namePlaceable.placeRelative(0, 0)
+            }
+        }
+    }
+}
+

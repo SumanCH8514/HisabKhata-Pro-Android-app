@@ -53,6 +53,7 @@ import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Button
@@ -85,6 +86,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -97,6 +99,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.sumanonline.hisabkhata.R
 import com.sumanonline.hisabkhata.core.common.CurrencyFormatter
 import com.sumanonline.hisabkhata.core.common.DateUtils
 import com.sumanonline.hisabkhata.core.common.ImageUtils
@@ -160,40 +163,63 @@ fun PaymentsScreen(
     )
 
     Scaffold(
-        bottomBar = {
-            AppBottomBar(
-                currentTab = BottomTab.PAYMENTS,
-                onTabSelected = onTabSelected
-            )
-        },
-        containerColor = PageBackground
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding())
-                .statusBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // Top action bar (Header row with refresh & QR code button)
-            item(key = "header_action_bar") {
+        topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(BrandBlue)
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 8.dp, bottom = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "Payments & Collections",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.app_logo_round),
+                            contentDescription = "HisabKhata Logo",
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "HisabKhata",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color(0xFFDC2626))
+                                        .padding(horizontal = 6.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = "PRO",
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "Payments & Collections",
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
 
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
@@ -204,7 +230,7 @@ fun PaymentsScreen(
                             Icon(
                                 imageVector = Icons.Outlined.Refresh,
                                 contentDescription = "Refresh",
-                                tint = if (isRefreshing) MaterialTheme.colorScheme.primary else TextSecondary,
+                                tint = Color.White,
                                 modifier = Modifier
                                     .size(20.dp)
                                     .graphicsLayer {
@@ -216,8 +242,7 @@ fun PaymentsScreen(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
-                                .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
-                                .background(SurfaceWhite)
+                                .background(Color.White)
                                 .clickable {
                                     viewModel.ensureQrGenerated()
                                     showStoreQrSheet = true
@@ -228,46 +253,54 @@ fun PaymentsScreen(
                             Icon(
                                 imageVector = Icons.Outlined.QrCode2,
                                 contentDescription = "My Store QR",
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = BrandBlue,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Store QR",
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
+                                fontWeight = FontWeight.Bold,
+                                color = BrandBlue
                             )
                         }
                     }
                 }
             }
-
+        },
+        bottomBar = {
+            AppBottomBar(
+                currentTab = BottomTab.PAYMENTS,
+                onTabSelected = onTabSelected
+            )
+        },
+        containerColor = PageBackground
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             // 1. Top 3 Summary Cards
             item(key = "summary_cards") {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Pending Card
                     SummaryMetricCard(
                         modifier = Modifier.weight(1f),
                         title = "Pending",
-                        icon = {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF94A3B8))
-                            )
-                        },
+                        icon = Icons.Outlined.Schedule,
                         count = summary.pendingCount.toString(),
                         subtitle = CurrencyFormatter.formatInr(summary.pendingTotal),
                         subtitleColor = TextSecondary,
                         isSelected = selectedFilter == PaymentFilter.PENDING,
                         accentColor = WarningAmber,
+                        selectedBgColor = if (isAppDark) Color(0xFF78350F).copy(alpha = 0.25f) else Color(0xFFFFFBEB),
                         onClick = {
                             viewModel.setFilter(
                                 if (selectedFilter == PaymentFilter.PENDING) PaymentFilter.ALL else PaymentFilter.PENDING
@@ -279,19 +312,13 @@ fun PaymentsScreen(
                     SummaryMetricCard(
                         modifier = Modifier.weight(1f),
                         title = "Approved",
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.CheckCircle,
-                                contentDescription = null,
-                                tint = GotGreen,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        },
+                        icon = Icons.Outlined.CheckCircle,
                         count = summary.approvedCount.toString(),
                         subtitle = CurrencyFormatter.formatInr(summary.approvedTotal),
                         subtitleColor = GotGreen,
                         isSelected = selectedFilter == PaymentFilter.APPROVED,
                         accentColor = GotGreen,
+                        selectedBgColor = if (isAppDark) Color(0xFF14532D).copy(alpha = 0.25f) else Color(0xFFF0FDF4),
                         onClick = {
                             viewModel.setFilter(
                                 if (selectedFilter == PaymentFilter.APPROVED) PaymentFilter.ALL else PaymentFilter.APPROVED
@@ -303,19 +330,13 @@ fun PaymentsScreen(
                     SummaryMetricCard(
                         modifier = Modifier.weight(1f),
                         title = "Rejected",
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Cancel,
-                                contentDescription = null,
-                                tint = GiveRed,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        },
+                        icon = Icons.Outlined.Cancel,
                         count = summary.rejectedCount.toString(),
                         subtitle = "Recorded",
                         subtitleColor = TextSecondary,
                         isSelected = selectedFilter == PaymentFilter.REJECTED,
                         accentColor = GiveRed,
+                        selectedBgColor = if (isAppDark) Color(0xFF7F1D1D).copy(alpha = 0.25f) else Color(0xFFFEF2F2),
                         onClick = {
                             viewModel.setFilter(
                                 if (selectedFilter == PaymentFilter.REJECTED) PaymentFilter.ALL else PaymentFilter.REJECTED
@@ -780,16 +801,18 @@ fun PaymentsScreen(
 private fun SummaryMetricCard(
     modifier: Modifier = Modifier,
     title: String,
-    icon: @Composable () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     count: String,
     subtitle: String,
     subtitleColor: Color = TextSecondary,
     isSelected: Boolean,
     accentColor: Color = MaterialTheme.colorScheme.primary,
+    selectedBgColor: Color,
     onClick: () -> Unit
 ) {
     val borderColor = if (isSelected) accentColor else BorderLight
-    val containerBg = if (isSelected) accentColor.copy(alpha = if (isAppDark) 0.12f else 0.05f) else SurfaceWhite
+    val containerBg = if (isSelected) selectedBgColor else SurfaceWhite
+    val elevation = if (isSelected) 2.dp else 0.5.dp
 
     Card(
         modifier = modifier
@@ -801,7 +824,7 @@ private fun SummaryMetricCard(
             width = if (isSelected) 1.5.dp else 1.dp,
             color = borderColor
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Column(
             modifier = Modifier
@@ -816,10 +839,25 @@ private fun SummaryMetricCard(
                 Text(
                     text = title,
                     fontSize = 12.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                    color = if (isSelected) accentColor else TextPrimary
                 )
-                icon()
+
+                // Circular icon badge
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(if (isSelected) accentColor else accentColor.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSelected) Color.White else accentColor,
+                        modifier = Modifier.size(13.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -835,9 +873,11 @@ private fun SummaryMetricCard(
 
             Text(
                 text = subtitle,
-                fontSize = 12.sp,
-                fontWeight = if (subtitleColor != TextSecondary) FontWeight.Bold else FontWeight.Normal,
-                color = subtitleColor
+                fontSize = 11.5.sp,
+                fontWeight = if (subtitleColor != TextSecondary) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected && subtitleColor == TextSecondary) accentColor else subtitleColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

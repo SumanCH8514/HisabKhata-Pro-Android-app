@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccessTime
@@ -65,6 +66,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -108,15 +110,23 @@ import com.sumanonline.hisabkhata.core.designsystem.RedPillBg
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
+import com.sumanonline.hisabkhata.core.designsystem.components.AttachmentPreviewViewer
 import com.sumanonline.hisabkhata.core.designsystem.components.ConfirmDialog
 import com.sumanonline.hisabkhata.core.designsystem.components.CustomerAvatar
 import com.sumanonline.hisabkhata.core.designsystem.components.EmptyStateView
 import com.sumanonline.hisabkhata.core.designsystem.components.LedgerScreenSkeleton
 import com.sumanonline.hisabkhata.core.designsystem.components.shimmerBrush
+import com.sumanonline.hisabkhata.core.database.entity.attachmentList
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+// Column Weights for Ledger Table (58% note space, 21% gave, 21% got)
+private const val COL_WEIGHT_ENTRIES = 1.74f
+private const val COL_WEIGHT_GAVE = 0.63f
+private const val COL_WEIGHT_GOT = 0.63f
+private const val TOTAL_COL_WEIGHT = COL_WEIGHT_ENTRIES + COL_WEIGHT_GAVE + COL_WEIGHT_GOT
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -136,7 +146,8 @@ fun CustomerLedgerScreen(
     var showAddGaveSheet by remember { mutableStateOf(false) }
     var showAddGotSheet by remember { mutableStateOf(false) }
     var selectedTransaction by remember { mutableStateOf<TransactionEntity?>(null) }
-    var fullScreenAttachmentUrl by remember { mutableStateOf<String?>(null) }
+    var fullScreenAttachmentList by remember { mutableStateOf<List<String>?>(null) }
+    var fullScreenAttachmentIndex by remember { mutableIntStateOf(0) }
     var showPartyProfileSheet by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -147,8 +158,8 @@ fun CustomerLedgerScreen(
     var savedScrollIndex by remember { mutableStateOf<Int?>(null) }
     var savedScrollOffset by remember { mutableStateOf<Int?>(null) }
 
-    LaunchedEffect(fullScreenAttachmentUrl) {
-        if (fullScreenAttachmentUrl == null && savedScrollIndex != null) {
+    LaunchedEffect(fullScreenAttachmentList) {
+        if (fullScreenAttachmentList == null && savedScrollIndex != null) {
             listState.scrollToItem(savedScrollIndex!!, savedScrollOffset ?: 0)
         }
     }
@@ -537,7 +548,7 @@ fun CustomerLedgerScreen(
                             color = TextSecondary,
                             letterSpacing = 0.5.sp,
                             modifier = Modifier
-                                .weight(1.4f)
+                                .weight(COL_WEIGHT_ENTRIES)
                                 .padding(start = 16.dp)
                         )
 
@@ -548,7 +559,7 @@ fun CustomerLedgerScreen(
                             color = TextSecondary,
                             textAlign = TextAlign.Center,
                             letterSpacing = 0.5.sp,
-                            modifier = Modifier.weight(0.8f)
+                            modifier = Modifier.weight(COL_WEIGHT_GAVE)
                         )
 
                         Text(
@@ -558,7 +569,7 @@ fun CustomerLedgerScreen(
                             color = TextSecondary,
                             textAlign = TextAlign.Center,
                             letterSpacing = 0.5.sp,
-                            modifier = Modifier.weight(0.8f)
+                            modifier = Modifier.weight(COL_WEIGHT_GOT)
                         )
                     }
                 }
@@ -603,10 +614,11 @@ fun CustomerLedgerScreen(
                         LedgerTableRowItem(
                             tx = tx,
                             onClick = { selectedTransaction = tx },
-                            onAttachmentClick = { attachmentUrl ->
+                            onAttachmentClick = { urls ->
                                 savedScrollIndex = listState.firstVisibleItemIndex
                                 savedScrollOffset = listState.firstVisibleItemScrollOffset
-                                fullScreenAttachmentUrl = attachmentUrl
+                                fullScreenAttachmentList = urls
+                                fullScreenAttachmentIndex = 0
                             }
                         )
                     }
@@ -718,77 +730,13 @@ fun CustomerLedgerScreen(
 
 
 
-        fullScreenAttachmentUrl?.let { rawUrl ->
-            BackHandler {
-                fullScreenAttachmentUrl = null
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .zIndex(100f)
-            ) {
-                val imageModel = remember(rawUrl) {
-                    ImageUtils.sanitizeImageSource(rawUrl)
-                }
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageModel)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Full Attachment",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.Black.copy(alpha = 0.6f))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Image,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Attachment Preview",
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { fullScreenAttachmentUrl = null },
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.6f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close Fullscreen",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
+        fullScreenAttachmentList?.let { urls ->
+            AttachmentPreviewViewer(
+                attachments = urls,
+                initialIndex = fullScreenAttachmentIndex,
+                title = "Bill Receipt",
+                onDismiss = { fullScreenAttachmentList = null }
+            )
         }
     }
 
@@ -896,9 +844,10 @@ private fun QuickActionButton(
 private fun LedgerTableRowItem(
     tx: TransactionEntity,
     onClick: () -> Unit,
-    onAttachmentClick: (String) -> Unit
+    onAttachmentClick: (List<String>) -> Unit
 ) {
     val isGave = tx.amount < 0 || tx.type == "GAVE"
+    val attachmentList = remember(tx.attachment) { tx.attachmentList }
 
     Surface(
         modifier = Modifier
@@ -912,8 +861,8 @@ private fun LedgerTableRowItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .drawBehind {
-                        val col1Right = size.width * (1.4f / 3.0f)
-                        val col2Right = size.width * (2.2f / 3.0f)
+                        val col1Right = size.width * (COL_WEIGHT_ENTRIES / TOTAL_COL_WEIGHT)
+                        val col2Right = size.width * ((COL_WEIGHT_ENTRIES + COL_WEIGHT_GAVE) / TOTAL_COL_WEIGHT)
                         drawLine(
                             color = dividerCol,
                             start = Offset(col1Right, 0f),
@@ -931,12 +880,12 @@ private fun LedgerTableRowItem(
             ) {
                 Column(
                     modifier = Modifier
-                        .weight(1.4f)
+                        .weight(COL_WEIGHT_ENTRIES)
                         .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
                 ) {
                     val rowTimestamp = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
                     Text(
-                        text = DateUtils.formatDisplayDateTime(rowTimestamp),
+                        text = DateUtils.formatDisplayDateTime(rowTimestamp).replace(", ", " • "),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextSecondary
@@ -974,7 +923,7 @@ private fun LedgerTableRowItem(
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary,
                             lineHeight = 18.sp,
-                            maxLines = 4,
+                            maxLines = 6,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
@@ -982,7 +931,7 @@ private fun LedgerTableRowItem(
 
                 Box(
                     modifier = Modifier
-                        .weight(0.8f)
+                        .weight(COL_WEIGHT_GAVE)
                         .padding(horizontal = 4.dp, vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -997,16 +946,32 @@ private fun LedgerTableRowItem(
                                 fontWeight = FontWeight.Bold,
                                 color = GiveRed
                             )
-                            if (!tx.attachment.isNullOrBlank()) {
+                            if (attachmentList.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_attachment_image),
-                                    contentDescription = "Attachment",
-                                    tint = BrandBlue,
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
                                     modifier = Modifier
-                                        .size(18.dp)
-                                        .clickable { onAttachmentClick(tx.attachment) }
-                                )
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .clickable { onAttachmentClick(attachmentList) }
+                                        .padding(horizontal = 3.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_attachment_image),
+                                        contentDescription = if (attachmentList.size > 1) "${attachmentList.size} Attachments" else "Attachment",
+                                        tint = BrandBlue,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    if (attachmentList.size > 1) {
+                                        Spacer(modifier = Modifier.width(3.dp))
+                                        Text(
+                                            text = "${attachmentList.size}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = BrandBlue
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -1014,7 +979,7 @@ private fun LedgerTableRowItem(
 
                 Box(
                     modifier = Modifier
-                        .weight(0.8f)
+                        .weight(COL_WEIGHT_GOT)
                         .padding(horizontal = 4.dp, vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -1029,16 +994,32 @@ private fun LedgerTableRowItem(
                                 fontWeight = FontWeight.Bold,
                                 color = GotGreen
                             )
-                            if (!tx.attachment.isNullOrBlank()) {
+                            if (attachmentList.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_attachment_image),
-                                    contentDescription = "Attachment",
-                                    tint = BrandBlue,
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
                                     modifier = Modifier
-                                        .size(18.dp)
-                                        .clickable { onAttachmentClick(tx.attachment) }
-                                )
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .clickable { onAttachmentClick(attachmentList) }
+                                        .padding(horizontal = 3.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_attachment_image),
+                                        contentDescription = if (attachmentList.size > 1) "${attachmentList.size} Attachments" else "Attachment",
+                                        tint = BrandBlue,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    if (attachmentList.size > 1) {
+                                        Spacer(modifier = Modifier.width(3.dp))
+                                        Text(
+                                            text = "${attachmentList.size}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = BrandBlue
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

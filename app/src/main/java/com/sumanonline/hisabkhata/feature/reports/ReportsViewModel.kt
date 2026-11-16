@@ -204,8 +204,10 @@ class ReportsViewModel @Inject constructor(
         viewModelScope.launch {
             val customerNameMap = customers.value.associate { it.id to it.name }
             val currentSession = session.value
-            val merchantName = currentSession.businessName.ifBlank { currentSession.displayName }
+            val merchantName = currentSession.businessName.ifBlank { currentSession.displayName.ifBlank { "Merchant" } }
             val merchantPhone = currentSession.phone
+            val merchantEmail = currentSession.email
+            val merchantOwnerName = currentSession.displayName
 
             val periodLabel = when (selectedPeriod.value) {
                 ReportPeriod.THIS_MONTH -> "This Month"
@@ -226,6 +228,8 @@ class ReportsViewModel @Inject constructor(
                 context = context,
                 merchantName = merchantName,
                 merchantPhone = merchantPhone,
+                merchantEmail = merchantEmail,
+                merchantOwnerName = merchantOwnerName,
                 customerName = null,
                 startDate = periodLabel,
                 endDate = DateUtils.todayIso(),

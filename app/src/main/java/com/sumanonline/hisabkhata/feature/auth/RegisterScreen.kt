@@ -87,6 +87,7 @@ import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import com.sumanonline.hisabkhata.core.designsystem.GiveRed
 import com.sumanonline.hisabkhata.core.designsystem.GiveRedLight
 import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
+import com.sumanonline.hisabkhata.core.designsystem.NavyBluePrimary
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
@@ -238,20 +239,32 @@ fun RegisterScreen(
         )
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(PageBackground)
-            .statusBarsPadding()
-            .imePadding()
     ) {
-        Column(
+        // Status bar area with instant brand color
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .background(NavyBluePrimary)
+                .statusBarsPadding()
+        )
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .imePadding()
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             Image(
                 painter = painterResource(id = R.drawable.app_logo_round),
                 contentDescription = "HisabKhata Logo",
@@ -578,4 +591,5 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
 }

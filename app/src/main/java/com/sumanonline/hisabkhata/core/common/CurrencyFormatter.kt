@@ -22,8 +22,32 @@ object CurrencyFormatter {
         }
     }
 
+    private val indianFormatterThreadLocal = ThreadLocal.withInitial {
+        NumberFormat.getNumberInstance(indianLocale).apply {
+            minimumFractionDigits = 2
+            maximumFractionDigits = 2
+        }
+    }
+    private val usFormatterThreadLocal = ThreadLocal.withInitial {
+        NumberFormat.getNumberInstance(usLocale).apply {
+            minimumFractionDigits = 2
+            maximumFractionDigits = 2
+        }
+    }
+
+    private val indianCleanFormatterThreadLocal = ThreadLocal.withInitial {
+        NumberFormat.getNumberInstance(indianLocale)
+    }
+    private val usCleanFormatterThreadLocal = ThreadLocal.withInitial {
+        NumberFormat.getNumberInstance(usLocale)
+    }
+
+    private fun isUsLocale(): Boolean {
+        return activeCurrencyFormat.contains("$") || activeCurrencyFormat.contains("€") || activeCurrencyFormat.contains("£")
+    }
+
     private fun getLocale(): Locale {
-        return if (activeCurrencyFormat.contains("$") || activeCurrencyFormat.contains("€") || activeCurrencyFormat.contains("£")) {
+        return if (isUsLocale()) {
             usLocale
         } else {
             indianLocale
@@ -32,10 +56,8 @@ object CurrencyFormatter {
 
     fun formatInr(amount: BigDecimal, includeSymbol: Boolean = true): String {
         val scaled = amount.setScale(2, RoundingMode.HALF_UP)
-        val formatter = NumberFormat.getNumberInstance(getLocale())
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        val formattedNumber = formatter.format(scaled)
+        val formatter = if (isUsLocale()) usFormatterThreadLocal.get() else indianFormatterThreadLocal.get()
+        val formattedNumber = formatter?.format(scaled) ?: NumberFormat.getNumberInstance(getLocale()).format(scaled)
         val sym = getCurrencySymbol()
         return if (includeSymbol) "$sym$formattedNumber" else formattedNumber
     }
@@ -45,7 +67,8 @@ object CurrencyFormatter {
     }
 
     fun formatInrClean(amount: Double, withSpace: Boolean = true): String {
-        val formatter = NumberFormat.getNumberInstance(getLocale())
+        val formatter = (if (isUsLocale()) usCleanFormatterThreadLocal.get() else indianCleanFormatterThreadLocal.get())
+            ?: NumberFormat.getNumberInstance(getLocale())
         val absAmount = Math.abs(amount)
         val hasFractions = absAmount % 1.0 != 0.0
         if (hasFractions) {

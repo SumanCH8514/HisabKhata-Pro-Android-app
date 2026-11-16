@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -100,7 +101,7 @@ class CustomerViewModel @Inject constructor(
         }
     }
 
-    val totalGet: StateFlow<BigDecimal> = rawCustomers.combine(_searchQuery) { list, _ ->
+    val totalGet: StateFlow<BigDecimal> = rawCustomers.map { list ->
         var sum = BigDecimal.ZERO
         list.forEach { c ->
             if (c.balance < 0.0) {
@@ -108,9 +109,10 @@ class CustomerViewModel @Inject constructor(
             }
         }
         sum
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
+    }.flowOn(Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
-    val totalGive: StateFlow<BigDecimal> = rawCustomers.combine(_searchQuery) { list, _ ->
+    val totalGive: StateFlow<BigDecimal> = rawCustomers.map { list ->
         var sum = BigDecimal.ZERO
         list.forEach { c ->
             if (c.balance > 0.0) {
@@ -118,7 +120,8 @@ class CustomerViewModel @Inject constructor(
             }
         }
         sum
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
+    }.flowOn(Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
     val sessionState: StateFlow<UserSession> = sessionManager.sessionState
 
@@ -133,7 +136,8 @@ class CustomerViewModel @Inject constructor(
 
     val overduePartiesCount: StateFlow<Int> = rawCustomers.map { list ->
         list.count { DateUtils.getDueDateStatus(it.dueDate) is DueStatus.Overdue }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+    }.flowOn(Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     val netReceivableBalance: StateFlow<BigDecimal> = combine(totalGet, totalGive) { get, give ->
         get.subtract(give)
@@ -176,7 +180,8 @@ class CustomerViewModel @Inject constructor(
             CustomerSort.AMOUNT_HIGH -> filtered.sortedByDescending { Math.abs(it.balance) }
             CustomerSort.AMOUNT_LOW -> filtered.sortedBy { Math.abs(it.balance) }
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }.flowOn(Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query

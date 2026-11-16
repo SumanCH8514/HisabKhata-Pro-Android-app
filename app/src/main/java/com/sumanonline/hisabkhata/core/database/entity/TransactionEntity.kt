@@ -29,3 +29,7 @@ data class TransactionEntity(
     val attachment: String? = null,
     val syncStatus: String = Constants.SYNC_STATUS_SYNCED
 )
+
+val TransactionEntity.attachmentList: List<String>
+    get() = attachment?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
+

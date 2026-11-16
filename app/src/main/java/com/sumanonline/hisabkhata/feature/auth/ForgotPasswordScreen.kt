@@ -54,6 +54,7 @@ import com.sumanonline.hisabkhata.core.designsystem.GiveRedStroke
 import com.sumanonline.hisabkhata.core.designsystem.GotGreen
 import com.sumanonline.hisabkhata.core.designsystem.GotGreenLight
 import com.sumanonline.hisabkhata.core.designsystem.GotGreenStroke
+import com.sumanonline.hisabkhata.core.designsystem.NavyBluePrimary
 import com.sumanonline.hisabkhata.core.designsystem.PageBackground
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
@@ -87,15 +88,23 @@ fun ForgotPasswordScreen(
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(PageBackground)
-            .statusBarsPadding()
     ) {
+        // Status bar area with instant brand color
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(NavyBluePrimary)
+                .statusBarsPadding()
+        )
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .padding(24.dp)
         ) {
             IconButton(onClick = onNavigateBack) {

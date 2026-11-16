@@ -142,8 +142,8 @@ fun CustomerListScreen(
     var showSortMenu by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
-    val isFabExpanded by remember { derivedStateOf { !listState.isScrollInProgress } }
-    val shimmer = shimmerBrush()
+    val isFabExpanded by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
+    val shimmer = if (isLoading) shimmerBrush() else null
 
     Scaffold(
         topBar = {
@@ -402,7 +402,7 @@ fun CustomerListScreen(
                 }
             }
 
-            if (isLoading) {
+            if (isLoading && shimmer != null) {
                 items(6, contentType = { "loading_skeleton_item" }) {
                     CustomerListItemSkeleton(brush = shimmer)
                 }
@@ -416,10 +416,14 @@ fun CustomerListScreen(
                     )
                 }
             } else {
-                items(customers, key = { it.id }, contentType = { "customer_item" }) { customer ->
+                items(
+                    items = customers,
+                    key = { it.id },
+                    contentType = { "customer_item" }
+                ) { customer ->
                     CustomerListItem(
                         customer = customer,
-                        onClick = { onCustomerClick(customer.id) }
+                        onCustomerClick = onCustomerClick
                     )
                 }
             }
@@ -681,16 +685,21 @@ private fun HomeHeaderBar(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val infiniteTransition = rememberInfiniteTransition(label = "syncRotation")
-                val syncRotation by infiniteTransition.animateFloat(
-                    initialValue = 0f,
-                    targetValue = 360f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(durationMillis = 800, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "syncAngle"
-                )
+                val syncRotationModifier = if (isSyncing) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "syncRotation")
+                    val syncRotation by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 360f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(durationMillis = 800, easing = LinearEasing),
+                            repeatMode = RepeatMode.Restart
+                        ),
+                        label = "syncAngle"
+                    )
+                    Modifier.graphicsLayer { rotationZ = syncRotation }
+                } else {
+                    Modifier
+                }
 
                 IconButton(
                     onClick = onQrClick,
@@ -714,9 +723,7 @@ private fun HomeHeaderBar(
                         tint = Color.White,
                         modifier = Modifier
                             .size(22.dp)
-                            .graphicsLayer {
-                                rotationZ = if (isSyncing) syncRotation else 0f
-                            }
+                            .then(syncRotationModifier)
                     )
                 }
                 Spacer(modifier = Modifier.width(2.dp))
@@ -798,13 +805,14 @@ private fun NetReceivableBanner(
 @Composable
 fun CustomerListItem(
     customer: CustomerEntity,
-    onClick: () -> Unit
+    onCustomerClick: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val isGet = customer.balance < 0.0
     val isGive = customer.balance > 0.0
     val isSettled = customer.balance == 0.0
 
-    val dueStatus = DateUtils.getDueDateStatus(customer.dueDate)
+    val dueStatus = remember(customer.dueDate) { DateUtils.getDueDateStatus(customer.dueDate) }
     val isOverdue = dueStatus is DueStatus.Overdue
 
     val avatarBg = when {
@@ -818,13 +826,25 @@ fun CustomerListItem(
         else -> TextSecondary
     }
 
-    val showActive = customer.name.contains("Supratik", ignoreCase = true)
+    val showActive = remember(customer.name) { customer.name.contains("Supratik", ignoreCase = true) }
+    val relativeTime = remember(customer.updatedAt) {
+        DateUtils.formatRelativeTime(customer.updatedAt).uppercase()
+    }
+
+    val formattedAmount = remember(customer.balance) {
+        when {
+            isSettled -> "₹0"
+            isGet -> CurrencyFormatter.formatInr(Math.abs(customer.balance)) + " ↘"
+            isGive -> CurrencyFormatter.formatInr(Math.abs(customer.balance)) + " ↗"
+            else -> "₹0"
+        }
+    }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(SurfaceWhite)
-            .clickable(onClick = onClick)
+            .clickable { onCustomerClick(customer.id) }
     ) {
         Row(
             modifier = Modifier
@@ -865,7 +885,7 @@ fun CustomerListItem(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = DateUtils.formatRelativeTime(customer.updatedAt).uppercase(),
+                        text = relativeTime,
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TextSecondary,
@@ -904,12 +924,6 @@ fun CustomerListItem(
             Spacer(modifier = Modifier.width(8.dp))
 
             Column(horizontalAlignment = Alignment.End) {
-                val amountText = when {
-                    isSettled -> "₹0"
-                    isGet -> CurrencyFormatter.formatInr(Math.abs(customer.balance)) + " ↘"
-                    isGive -> CurrencyFormatter.formatInr(Math.abs(customer.balance)) + " ↗"
-                    else -> "₹0"
-                }
                 val amountColor = when {
                     isGet -> GiveRed
                     isGive -> GotGreen
@@ -917,7 +931,7 @@ fun CustomerListItem(
                 }
 
                 Text(
-                    text = amountText,
+                    text = formattedAmount,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = amountColor

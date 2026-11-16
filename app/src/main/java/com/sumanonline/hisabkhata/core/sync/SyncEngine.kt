@@ -517,6 +517,14 @@ class SyncEngine @Inject constructor(
             if (txRes.isSuccessful && txRes.body() != null) {
                 val cloudTxs = txRes.body()!!.map { (key, dto) ->
                     val resolvedTs = DateUtils.getResolvedTimestamp(dto.date, dto.timestamp)
+                    val listFromAttachments = dto.attachments.map { it.trim() }.filter { it.isNotBlank() }
+                    val listFromAttachment = dto.attachment?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
+                    val combinedList = if (listFromAttachments.size >= listFromAttachment.size) {
+                        listFromAttachments
+                    } else {
+                        listFromAttachment
+                    }
+                    val resolvedAttachment = if (combinedList.isNotEmpty()) combinedList.joinToString(",") else null
                     TransactionEntity(
                         id = key,
                         clientTxId = dto.clientTxId ?: key,
@@ -528,7 +536,7 @@ class SyncEngine @Inject constructor(
                         date = dto.date,
                         timestamp = resolvedTs,
                         balance = dto.balance,
-                        attachment = dto.attachment ?: dto.attachments.firstOrNull(),
+                        attachment = resolvedAttachment,
                         syncStatus = Constants.SYNC_STATUS_SYNCED
                     )
                 }

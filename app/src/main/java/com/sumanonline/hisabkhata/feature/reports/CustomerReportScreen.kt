@@ -247,9 +247,13 @@ fun CustomerReportScreen(
         val endDateFormatted = if (endDate != null) shortDateFormat.format(endDate!!) else DateUtils.todayIso()
         return PdfGenerator.generateStatementPdf(
             context = context,
-            merchantName = session.businessName.ifBlank { "Merchant" },
+            merchantName = session.businessName.ifBlank { session.displayName.ifBlank { "Merchant" } },
             merchantPhone = session.phone,
+            merchantEmail = session.email,
+            merchantOwnerName = session.displayName,
             customerName = customer.name,
+            customerPhone = customer.phone,
+            customerEmail = customer.email,
             startDate = startDateFormatted,
             endDate = endDateFormatted,
             transactions = filteredTransactions
@@ -258,7 +262,7 @@ fun CustomerReportScreen(
 
     fun handleDownload() {
         val pdfFile = createStatementPdf()
-        savePdfToDownloads(context, pdfFile, customer.name)
+        savePdfToDownloads(context, pdfFile)
         Toast.makeText(context, "Statement saved to Downloads", Toast.LENGTH_SHORT).show()
         openPdfFile(context, pdfFile)
     }
@@ -836,10 +840,8 @@ fun CustomerReportScreen(
     }
 }
 
-private fun savePdfToDownloads(context: Context, sourceFile: File, customerName: String) {
-    val cleanName = customerName.replace("\\s+".toRegex(), "_")
-    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-    val fileName = "Statement_${cleanName}_$timeStamp.pdf"
+private fun savePdfToDownloads(context: Context, sourceFile: File) {
+    val fileName = sourceFile.name
 
     try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

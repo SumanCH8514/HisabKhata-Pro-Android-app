@@ -42,7 +42,17 @@ fun CustomerAvatar(
     showActiveBadge: Boolean = false
 ) {
     val sanitizedSource = remember(photoUrl) { ImageUtils.sanitizeImageSource(photoUrl) }
-    var loadFailed by remember(sanitizedSource) { mutableStateOf(false) }
+    val context = LocalContext.current
+    val imageRequest = remember(sanitizedSource, context) {
+        if (sanitizedSource != null) {
+            ImageRequest.Builder(context)
+                .data(sanitizedSource)
+                .crossfade(true)
+                .error(R.drawable.no_contact_image)
+                .fallback(R.drawable.no_contact_image)
+                .build()
+        } else null
+    }
 
     Box(
         modifier = modifier.size(size)
@@ -54,20 +64,12 @@ fun CustomerAvatar(
                 .background(backgroundColor),
             contentAlignment = Alignment.Center
         ) {
-            if (sanitizedSource != null && !loadFailed) {
+            if (imageRequest != null) {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(sanitizedSource)
-                        .crossfade(true)
-                        .error(R.drawable.no_contact_image)
-                        .fallback(R.drawable.no_contact_image)
-                        .build(),
+                    model = imageRequest,
                     contentDescription = name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                    onError = {
-                        loadFailed = true
-                    }
+                    modifier = Modifier.fillMaxSize()
                 )
             } else {
                 Image(

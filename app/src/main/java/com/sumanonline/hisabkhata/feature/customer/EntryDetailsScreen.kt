@@ -87,6 +87,8 @@ import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 import com.sumanonline.hisabkhata.core.designsystem.TextPrimary
 import com.sumanonline.hisabkhata.core.designsystem.TextSecondary
 import com.sumanonline.hisabkhata.core.designsystem.TextTertiary
+import com.sumanonline.hisabkhata.core.database.entity.attachmentList
+import com.sumanonline.hisabkhata.core.designsystem.components.AttachmentPreviewViewer
 import com.sumanonline.hisabkhata.core.designsystem.components.ConfirmDialog
 
 @Composable
@@ -654,45 +656,20 @@ fun EntryDetailsScreen(
 
     val activePreviewUrl = fullScreenAttachmentUrl ?: currentTransaction.attachment
     if (showFullAttachment && !activePreviewUrl.isNullOrBlank()) {
-        BackHandler {
-            showFullAttachment = false
-            fullScreenAttachmentUrl = null
+        val allAtts = remember(currentTransaction.attachment, activePreviewUrl) {
+            val list = currentTransaction.attachmentList
+            if (list.isNotEmpty()) list else listOf(activePreviewUrl)
         }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .zIndex(100f)
-        ) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(ImageUtils.sanitizeImageSource(activePreviewUrl))
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Attachment Full View",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
-            )
-            IconButton(
-                onClick = {
-                    showFullAttachment = false
-                    fullScreenAttachmentUrl = null
-                },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(16.dp)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.6f))
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Close",
-                    tint = Color.White
-                )
+        val currentIdx = allAtts.indexOf(activePreviewUrl).coerceAtLeast(0)
+        AttachmentPreviewViewer(
+            attachments = allAtts,
+            initialIndex = currentIdx,
+            title = "Bill Receipt",
+            onDismiss = {
+                showFullAttachment = false
+                fullScreenAttachmentUrl = null
             }
-        }
+        )
     }
 
     if (showDeleteConfirm) {
