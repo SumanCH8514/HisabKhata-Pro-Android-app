@@ -37,9 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 
-/**
- * Creates an animated linear gradient shimmer brush for skeleton loading states.
- */
 @Composable
 fun shimmerBrush(
     targetValue: Float = 1300f,
@@ -68,9 +65,6 @@ fun shimmerBrush(
     )
 }
 
-/**
- * Applies a clipped background with the shimmer brush to any composable box.
- */
 fun Modifier.shimmerBackground(
     brush: Brush,
     shape: Shape = RoundedCornerShape(8.dp)
@@ -78,9 +72,6 @@ fun Modifier.shimmerBackground(
     .clip(shape)
     .background(brush)
 
-/**
- * A basic reusable box element representing a shimmering skeleton placeholder.
- */
 @Composable
 fun SkeletonBox(
     brush: Brush,
@@ -97,9 +88,6 @@ fun SkeletonBox(
     )
 }
 
-/**
- * Shimmer placeholder row for a single customer in CustomerListScreen.
- */
 @Composable
 fun CustomerListItemSkeleton(brush: Brush) {
     Column(
@@ -112,7 +100,7 @@ fun CustomerListItemSkeleton(brush: Brush) {
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Circular Avatar Shimmer
+
             Box(
                 modifier = Modifier
                     .size(46.dp)
@@ -122,7 +110,6 @@ fun CustomerListItemSkeleton(brush: Brush) {
 
             Spacer(modifier = Modifier.width(14.dp))
 
-            // Center details column
             Column(modifier = Modifier.weight(1f)) {
                 SkeletonBox(brush = brush, width = 140.dp, height = 15.dp, shape = RoundedCornerShape(4.dp))
                 Spacer(modifier = Modifier.height(7.dp))
@@ -135,7 +122,6 @@ fun CustomerListItemSkeleton(brush: Brush) {
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Right amount column
             Column(horizontalAlignment = Alignment.End) {
                 SkeletonBox(brush = brush, width = 76.dp, height = 16.dp, shape = RoundedCornerShape(4.dp))
                 Spacer(modifier = Modifier.height(6.dp))
@@ -146,9 +132,6 @@ fun CustomerListItemSkeleton(brush: Brush) {
     HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 0.5.dp)
 }
 
-/**
- * Shimmer placeholder for the summary balance cards on the home page.
- */
 @Composable
 fun SummaryBalanceCardsSkeleton(brush: Brush) {
     Row(
@@ -189,9 +172,6 @@ fun SummaryBalanceCardsSkeleton(brush: Brush) {
     }
 }
 
-/**
- * Full skeleton feed for the customer home list screen.
- */
 @Composable
 fun CustomerListSkeleton(
     brush: Brush,
@@ -200,7 +180,6 @@ fun CustomerListSkeleton(
     Column(modifier = Modifier.fillMaxWidth()) {
         SummaryBalanceCardsSkeleton(brush)
 
-        // Net Receivable Banner Shimmer
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -224,7 +203,6 @@ fun CustomerListSkeleton(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Filter pills row shimmer
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -240,16 +218,12 @@ fun CustomerListSkeleton(
         Spacer(modifier = Modifier.height(6.dp))
         HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 0.5.dp)
 
-        // Customer item rows shimmer
         repeat(itemCount) {
             CustomerListItemSkeleton(brush)
         }
     }
 }
 
-/**
- * Shimmer placeholder row for a ledger table entry.
- */
 @Composable
 fun LedgerRowSkeleton(brush: Brush) {
     Row(
@@ -290,13 +264,10 @@ fun LedgerRowSkeleton(brush: Brush) {
     HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 0.5.dp)
 }
 
-/**
- * Shimmer placeholder for CustomerLedgerScreen.
- */
 @Composable
 fun LedgerScreenSkeleton(brush: Brush, rowCount: Int = 6) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Balance Card Shimmer
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -325,7 +296,6 @@ fun LedgerScreenSkeleton(brush: Brush, rowCount: Int = 6) {
             }
         }
 
-        // Action buttons shimmer
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -343,7 +313,6 @@ fun LedgerScreenSkeleton(brush: Brush, rowCount: Int = 6) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Table header shimmer
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -355,20 +324,16 @@ fun LedgerScreenSkeleton(brush: Brush, rowCount: Int = 6) {
             SkeletonBox(brush = brush, width = 50.dp, height = 12.dp, modifier = Modifier.weight(0.8f))
         }
 
-        // Ledger rows
         repeat(rowCount) {
             LedgerRowSkeleton(brush)
         }
     }
 }
 
-/**
- * Shimmer placeholder for ReportsScreen.
- */
 @Composable
 fun ReportsScreenSkeleton(brush: Brush) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Filter chips
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -380,7 +345,6 @@ fun ReportsScreenSkeleton(brush: Brush) {
             }
         }
 
-        // Summary Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -411,7 +375,6 @@ fun ReportsScreenSkeleton(brush: Brush) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Transaction cards
         repeat(5) {
             Card(
                 modifier = Modifier

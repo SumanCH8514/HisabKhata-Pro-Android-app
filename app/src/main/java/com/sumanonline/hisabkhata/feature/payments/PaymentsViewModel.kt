@@ -19,6 +19,8 @@ import com.sumanonline.hisabkhata.core.sync.SyncEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -93,13 +95,25 @@ class PaymentsViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    companion object {
+        const val PENDING_EXPIRY_MILLIS = 5 * 60 * 1000L
+    }
+
     val summary: StateFlow<PaymentSummary> = allPayments.map { list ->
         withContext(Dispatchers.Default) {
-            val pending = list.filter { it.status.equals("pending", ignoreCase = true) }
-            val approved = list.filter { it.status.equals("approved", ignoreCase = true) }
-            val rejected = list.filter { it.status.equals("rejected", ignoreCase = true) }
+            val now = System.currentTimeMillis()
+            val validPayments = list.filter { payment ->
+                if (payment.status.equals("pending", ignoreCase = true)) {
+                    (now - payment.timestamp) <= PENDING_EXPIRY_MILLIS
+                } else {
+                    true
+                }
+            }
+            val pending = validPayments.filter { it.status.equals("pending", ignoreCase = true) }
+            val approved = validPayments.filter { it.status.equals("approved", ignoreCase = true) }
+            val rejected = validPayments.filter { it.status.equals("rejected", ignoreCase = true) }
             PaymentSummary(
-                allCount = list.size,
+                allCount = validPayments.size,
                 pendingCount = pending.size,
                 pendingTotal = pending.sumOf { it.amount },
                 approvedCount = approved.size,
@@ -116,10 +130,18 @@ class PaymentsViewModel @Inject constructor(
         _searchQuery
     ) { payments, filter, query ->
         withContext(Dispatchers.Default) {
+            val now = System.currentTimeMillis()
             val q = query.trim()
             val hasQuery = q.isNotBlank()
 
             payments.filter { payment ->
+
+                if (payment.status.equals("pending", ignoreCase = true) &&
+                    (now - payment.timestamp) > PENDING_EXPIRY_MILLIS
+                ) {
+                    return@filter false
+                }
+
                 val matchesFilter = when (filter) {
                     PaymentFilter.ALL -> true
                     PaymentFilter.PENDING -> payment.status.equals("pending", ignoreCase = true)
@@ -144,9 +166,35 @@ class PaymentsViewModel @Inject constructor(
     val qrBitmap: StateFlow<Bitmap?> = _qrBitmap.asStateFlow()
 
     init {
-        // Fast instant launch: Cloud sync runs asynchronously in background,
-        // and heavy QR bitmap generation is deferred until the Store QR modal is requested.
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                pendingPaymentDao.deleteAllPendingAndCancelled()
+            } catch (_: Exception) {}
+        }
+        startPeriodicExpiryCleaner()
+
         refreshPayments()
+    }
+
+    private fun startPeriodicExpiryCleaner() {
+        viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                pruneExpiredPendingPayments()
+                delay(15_000L)
+            }
+        }
+    }
+
+    fun pruneExpiredPendingPayments() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val cutoff = System.currentTimeMillis() - PENDING_EXPIRY_MILLIS
+                pendingPaymentDao.deleteExpiredPendingPayments(cutoff)
+            } catch (_: Exception) {
+
+            }
+        }
     }
 
     fun ensureQrGenerated() {
@@ -164,6 +212,7 @@ class PaymentsViewModel @Inject constructor(
     }
 
     fun refreshPayments() {
+        pruneExpiredPendingPayments()
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
@@ -214,7 +263,7 @@ class PaymentsViewModel @Inject constructor(
     fun approvePayment(payment: PendingPaymentEntity, onComplete: ((Boolean) -> Unit)? = null) {
         viewModelScope.launch {
             try {
-                // 1. Create offline transaction in Customer Ledger
+
                 val absAmount = Math.abs(payment.amount)
                 syncEngine.createTransactionOffline(
                     customerId = payment.customerId,
@@ -223,10 +272,9 @@ class PaymentsViewModel @Inject constructor(
                     description = "Online UPI Payment (UTR: ${payment.transactionId ?: "N/A"})",
                     date = com.sumanonline.hisabkhata.core.common.DateUtils.todayIso()
                 )
-                // 2. Update local payment status
+
                 pendingPaymentDao.updateStatus(payment.id, "approved")
 
-                // 3. Patch status in Firebase
                 val token = sessionManager.getIdToken()
                 if (token.isNotBlank()) {
                     val patchObj = buildJsonObject {
@@ -237,10 +285,8 @@ class PaymentsViewModel @Inject constructor(
                     } catch (_: Exception) {}
                 }
 
-                // 4. Push sync to server
                 syncEngine.synchronize()
 
-                // 5. Trigger transaction alert email
                 try {
                     val customer = customerDao.getCustomerById(payment.customerId)
                     val customerEmail = customer?.email?.trim()

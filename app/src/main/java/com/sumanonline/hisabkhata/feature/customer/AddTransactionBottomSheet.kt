@@ -248,7 +248,6 @@ fun AddTransactionBottomSheet(
         }
     }
 
-    // Color theme mappings matching reference screenshots
     val pageBgColor = if (isGave) Color(0xFFFAF5F6) else Color(0xFFF6FBF8)
     val headerTint = if (isGave) Color(0xFF5A1A1A) else Color(0xFF0F5132)
     val headerBgColor = if (isGave) Color(0xFFF8D7DA) else Color(0xFFD7F4E5)
@@ -267,7 +266,6 @@ fun AddTransactionBottomSheet(
         "You got ₹ $dynamicTitleAmount from $customerName"
     }
 
-    // Intercept back navigation
     BackHandler { onDismiss() }
 
     val activity = remember(context) {
@@ -444,7 +442,7 @@ fun AddTransactionBottomSheet(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. Amount Box Container
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -510,7 +508,6 @@ fun AddTransactionBottomSheet(
                     }
                 }
 
-                // 2. Transaction Details (Optional) Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -522,7 +519,7 @@ fun AddTransactionBottomSheet(
                             .fillMaxWidth()
                             .padding(14.dp)
                     ) {
-                        // Header row without overlap
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -565,7 +562,6 @@ fun AddTransactionBottomSheet(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Inner outlined text area
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -598,7 +594,6 @@ fun AddTransactionBottomSheet(
                                 modifier = Modifier.fillMaxWidth()
                             )
 
-                            // Subtle resize grip canvas at bottom-right
                             Canvas(
                                 modifier = Modifier
                                     .size(10.dp)
@@ -613,7 +608,6 @@ fun AddTransactionBottomSheet(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // 5 Quick action chips: Bullet, Bill No, Item List, Note, TNX
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -681,13 +675,12 @@ fun AddTransactionBottomSheet(
                     }
                 }
 
-                // 3. Date & Attach Bills Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left Pill Button: Date
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -756,7 +749,6 @@ fun AddTransactionBottomSheet(
                         }
                     }
 
-                    // Right Pill Button: Attach Bills
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -800,7 +792,6 @@ fun AddTransactionBottomSheet(
                     }
                 }
 
-                // 4. Attached Bills Preview Section (Up to 4 images, local until Save)
                 if (existingAttachments.isNotEmpty() || attachedBills.isNotEmpty()) {
                     Column(
                         modifier = Modifier.fillMaxWidth()
@@ -821,7 +812,7 @@ fun AddTransactionBottomSheet(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Pre-fetched existing attachments
+
                             existingAttachments.forEachIndexed { index, url ->
                                 Box(
                                     modifier = Modifier.size(68.dp)
@@ -839,7 +830,6 @@ fun AddTransactionBottomSheet(
                                             .border(BorderStroke(1.dp, Color(0xFFD1D5DB)), RoundedCornerShape(10.dp))
                                     )
 
-                                    // Delete (X) badge button
                                     Box(
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
@@ -862,7 +852,6 @@ fun AddTransactionBottomSheet(
                                 }
                             }
 
-                            // Newly added bills from local gallery
                             attachedBills.forEachIndexed { index, item ->
                                 Box(
                                     modifier = Modifier
@@ -878,7 +867,6 @@ fun AddTransactionBottomSheet(
                                             .border(BorderStroke(1.dp, Color(0xFFD1D5DB)), RoundedCornerShape(10.dp))
                                     )
 
-                                    // Delete (X) badge button
                                     Box(
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)

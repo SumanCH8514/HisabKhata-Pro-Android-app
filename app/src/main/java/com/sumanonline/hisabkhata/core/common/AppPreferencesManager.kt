@@ -10,16 +10,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class AppPreferences(
-    val themeMode: String = "System", // "System", "Light", "Dark"
-    val accentColor: String = "Brand Blue", // "Brand Blue", "Emerald Green", "Royal Purple", "Amber Gold", "Crimson Red"
-    val fontSize: String = "Standard", // "Small", "Standard", "Large", "Extra Large"
-    val fontFamily: String = "System Default", // "System Default", "Sans-Serif", "Serif", "Monospace"
-    val currencyFormat: String = "Indian Rupee (₹ INR)", // "Indian Rupee (₹ INR)", "US Dollar ($ USD)", "Euro (€ EUR)", "British Pound (£ GBP)"
-    val dateFormat: String = "dd MMM yyyy", // "dd MMM yyyy", "dd/MM/yyyy", "yyyy-MM-dd"
+    val themeMode: String = "System",
+    val accentColor: String = "Brand Blue",
+    val fontSize: String = "Standard",
+    val fontFamily: String = "System Default",
+    val currencyFormat: String = "Indian Rupee (₹ INR)",
+    val dateFormat: String = "dd MMM yyyy",
     val autoSyncWifiOnly: Boolean = false,
     val notificationAlerts: Boolean = true,
     val soundVibration: Boolean = true,
-    val lockTimeout: String = "Immediately", // "Immediately", "1 Minute", "5 Minutes", "15 Minutes"
+    val lockTimeout: String = "Immediately",
     val screenSecurity: Boolean = false,
     val appLanguage: String = "English (US)",
     val emailOtpVerification: Boolean = false,

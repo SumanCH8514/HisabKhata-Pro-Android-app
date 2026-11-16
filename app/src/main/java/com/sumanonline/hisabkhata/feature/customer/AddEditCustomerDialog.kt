@@ -133,7 +133,7 @@ fun AddEditCustomerDialog(
             } else ""
         )
     }
-    // "give" corresponds to "YOU GAVE" (red pill in screenshot), "get" corresponds to "YOU GOT" (green pill)
+
     var balanceType by remember(existingCustomer) {
         mutableStateOf(
             if (existingCustomer != null && existingCustomer.balance < 0) "get" else "give"
@@ -149,19 +149,16 @@ fun AddEditCustomerDialog(
         mutableStateOf(existingCustomer?.photoURL)
     }
 
-    // Expandable GSTIN & Address section
     var showGstAddress by remember { mutableStateOf(!existingCustomer?.gst.isNullOrBlank()) }
     var gst by remember(existingCustomer) { mutableStateOf(existingCustomer?.gst ?: "") }
     var address by remember { mutableStateOf("") }
     var pincode by remember { mutableStateOf("") }
     var state by remember { mutableStateOf("") }
 
-    // Dialog state for photo options
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
     var showPasteUrlDialog by remember { mutableStateOf(false) }
     var pastedUrlInput by remember { mutableStateOf("") }
 
-    // Image Picker from Gallery
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -198,7 +195,6 @@ fun AddEditCustomerDialog(
         }
     }
 
-    // Android Contact Picker
     val contactPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -210,7 +206,6 @@ fun AddEditCustomerDialog(
                     var resolvedPhone: String? = null
                     var resolvedPhoto: String? = null
 
-                    // 1. Try querying with CommonDataKinds.Phone projection
                     try {
                         val projection = arrayOf(
                             ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
@@ -230,7 +225,6 @@ fun AddEditCustomerDialog(
                         }
                     } catch (_: Exception) {}
 
-                    // 2. Fallback query if contactUri was from Contacts instead of Phone
                     if (resolvedName.isNullOrBlank() || resolvedPhone.isNullOrBlank()) {
                         try {
                             context.contentResolver.query(
@@ -387,7 +381,6 @@ fun AddEditCustomerDialog(
                 }
             }
 
-            // Scrollable Form Content
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -398,7 +391,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Profile Photo Circle with edit pencil badge
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -440,7 +432,6 @@ fun AddEditCustomerDialog(
                         }
                     }
 
-                    // Small edit pencil badge at bottom right
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -472,7 +463,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 1. Party Name Label Row with "Select from Contacts" Pill Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -513,7 +503,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Party Name Input Field with trailing contact book icon
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -568,7 +557,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 2. Phone Number Label Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -590,7 +578,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Phone Number Input Container: +91 | [phone] | 📇
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -674,7 +661,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 3. Email Label Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -696,7 +682,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Email Input Box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -733,7 +718,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 4. Opening Balance Label Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -755,7 +739,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Opening Balance Composite Input: [ ₹ | Enter amount | YOU GAVE v ]
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -821,7 +804,6 @@ fun AddEditCustomerDialog(
                     )
                 }
 
-                // Balance Type Pill (YOU GAVE in pink/red, YOU GOT in light green)
                 val isGive = balanceType.equals("give", ignoreCase = true)
                 Box(
                     modifier = Modifier
@@ -885,7 +867,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 5. "Who are they?" Section
             Text(
                 text = "Who are they?",
                 fontSize = 15.sp,
@@ -899,7 +880,7 @@ fun AddEditCustomerDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Customer Card
+
                 val isCustomer = partyType.equals("Customer", ignoreCase = true)
                 Surface(
                     modifier = Modifier
@@ -942,7 +923,6 @@ fun AddEditCustomerDialog(
                     }
                 }
 
-                // Supplier Card
                 val isSupplier = partyType.equals("Supplier", ignoreCase = true)
                 Surface(
                     modifier = Modifier
@@ -988,7 +968,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 6. Collapsible "Add GSTIN & Address (Optional)" Card
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1036,7 +1015,6 @@ fun AddEditCustomerDialog(
                     if (showGstAddress) {
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // GSTIN Number
                         Text(
                             text = "GSTIN Number",
                             fontSize = 13.sp,
@@ -1079,7 +1057,6 @@ fun AddEditCustomerDialog(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Billing Address
                         Text(
                             text = "Billing Address",
                             fontSize = 13.sp,
@@ -1117,7 +1094,6 @@ fun AddEditCustomerDialog(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Pincode and State
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -1189,7 +1165,6 @@ fun AddEditCustomerDialog(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 7. Bottom Action Button: ADD CUSTOMER / ADD SUPPLIER / SAVE CHANGES
             val isFormValid = name.isNotBlank()
             val buttonLabel = when {
                 existingCustomer != null -> "SAVE CHANGES"
@@ -1248,7 +1223,6 @@ fun AddEditCustomerDialog(
     }
 }
 
-    // Photo selection options dialog
     if (showPhotoOptionsDialog) {
         AlertDialog(
             onDismissRequest = { showPhotoOptionsDialog = false },
@@ -1257,7 +1231,7 @@ fun AddEditCustomerDialog(
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Option 1: Gallery
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1273,7 +1247,6 @@ fun AddEditCustomerDialog(
                         Text("Choose from Gallery", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     }
 
-                    // Option 2: Paste URL
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1289,7 +1262,6 @@ fun AddEditCustomerDialog(
                         Text("Paste Image URL", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     }
 
-                    // Option 3: Remove photo (if set)
                     if (!photoUrl.isNullOrBlank()) {
                         Row(
                             modifier = Modifier
@@ -1316,7 +1288,6 @@ fun AddEditCustomerDialog(
         )
     }
 
-    // Paste Image URL Dialog
     if (showPasteUrlDialog) {
         AlertDialog(
             onDismissRequest = { showPasteUrlDialog = false },

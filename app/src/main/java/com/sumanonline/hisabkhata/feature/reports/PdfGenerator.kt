@@ -79,12 +79,11 @@ object PdfGenerator {
             null
         }
 
-        // Count header lines to determine optimal header height & vertical spacing
-        var leftLines = 3 // Title, Subtitle, Period
+        var leftLines = 3
         if (!customerPhone.isNullOrBlank()) leftLines++
         if (!customerEmail.isNullOrBlank()) leftLines++
 
-        var rightLines = 1 // Merchant Brand Name
+        var rightLines = 1
         val showMerchantOwner = !merchantOwnerName.isNullOrBlank() && !merchantOwnerName.equals(merchantName, ignoreCase = true)
         if (showMerchantOwner) rightLines++
         if (merchantPhone.isNotBlank()) rightLines++
@@ -97,11 +96,9 @@ object PdfGenerator {
             else -> Triple(88f, 15f, 34f)
         }
 
-        // Header Background
         paint.color = Color.parseColor("#0057BB")
         canvas.drawRect(0f, 0f, 595f, headerHeight, paint)
 
-        // Draw Logo before brand name (vertically centered in header)
         val textStartX: Float
         if (logoBitmap != null) {
             val logoSize = 46f
@@ -119,24 +116,20 @@ object PdfGenerator {
         val iconTextGap = 3.5f
         val subColor = Color.parseColor("#E0E7FF")
 
-        // ---------------- Left Header Content (App Title & Customer / Party) ----------------
         var leftY = startY
 
-        // 1. App Title
         paint.color = Color.WHITE
         paint.textSize = 17f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         canvas.drawText("HisabKhata PRO", textStartX, leftY, paint)
         leftY += lineSpacing
 
-        // 2. Subtitle (Party / Customer Name or Business Statement)
         paint.textSize = 10f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         val subtitle = if (customerName != null) "Customer Statement: $customerName" else "Business Transaction Statement"
         canvas.drawText(subtitle, textStartX, leftY, paint)
         leftY += lineSpacing
 
-        // 3. Customer Mobile Number with Phone Icon
         if (!customerPhone.isNullOrBlank()) {
             val phoneStr = customerPhone.trim()
             drawIcon(canvas, phonePath, textStartX, leftY - 6.5f, iconSize, subColor)
@@ -147,7 +140,6 @@ object PdfGenerator {
             leftY += lineSpacing
         }
 
-        // 4. Customer Email ID with Email Icon
         if (!customerEmail.isNullOrBlank()) {
             var emailStr = customerEmail.trim()
             paint.color = subColor
@@ -164,24 +156,20 @@ object PdfGenerator {
             leftY += lineSpacing
         }
 
-        // 5. Statement Period
         paint.color = subColor
         paint.textSize = 8.5f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
         canvas.drawText("Period: $startDate to $endDate", textStartX, leftY, paint)
 
-        // ---------------- Right Header Content (Merchant Brand, Owner, Mobile, Email) ----------------
         var rightY = startY
         paint.textAlign = Paint.Align.RIGHT
 
-        // 1. Merchant Brand Name
         paint.color = Color.WHITE
         paint.textSize = 12f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         canvas.drawText(merchantName.uppercase(), 571f, rightY, paint)
         rightY += lineSpacing
 
-        // 2. Merchant Owner Name (if available and different from brand name)
         if (showMerchantOwner) {
             paint.color = Color.WHITE
             paint.textSize = 9.5f
@@ -190,7 +178,6 @@ object PdfGenerator {
             rightY += lineSpacing
         }
 
-        // 3. Merchant Mobile Number with Phone Icon
         if (merchantPhone.isNotBlank()) {
             val phoneStr = merchantPhone.trim()
             paint.color = subColor
@@ -203,7 +190,6 @@ object PdfGenerator {
             rightY += lineSpacing
         }
 
-        // 4. Merchant Email ID with Email Icon
         if (!merchantEmail.isNullOrBlank()) {
             var emailStr = merchantEmail.trim()
             paint.color = subColor
@@ -222,7 +208,6 @@ object PdfGenerator {
         }
         paint.textAlign = Paint.Align.LEFT
 
-        // ---------------- Summary Balance Cards ----------------
         val summaryTop = headerHeight + 12f
         val summaryBottom = summaryTop + 50f
         paint.color = Color.parseColor("#F8FAFC")
@@ -265,7 +250,6 @@ object PdfGenerator {
         val netLabel = if (net < 0) "Dr" else "Cr"
         canvas.drawText("${CurrencyFormatter.formatInr(Math.abs(net))} $netLabel", 410f, summaryValueY, paint)
 
-        // ---------------- Table Header ----------------
         val tableHeaderTop = summaryBottom + 14f
         val tableHeaderBottom = tableHeaderTop + 20f
         paint.color = Color.parseColor("#F1F5F9")
@@ -289,7 +273,6 @@ object PdfGenerator {
             val partyName = customerName ?: customerNameMap[tx.customerId] ?: "Party"
             val description = tx.description.trim()
 
-            // Measure description lines
             paint.textSize = 8f
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
             val descLines = if (description.isNotBlank()) {
@@ -301,7 +284,6 @@ object PdfGenerator {
             val lastLineY = if (descLines.isEmpty()) y else (y + 11.5f * descLines.size)
             val rowDividerY = lastLineY + 9f
 
-            // Check if row exceeds printable page boundary (footer sits at 808f - 830f)
             if (rowDividerY > 795f) {
                 drawFooter(canvas, paint)
                 pdfDoc.finishPage(page)
@@ -309,7 +291,6 @@ object PdfGenerator {
                 page = pdfDoc.startPage(pageInfo)
                 canvas = page.canvas
 
-                // Continuation top header
                 paint.color = Color.parseColor("#0057BB")
                 canvas.drawRect(0f, 0f, 595f, 38f, paint)
                 paint.color = Color.WHITE
@@ -322,7 +303,6 @@ object PdfGenerator {
                 canvas.drawText("Page $pageNumber", 571f, 24f, paint)
                 paint.textAlign = Paint.Align.LEFT
 
-                // Table headers on new page
                 paint.color = Color.parseColor("#F1F5F9")
                 canvas.drawRect(24f, 48f, 571f, 68f, paint)
                 paint.color = Color.parseColor("#475569")
@@ -342,14 +322,12 @@ object PdfGenerator {
             val actualLastLineY = if (descLines.isEmpty()) y else (y + 11.5f * descLines.size)
             val actualDividerY = actualLastLineY + 9f
 
-            // Draw Date
             paint.color = Color.parseColor("#334155")
             paint.textSize = 8.5f
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
             val resolvedTs = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
             canvas.drawText(DateUtils.formatDisplayDate(resolvedTs), 32f, y, paint)
 
-            // Draw Party Name on line 1
             paint.color = Color.parseColor("#0F172A")
             paint.textSize = 9f
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -364,7 +342,6 @@ object PdfGenerator {
             }
             canvas.drawText(displayParty, 120f, y, paint)
 
-            // Draw Details in full on next line(s)
             if (descLines.isNotEmpty()) {
                 paint.color = Color.parseColor("#64748B")
                 paint.textSize = 8f
@@ -374,7 +351,6 @@ object PdfGenerator {
                 }
             }
 
-            // Draw Amounts
             paint.textSize = 9f
             paint.textAlign = Paint.Align.RIGHT
             if (isDebit) {
@@ -398,16 +374,13 @@ object PdfGenerator {
             canvas.drawText(CurrencyFormatter.formatInr(Math.abs(tx.balance)), 560f, y, paint)
             paint.textAlign = Paint.Align.LEFT
 
-            // Divider line below row
             paint.color = Color.parseColor("#E2E8F0")
             paint.strokeWidth = 0.5f
             canvas.drawLine(24f, actualDividerY, 571f, actualDividerY, paint)
 
-            // Advance y to next row baseline with comfortable spacing (zero collision)
             y = actualDividerY + 16f
         }
 
-        // Draw footer on the last page
         drawFooter(canvas, paint)
         pdfDoc.finishPage(page)
 
@@ -489,22 +462,18 @@ object PdfGenerator {
         val startX = (595f - totalWidth) / 2f
         val footerY = 824f
 
-        // Subtle divider line above footer
         paint.color = Color.parseColor("#E2E8F0")
         paint.strokeWidth = 0.8f
         canvas.drawLine(24f, 808f, 571f, 808f, paint)
 
-        // Prefix: © <Year>
         paint.color = Color.parseColor("#64748B")
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
         canvas.drawText(prefix, startX, footerY, paint)
 
-        // Brand: SumanOnline Web Service in BOLD
         paint.color = Color.parseColor("#0F172A")
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         canvas.drawText(brand, startX + prefixWidth, footerY, paint)
 
-        // Suffix: | All Rights Reserved
         paint.color = Color.parseColor("#64748B")
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
         canvas.drawText(suffix, startX + prefixWidth + brandWidth, footerY, paint)

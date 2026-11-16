@@ -52,7 +52,6 @@ class MainActivity : FragmentActivity() {
         SyncWorker.schedulePeriodicSync(this, initialPrefs.autoSyncWifiOnly)
         SyncWorker.enqueueOneTimeSync(this)
 
-        // Observe screen security preference to block screenshots & app switcher previews
         lifecycleScope.launch {
             preferencesManager.preferences.collect { prefs ->
                 if (prefs.screenSecurity) {

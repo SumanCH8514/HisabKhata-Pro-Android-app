@@ -4,12 +4,6 @@ import android.util.Base64
 
 object ImageUtils {
 
-    /**
-     * Sanitizes image source strings for Coil.
-     * - Decodes base64 data URIs ("data:image/...;base64,...") into ByteArray so Coil can display them directly.
-     * - Upgrades cleartext http URLs to https.
-     * - Trims surrounding whitespaces.
-     */
     fun sanitizeImageSource(raw: String?): Any? {
         if (raw.isNullOrBlank()) return null
         val trimmed = raw.trim()

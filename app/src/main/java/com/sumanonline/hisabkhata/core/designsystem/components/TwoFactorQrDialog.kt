@@ -71,7 +71,6 @@ fun TwoFactorQrDialog(
 ) {
     val context = LocalContext.current
 
-    // Generate standard RFC 4648 Base32 Secret Key (16 characters: A-Z, 2-7)
     val base32Secret = remember(userId, userEmail) {
         val base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
         val seed = "${userId.ifBlank { "HKPRO" }}-${userEmail.ifBlank { "USER" }}"
@@ -82,13 +81,11 @@ fun TwoFactorQrDialog(
         }.joinToString("")
     }
 
-    // Standard Google Authenticator / TOTP URI
     val totpUri = remember(base32Secret, userEmail) {
         val encodedEmail = Uri.encode(userEmail.ifBlank { "User" })
         "otpauth://totp/HisabKhata:$encodedEmail?secret=$base32Secret&issuer=HisabKhata&algorithm=SHA1&digits=6&period=30"
     }
 
-    // Generate QR Code Bitmap via ZXing
     val qrBitmap = remember(totpUri) {
         try {
             val writer = QRCodeWriter()
@@ -107,7 +104,6 @@ fun TwoFactorQrDialog(
         }
     }
 
-    // Group secret in 4-character chunks for legibility (e.g., JBSW Y3DP EHPK 3PXP)
     val formattedSecret = remember(base32Secret) {
         base32Secret.chunked(4).joinToString(" ")
     }
@@ -165,7 +161,6 @@ fun TwoFactorQrDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // QR Code Container
                 Card(
                     modifier = Modifier.size(190.dp),
                     shape = RoundedCornerShape(16.dp),
@@ -193,7 +188,6 @@ fun TwoFactorQrDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Quick Launch Authenticator Button
                 OutlinedButton(
                     onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(totpUri))
@@ -224,7 +218,6 @@ fun TwoFactorQrDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Manual Setup Key Section
                 Text(
                     text = "CAN'T SCAN? USE SETUP KEY",
                     fontSize = 10.5.sp,
@@ -285,7 +278,6 @@ fun TwoFactorQrDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 2FA Enable Switch
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()

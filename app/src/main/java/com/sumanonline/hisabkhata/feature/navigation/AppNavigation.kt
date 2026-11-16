@@ -44,7 +44,7 @@ fun AppNavigation(
     isBiometricAuthenticated: Boolean = true,
     deepLinkFlow: StateFlow<Uri?>? = null
 ) {
-    // Handle runtime deep link events (e.g., when an email link is clicked while app is in background or running)
+
     LaunchedEffect(deepLinkFlow) {
         deepLinkFlow?.collect { uri ->
             if (uri != null && authViewModel.isUserLoggedIn()) {
@@ -376,4 +376,3 @@ private fun resolveRouteFromUri(uri: Uri): String? {
 
     return null
 }
-

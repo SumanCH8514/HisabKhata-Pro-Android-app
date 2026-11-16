@@ -137,7 +137,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 }
 
-// Automated enforcement rule: fail the build if any hardcoded secret or API key is detected
 tasks.register("verifyNoHardcodedSecrets") {
     description = "Enforces zero-hardcoded-secrets policy across project source code and build files."
     group = "verification"
@@ -184,4 +183,3 @@ tasks.register("verifyNoHardcodedSecrets") {
 tasks.named("preBuild") {
     dependsOn("verifyNoHardcodedSecrets")
 }
-

@@ -156,10 +156,9 @@ fun ApplicationSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // ================= 1. ACCOUNT & SECURITY =================
+
             SectionHeader(title = "ACCOUNT & SECURITY")
 
-            // Change Password
             SettingActionRow(
                 icon = Icons.Outlined.LockReset,
                 title = "Change Password",
@@ -169,7 +168,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Two-Factor Authentication
             SettingActionRow(
                 icon = Icons.Outlined.VpnKey,
                 title = "Two-Factor Authentication",
@@ -180,7 +178,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Login Email OTP Verification
             SettingToggleRow(
                 icon = Icons.Outlined.MarkEmailRead,
                 title = "Login Email OTP Verification",
@@ -204,7 +201,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Biometric App Lock Switch
             SettingToggleRow(
                 icon = Icons.Outlined.Fingerprint,
                 title = "Biometric App Lock",
@@ -215,7 +211,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Lock Timeout selector
             SettingActionRow(
                 icon = Icons.Outlined.Timer,
                 title = "App Lock Timeout",
@@ -225,7 +220,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Screen Security Toggle
             SettingToggleRow(
                 icon = Icons.Outlined.Security,
                 title = "Block Screen Capture",
@@ -234,10 +228,8 @@ fun ApplicationSettingsScreen(
                 onCheckedChange = { preferencesManager.setScreenSecurity(it) }
             )
 
-            // ================= 2. DATA & BACKUP =================
             SectionHeader(title = "DATA & BACKUP")
 
-            // Auto Cloud Backup
             SettingToggleRow(
                 icon = Icons.Outlined.CloudDone,
                 title = "Auto Cloud Backup",
@@ -256,7 +248,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Export All Ledger Data with Download Action
             SettingExportRow(
                 icon = Icons.Outlined.FileDownload,
                 title = "Export All Ledger Data",
@@ -277,7 +268,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Sync on Wi-Fi Only
             SettingToggleRow(
                 icon = Icons.Outlined.Wifi,
                 title = "Sync on Wi-Fi Only",
@@ -288,7 +278,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Force Sync Ledger Now
             SettingActionRow(
                 icon = Icons.Outlined.Sync,
                 title = "Force Sync Ledger Now",
@@ -301,7 +290,6 @@ fun ApplicationSettingsScreen(
 
             SettingsDivider()
 
-            // Clear Temporary Cache
             SettingActionRow(
                 icon = Icons.Outlined.CleaningServices,
                 title = "Clear Temporary Cache",
@@ -312,7 +300,6 @@ fun ApplicationSettingsScreen(
                 }
             )
 
-            // ================= 3. APPLICATION DETAILS =================
             SectionHeader(title = "APPLICATION DETAILS")
 
             SettingInfoRow(
@@ -333,7 +320,6 @@ fun ApplicationSettingsScreen(
         }
     }
 
-    // Dialog: Lock Timeout Selection
     if (showTimeoutDialog) {
         AlertDialog(
             onDismissRequest = { showTimeoutDialog = false },
@@ -384,7 +370,6 @@ fun ApplicationSettingsScreen(
         )
     }
 
-    // Dialog: Change Password Confirmation
     if (showPasswordResetDialog) {
         val targetEmail = session.email.ifBlank { "your registered email" }
         AlertDialog(
@@ -464,7 +449,6 @@ fun ApplicationSettingsScreen(
         )
     }
 
-    // Dialog: Two-Factor Authentication Setup with QR Code
     if (showTwoFactorDialog) {
         TwoFactorQrDialog(
             userEmail = session.email,
@@ -477,7 +461,6 @@ fun ApplicationSettingsScreen(
         )
     }
 
-    // Dialog: Clear Temporary Cache with Sweeping Animation
     if (showClearCacheDialog) {
         ClearCacheAnimatedDialog(
             initialSizeBytes = cacheSizeBytes,
@@ -999,4 +982,3 @@ fun formatStorageSize(bytes: Long): String {
         else -> "$bytes B"
     }
 }
-

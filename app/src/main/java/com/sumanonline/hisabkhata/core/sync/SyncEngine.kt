@@ -433,7 +433,6 @@ class SyncEngine @Inject constructor(
             token = refreshToken() ?: return@withContext false
         }
 
-        // Fetch all unsynced operations (including PENDING_SYNC, FAILED, and SYNCING)
         val pendingOps = outboxDao.getAllUnsyncedOperations()
         var allSucceeded = true
 
@@ -442,7 +441,6 @@ class SyncEngine @Inject constructor(
                 outboxDao.updateStatus(op.operationId, Constants.SYNC_STATUS_SYNCING)
                 var result = executeOperation(op, token)
 
-                // If unauthorized (token expired / 401), automatically refresh the token and retry once
                 if (!result.isSuccess && result.httpCode == 401) {
                     val freshToken = refreshToken()
                     if (!freshToken.isNullOrBlank()) {

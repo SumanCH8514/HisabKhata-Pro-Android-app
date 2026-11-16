@@ -93,7 +93,7 @@ fun ForgotPasswordScreen(
             .fillMaxSize()
             .background(PageBackground)
     ) {
-        // Status bar area with instant brand color
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()

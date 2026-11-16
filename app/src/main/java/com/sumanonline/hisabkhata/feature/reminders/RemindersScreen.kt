@@ -133,7 +133,7 @@ fun RemindersScreen(
                 .padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 1. Sticky Filter Pills Row (pins to top on scroll)
+
             stickyHeader(key = "sticky_reminder_filters") {
                 Box(
                     modifier = Modifier
@@ -179,7 +179,6 @@ fun RemindersScreen(
                 }
             }
 
-            // 2. Search Bar
             item(key = "reminder_search_bar") {
                 Box(
                     modifier = Modifier
@@ -240,7 +239,6 @@ fun RemindersScreen(
                 }
             }
 
-            // 3. Customer Reminders List
             if (filteredCustomers.isEmpty()) {
                 item(key = "empty_reminders_view") {
                     Box(
@@ -483,7 +481,7 @@ private fun ReminderCustomerCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 1. WhatsApp Reminder
+
                 Button(
                     onClick = onSendWhatsApp,
                     colors = ButtonDefaults.buttonColors(
@@ -512,7 +510,6 @@ private fun ReminderCustomerCard(
                     )
                 }
 
-                // 2. SMS Button (between WhatsApp and Email)
                 OutlinedButton(
                     onClick = onSendSms,
                     shape = RoundedCornerShape(10.dp),
@@ -536,7 +533,6 @@ private fun ReminderCustomerCard(
                     )
                 }
 
-                // 3. Email Button
                 OutlinedButton(
                     onClick = onSendEmail,
                     shape = RoundedCornerShape(10.dp),

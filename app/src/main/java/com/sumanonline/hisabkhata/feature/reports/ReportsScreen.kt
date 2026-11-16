@@ -129,7 +129,7 @@ fun ReportsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // 1. Period Filter Chips Row (Scrollable - does not stick)
+
             item(key = "period_filters") {
                 Row(
                     modifier = Modifier
@@ -179,7 +179,6 @@ fun ReportsScreen(
                 }
             }
 
-            // 2. Custom Date Range Selector (visible when CUSTOM is selected - does not stick)
             if (selectedPeriod == ReportPeriod.CUSTOM) {
                 item(key = "custom_date_range") {
                     Card(
@@ -198,7 +197,7 @@ fun ReportsScreen(
                                 .padding(horizontal = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Start Date Box
+
                             Row(
                                 modifier = Modifier
                                     .weight(1f)
@@ -229,7 +228,6 @@ fun ReportsScreen(
                                 )
                             }
 
-                            // Divider
                             Box(
                                 modifier = Modifier
                                     .width(1.dp)
@@ -237,7 +235,6 @@ fun ReportsScreen(
                                     .background(BorderLight)
                             )
 
-                            // End Date Box
                             Row(
                                 modifier = Modifier
                                     .weight(1f)
@@ -290,7 +287,6 @@ fun ReportsScreen(
                 }
             }
 
-            // 3. Summary Card (Scrollable - does not stick)
             item(key = "summary_card") {
                 Card(
                     modifier = Modifier
@@ -305,7 +301,7 @@ fun ReportsScreen(
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
-                        // 3-Column Summary
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -386,7 +382,6 @@ fun ReportsScreen(
                         HorizontalDivider(color = BorderLight, thickness = 0.5.dp)
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Action Buttons Row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -448,7 +443,6 @@ fun ReportsScreen(
                 }
             }
 
-            // 4. Sticky Header: Search Bar + Transactions and Period Headers
             stickyHeader(key = "sticky_search_and_headers") {
                 Column(
                     modifier = Modifier
@@ -456,7 +450,7 @@ fun ReportsScreen(
                         .background(PageBackground)
                         .padding(bottom = 4.dp)
                 ) {
-                    // Search Input Container
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -511,7 +505,6 @@ fun ReportsScreen(
                         }
                     }
 
-                    // Transactions Count & Active Filter Indicator (Sticking with Search Bar)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -535,7 +528,6 @@ fun ReportsScreen(
                 }
             }
 
-            // 5. Transactions List or Empty State
             if (transactions.isEmpty()) {
                 item(key = "empty_state") {
                     EmptyStateView(

@@ -151,7 +151,7 @@ fun LoginScreen(
                 isGoogleSignInInProgress = false
                 when (e.statusCode) {
                     GoogleSignInStatusCodes.SIGN_IN_CANCELLED, 16 -> {
-                        // User cancelled / dismissed the account picker; do nothing
+
                     }
                     10 -> {
                         val sha1 = CertificateUtils.getSigningSha1(context)
@@ -290,7 +290,7 @@ fun LoginScreen(
             .fillMaxSize()
             .background(PageBackground)
     ) {
-        // Status bar area with instant brand color
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -596,7 +596,6 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Modern Animated Loading Overlay
         androidx.compose.animation.AnimatedVisibility(
             visible = uiState is Resource.Loading,
             enter = fadeIn(animationSpec = tween(durationMillis = 250)),
@@ -982,4 +981,3 @@ fun AuthLoadingOverlay(
         }
     }
 }
-

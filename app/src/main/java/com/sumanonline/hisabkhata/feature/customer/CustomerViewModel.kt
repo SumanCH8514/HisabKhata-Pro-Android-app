@@ -14,6 +14,8 @@ import com.sumanonline.hisabkhata.core.security.UserSession
 import com.sumanonline.hisabkhata.core.sync.SyncEngine
 import com.sumanonline.hisabkhata.core.network.BackendApiService
 import com.sumanonline.hisabkhata.core.network.model.EmailRequest
+import com.sumanonline.hisabkhata.feature.payments.model.QrPaymentRequest
+import com.sumanonline.hisabkhata.feature.payments.reconciliation.PaymentReconciliationEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,14 +60,65 @@ class CustomerViewModel @Inject constructor(
     private val transactionDao: TransactionDao,
     private val syncEngine: SyncEngine,
     private val sessionManager: SecureSessionManager,
-    private val backendApi: BackendApiService
+    private val backendApi: BackendApiService,
+    private val paymentReconciliationEngine: PaymentReconciliationEngine
 ) : ViewModel() {
+
+    val session: StateFlow<UserSession> = sessionManager.sessionState
+    val activePaymentRequest: StateFlow<QrPaymentRequest?> = paymentReconciliationEngine.activeRequest
 
     val pendingSyncCount: StateFlow<Int> = syncEngine.pendingCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
+
+    fun createQrPaymentRequest(
+        customer: CustomerEntity,
+        amount: Double,
+        isCustomAmount: Boolean = false,
+        upiUri: String = ""
+    ): QrPaymentRequest {
+        return paymentReconciliationEngine.createPaymentRequest(customer, amount, isCustomAmount, upiUri)
+    }
+
+    fun cancelPaymentRequest(requestId: String) {
+        paymentReconciliationEngine.cancelPaymentRequest(requestId)
+    }
+
+    suspend fun confirmAndCreditQrPayment(requestId: String, manualUtr: String? = null): Result<String> {
+        val result = paymentReconciliationEngine.confirmAndCreditLedger(requestId, manualUtr)
+        if (result.isSuccess) {
+            triggerSync()
+        }
+        return result
+    }
+
+    suspend fun rejectQrPayment(requestId: String, reason: String? = null) {
+        paymentReconciliationEngine.rejectPayment(requestId, reason)
+    }
+
+    fun clearActivePaymentRequest() {
+        paymentReconciliationEngine.clearActiveRequest()
+    }
+
+    fun isNotificationMonitoringEnabled(): Boolean {
+        return paymentReconciliationEngine.isMonitoringEnabled()
+    }
+
+    fun setNotificationMonitoringEnabled(enabled: Boolean) {
+        paymentReconciliationEngine.setMonitoringEnabled(enabled)
+    }
+
+    fun updateMerchantUpiId(upiId: String) {
+        val s = session.value
+        sessionManager.updateProfile(
+            name = s.displayName,
+            businessName = s.businessName,
+            phone = s.phone,
+            upiId = upiId.trim()
+        )
+    }
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -294,7 +347,6 @@ class CustomerViewModel @Inject constructor(
             val custPrefix = if (!customerId.isNullOrBlank()) "tx_${customerId}" else "tx"
             val filename = "${custPrefix}_${System.currentTimeMillis()}_${UUID.randomUUID().toString().take(6)}.$cleanExt"
 
-            // 1. Primary method: JSON upload (exact same as HisabKhata React app)
             val jsonReq = com.sumanonline.hisabkhata.core.network.model.JsonUploadRequest(
                 image = dataUri,
                 folder = "transaction_attachments",
@@ -305,7 +357,6 @@ class CustomerViewModel @Inject constructor(
                 return@withContext jsonRes.body()?.url
             }
 
-            // 2. Secondary fallback: Multipart upload
             val mediaType = mime.toMediaTypeOrNull()
             val requestBody = imageBytes.toRequestBody(mediaType)
             val filePart = MultipartBody.Part.createFormData("file", filename, requestBody)
@@ -352,7 +403,6 @@ class CustomerViewModel @Inject constructor(
             )
             triggerSync()
 
-            // Dispatch transaction alert email (matches HisabKhata React project dbService.addTransaction)
             try {
                 val customer = customerDao.getCustomerById(customerId)
                 val customerEmail = customer?.email?.trim()
@@ -391,7 +441,7 @@ class CustomerViewModel @Inject constructor(
                     backendApi.sendEmail(emailReq)
                 }
             } catch (_: Exception) {
-                // Keep local transaction saving resilient to email/network failures
+
             }
         }
     }

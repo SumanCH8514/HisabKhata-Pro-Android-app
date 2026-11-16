@@ -282,7 +282,7 @@ fun PaymentsScreen(
                 .padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 1. Top 3 Summary Cards
+
             item(key = "summary_cards") {
                 Row(
                     modifier = Modifier
@@ -290,7 +290,7 @@ fun PaymentsScreen(
                         .padding(start = 16.dp, end = 16.dp, top = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Pending Card
+
                     SummaryMetricCard(
                         modifier = Modifier.weight(1f),
                         title = "Pending",
@@ -308,7 +308,6 @@ fun PaymentsScreen(
                         }
                     )
 
-                    // Approved Card
                     SummaryMetricCard(
                         modifier = Modifier.weight(1f),
                         title = "Approved",
@@ -326,7 +325,6 @@ fun PaymentsScreen(
                         }
                     )
 
-                    // Rejected Card
                     SummaryMetricCard(
                         modifier = Modifier.weight(1f),
                         title = "Rejected",
@@ -346,7 +344,6 @@ fun PaymentsScreen(
                 }
             }
 
-            // 2. Sticky Filter Pills Row (sticks at the top when scrolling, title & summary cards scroll away)
             stickyHeader(key = "sticky_filter_pills") {
                 Box(
                     modifier = Modifier
@@ -392,7 +389,6 @@ fun PaymentsScreen(
                 }
             }
 
-            // 3. Search Bar
             item(key = "search_bar") {
                 Box(
                     modifier = Modifier
@@ -446,7 +442,6 @@ fun PaymentsScreen(
                 }
             }
 
-            // 4. Payments List
             if (filteredPayments.isEmpty()) {
                 item(key = "empty_state") {
                     Box(
@@ -536,7 +531,6 @@ fun PaymentsScreen(
         }
     }
 
-    // Fullscreen / Dialog Payment Proof Viewer
     if (selectedProofPayment != null) {
         val payment = selectedProofPayment!!
         Dialog(
@@ -564,7 +558,6 @@ fun PaymentsScreen(
                         .padding(horizontal = 16.dp, vertical = 72.dp)
                 )
 
-                // Top bar with info and close
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -604,7 +597,6 @@ fun PaymentsScreen(
                     }
                 }
 
-                // If pending, allow 1-tap Approve/Reject right inside Proof preview
                 if (payment.status.equals("pending", ignoreCase = true)) {
                     Row(
                         modifier = Modifier
@@ -652,7 +644,6 @@ fun PaymentsScreen(
         }
     }
 
-    // In-store QR Code Bottom Sheet
     if (showStoreQrSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val qrBitmap by viewModel.qrBitmap.collectAsState()
@@ -843,7 +834,6 @@ private fun SummaryMetricCard(
                     color = if (isSelected) accentColor else TextPrimary
                 )
 
-                // Circular icon badge
                 Box(
                     modifier = Modifier
                         .size(22.dp)
@@ -998,12 +988,12 @@ private fun PaymentCardItem(
                 .fillMaxWidth()
                 .padding(14.dp)
         ) {
-            // Header: Avatar, Name, Date/Time & Amount + Status Badge
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Customer Avatar
+
                 CustomerAvatarBadge(
                     name = payment.customerName,
                     photoUrl = customerPhotoUrl
@@ -1011,7 +1001,6 @@ private fun PaymentCardItem(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Customer Name and Date
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = payment.customerName.ifBlank { "Customer" },
@@ -1031,7 +1020,6 @@ private fun PaymentCardItem(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Amount and Status Badge
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = formattedAmount,
@@ -1046,7 +1034,6 @@ private fun PaymentCardItem(
                 }
             }
 
-            // Pending Review Action Row (if status is pending)
             if (payment.status.equals("pending", ignoreCase = true)) {
                 Spacer(modifier = Modifier.height(10.dp))
                 HorizontalDivider(color = BorderLight, thickness = 0.5.dp)
@@ -1102,13 +1089,12 @@ private fun PaymentCardItem(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Footer Row: Ref on the left, Actions (Proof & Ledger) on the right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left side: Ref ID (flexible, gracefully truncated if tight)
+
                 Row(
                     modifier = Modifier.weight(1f, fill = false),
                     verticalAlignment = Alignment.CenterVertically
@@ -1163,12 +1149,11 @@ private fun PaymentCardItem(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Right side: Action pills (View Proof & Ledger)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // View Proof Button (if screenshot attached)
+
                     if (proofRequest != null) {
                         Row(
                             modifier = Modifier
@@ -1206,7 +1191,6 @@ private fun PaymentCardItem(
                         }
                     }
 
-                    // Native Ledger Button
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -1337,14 +1321,14 @@ private fun CustomerAvatarBadge(
 
 private fun getAvatarPaletteColor(name: String): Color {
     val palette = listOf(
-        Color(0xFF4F46E5), // Indigo (like Soumyadarshan)
-        Color(0xFF0284C7), // Sky Blue (like Sandip)
-        Color(0xFF0D9488), // Teal
-        Color(0xFF16A34A), // Emerald
-        Color(0xFFD97706), // Amber
-        Color(0xFF7C3AED), // Purple
-        Color(0xFFDB2777), // Pink
-        Color(0xFF2563EB)  // Blue
+        Color(0xFF4F46E5),
+        Color(0xFF0284C7),
+        Color(0xFF0D9488),
+        Color(0xFF16A34A),
+        Color(0xFFD97706),
+        Color(0xFF7C3AED),
+        Color(0xFFDB2777),
+        Color(0xFF2563EB)
     )
     val hash = kotlin.math.abs(name.hashCode())
     return palette[hash % palette.size]

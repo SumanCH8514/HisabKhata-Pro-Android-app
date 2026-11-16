@@ -137,7 +137,6 @@ fun CustomerReportScreen(
         return
     }
 
-    // Filter transactions by date range and search query
     val filteredTransactions = remember(transactions, startDate, endDate, searchQuery) {
         transactions.filter { tx ->
             val txTime = DateUtils.getResolvedTimestamp(tx.date, tx.timestamp)
@@ -290,7 +289,7 @@ fun CustomerReportScreen(
                     .background(BrandBlue)
                     .statusBarsPadding()
             ) {
-                // Top App Bar
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -312,7 +311,6 @@ fun CustomerReportScreen(
                     )
                 }
 
-                // Date Selectors Row
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -327,7 +325,7 @@ fun CustomerReportScreen(
                             .height(46.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Start Date
+
                         Row(
                             modifier = Modifier
                                 .weight(1f)
@@ -368,7 +366,6 @@ fun CustomerReportScreen(
                             }
                         }
 
-                        // Divider
                         Box(
                             modifier = Modifier
                                 .width(1.dp)
@@ -376,7 +373,6 @@ fun CustomerReportScreen(
                                 .background(BorderLight)
                         )
 
-                        // End Date
                         Row(
                             modifier = Modifier
                                 .weight(1f)
@@ -426,7 +422,6 @@ fun CustomerReportScreen(
                     }
                 }
 
-                // Search & Date Range Preset Row
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -443,7 +438,7 @@ fun CustomerReportScreen(
                             .padding(horizontal = 8.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Search icon
+
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search",
@@ -452,7 +447,6 @@ fun CustomerReportScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
 
-                        // Search Input Box with Border
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -498,7 +492,6 @@ fun CustomerReportScreen(
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        // Date Range Dropdown Trigger
                         Box {
                             Row(
                                 modifier = Modifier
@@ -577,7 +570,7 @@ fun CustomerReportScreen(
                         .navigationBarsPadding(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Download Button
+
                     OutlinedButton(
                         onClick = { handleDownload() },
                         modifier = Modifier
@@ -609,7 +602,6 @@ fun CustomerReportScreen(
                         )
                     }
 
-                    // Share Button
                     Button(
                         onClick = { handleShare() },
                         modifier = Modifier
@@ -643,7 +635,7 @@ fun CustomerReportScreen(
                 .padding(innerPadding)
                 .background(SurfaceWhite)
         ) {
-            // Net Balance Header
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -667,7 +659,6 @@ fun CustomerReportScreen(
 
             HorizontalDivider(thickness = 0.8.dp, color = BorderLight)
 
-            // 3-Column Summary Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -732,7 +723,6 @@ fun CustomerReportScreen(
 
             HorizontalDivider(thickness = 0.8.dp, color = BorderLight)
 
-            // Transaction List
             if (filteredTransactions.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -764,7 +754,7 @@ fun CustomerReportScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Left Details
+
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
@@ -780,7 +770,6 @@ fun CustomerReportScreen(
 
                                 Spacer(modifier = Modifier.height(4.dp))
 
-                                // Balance Pill
                                 Box(
                                     modifier = Modifier
                                         .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
@@ -796,7 +785,6 @@ fun CustomerReportScreen(
 
                                 Spacer(modifier = Modifier.height(4.dp))
 
-                                // Description
                                 val rawDesc = tx.description.ifBlank { if (isDebit) "You gave" else "You got" }
                                 val cleanDesc = rawDesc.trimStart { it == '•' || it == ' ' }
                                 Text(
@@ -808,7 +796,6 @@ fun CustomerReportScreen(
                                 )
                             }
 
-                            // Right Colored Amount Box
                             Box(
                                 modifier = Modifier
                                     .width(116.dp)
@@ -866,7 +853,7 @@ private fun savePdfToDownloads(context: Context, sourceFile: File) {
             sourceFile.copyTo(destFile, overwrite = true)
         }
     } catch (_: Exception) {
-        // Fallback to internal storage copy
+
     }
 }
 
@@ -879,6 +866,6 @@ private fun openPdfFile(context: Context, file: File) {
         }
         context.startActivity(Intent.createChooser(viewIntent, "Open Statement PDF"))
     } catch (_: Exception) {
-        // Ignored if no viewer
+
     }
 }

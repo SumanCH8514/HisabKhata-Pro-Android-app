@@ -491,10 +491,6 @@ fun CustomerListScreen(
     }
 }
 
-/**
- * Sticky Search & Filters Card matching the uploaded image exactly:
- * [ Search Icon | Inset Search Customer box | Vertical Divider | Filters funnel + FILTERS text ]
- */
 @Composable
 private fun StickySearchAndFiltersCard(
     searchQuery: String,

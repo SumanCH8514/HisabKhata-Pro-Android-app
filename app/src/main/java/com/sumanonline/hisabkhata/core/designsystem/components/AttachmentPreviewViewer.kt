@@ -67,17 +67,6 @@ import com.sumanonline.hisabkhata.core.common.ImageUtils
 import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
 import kotlinx.coroutines.launch
 
-/**
- * Modern, production-grade native Android attachment preview viewer.
- *
- * Features:
- * - Fluid full-screen swipeable [HorizontalPager] for multi-attachment navigation
- * - Pinch-to-zoom (up to 4x) and pan gesture support with double-tap zoom toggle
- * - Clean edge-to-edge layout with status bar and navigation bar gradient scrims
- * - Seamless tap to toggle controls for immersive full-bleed viewing
- * - System share sheet integration to easily forward receipt images
- * - Discrete bottom pagination pill with smooth transitions
- */
 @Composable
 fun AttachmentPreviewViewer(
     attachments: List<String>,
@@ -103,7 +92,7 @@ fun AttachmentPreviewViewer(
             .background(Color(0xFF090D14))
             .zIndex(100f)
     ) {
-        // Pager with Zoomable / Pannable Images
+
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
@@ -116,7 +105,6 @@ fun AttachmentPreviewViewer(
             var scale by remember { mutableFloatStateOf(1f) }
             var offset by remember { mutableStateOf(Offset.Zero) }
 
-            // Reset zoom when navigating away from this page
             LaunchedEffect(pagerState.currentPage) {
                 if (pagerState.currentPage != pageIndex) {
                     scale = 1f
@@ -214,7 +202,6 @@ fun AttachmentPreviewViewer(
             }
         }
 
-        // Top App Bar with gradient scrim
         AnimatedVisibility(
             visible = showControls,
             enter = fadeIn(),
@@ -240,7 +227,7 @@ fun AttachmentPreviewViewer(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Back button
+
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
@@ -258,7 +245,6 @@ fun AttachmentPreviewViewer(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    // Title & Page indicator
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
@@ -283,7 +269,6 @@ fun AttachmentPreviewViewer(
                         )
                     }
 
-                    // Share button
                     val activeAttachment = attachments.getOrNull(pagerState.currentPage) ?: ""
                     if (activeAttachment.isNotBlank()) {
                         IconButton(
@@ -310,7 +295,6 @@ fun AttachmentPreviewViewer(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    // Close button
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
@@ -329,7 +313,6 @@ fun AttachmentPreviewViewer(
             }
         }
 
-        // Bottom Controls Bar with gradient scrim
         AnimatedVisibility(
             visible = showControls,
             enter = fadeIn(),
@@ -357,7 +340,7 @@ fun AttachmentPreviewViewer(
                     verticalArrangement = Arrangement.Center
                 ) {
                     if (attachments.size > 1) {
-                        // Discrete floating pagination pill with chevron controls
+
                         Surface(
                             shape = RoundedCornerShape(24.dp),
                             color = Color.Black.copy(alpha = 0.65f),
@@ -423,7 +406,6 @@ fun AttachmentPreviewViewer(
 
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        // Interactive dot indicators
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically

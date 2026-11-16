@@ -33,7 +33,7 @@ object LedgerExportHelper {
             val readableDate = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date())
 
             val sb = StringBuilder()
-            // Header Info
+
             sb.appendLine("\"HISABKHATA PRO - COMPLETE LEDGER DATA EXPORT\"")
             sb.appendLine("\"Export Generated On:\",\"$readableDate\"")
             sb.appendLine("\"Business / User:\",\"$merchantName\",\"$merchantPhone\"")
@@ -41,7 +41,6 @@ object LedgerExportHelper {
             sb.appendLine("\"Total Transactions:\",\"${transactions.size}\"")
             sb.appendLine()
 
-            // 1. Transactions Sheet
             sb.appendLine("\"=== ALL TRANSACTIONS LOG ===\"")
             sb.appendLine("\"Date\",\"Party / Customer Name\",\"Phone\",\"Transaction Type\",\"Debit (You Gave)\",\"Credit (You Got)\",\"Net Balance\",\"Description / Note\",\"Bill No / Ref\"")
 
@@ -63,7 +62,7 @@ object LedgerExportHelper {
             }
 
             sb.appendLine()
-            // 2. Customers Summary Sheet
+
             sb.appendLine("\"=== ALL CUSTOMERS / PARTIES SUMMARY ===\"")
             sb.appendLine("\"Party Name\",\"Phone Number\",\"Email\",\"Party Type\",\"Current Balance\",\"Due Date\",\"Last Updated\"")
 
@@ -75,7 +74,6 @@ object LedgerExportHelper {
                 sb.appendLine("\"${c.name}\",\"${c.phone}\",\"${c.email}\",\"$cType\",\"$balStr\",\"$due\",\"$updatedStr\"")
             }
 
-            // Write to reports directory in cache
             val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
             val csvFile = File(reportsDir, "HisabKhata_All_Ledger_$timestamp.csv")
             FileOutputStream(csvFile).use { it.write(sb.toString().toByteArray(Charsets.UTF_8)) }

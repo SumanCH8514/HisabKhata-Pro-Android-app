@@ -156,10 +156,9 @@ fun PreferencesSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // ================= 1. APP PREFERENCES =================
+
             SectionHeader(title = "APP PREFERENCES")
 
-            // App Language Row
             SettingActionRow(
                 icon = Icons.Outlined.Language,
                 title = "App Language",
@@ -169,7 +168,6 @@ fun PreferencesSettingsScreen(
 
             SettingsDivider()
 
-            // Notifications & Alerts Toggle
             SettingToggleRow(
                 icon = Icons.Outlined.Notifications,
                 title = "Notifications & Alerts",
@@ -188,7 +186,6 @@ fun PreferencesSettingsScreen(
 
             SettingsDivider()
 
-            // Currency Format Section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -246,7 +243,6 @@ fun PreferencesSettingsScreen(
                 }
             }
 
-            // ================= 2. THEME & DISPLAY MODE =================
             SectionHeader(title = "THEME & DISPLAY MODE")
 
             ThemeOptionRow(
@@ -286,7 +282,6 @@ fun PreferencesSettingsScreen(
                 }
             )
 
-            // ================= 3. BRAND ACCENT COLOR =================
             SectionHeader(title = "BRAND ACCENT COLOR")
 
             Column(
@@ -358,7 +353,6 @@ fun PreferencesSettingsScreen(
                 }
             }
 
-            // ================= 4. TYPOGRAPHY & FONT SELECTION =================
             SectionHeader(title = "TYPOGRAPHY & FONT SELECTION")
 
             Column(
@@ -366,7 +360,7 @@ fun PreferencesSettingsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
-                // Font Size Selector
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Outlined.FormatSize,
@@ -409,7 +403,6 @@ fun PreferencesSettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Font Family Selector
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Outlined.FontDownload,
@@ -452,7 +445,6 @@ fun PreferencesSettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Live Preview Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -499,7 +491,6 @@ fun PreferencesSettingsScreen(
                 }
             }
 
-            // ================= 5. DATE FORMAT =================
             SectionHeader(title = "DATE FORMAT")
 
             Column(
@@ -552,7 +543,6 @@ fun PreferencesSettingsScreen(
         }
     }
 
-    // Dialog: App Language Selection
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },

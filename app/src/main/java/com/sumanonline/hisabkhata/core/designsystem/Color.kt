@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 
-// Default static constants for theme initializers & non-composable contexts
 val DefaultBrandBlue = Color(0xFF0057BB)
 val DefaultBrandBlueDark = Color(0xFF004494)
 val DefaultBrandBlueLight = Color(0xFFEFF6FF)
@@ -21,7 +20,6 @@ val DefaultTextMuted = Color(0xFFCBD5E1)
 val DefaultBorderLight = Color(0xFFE2E8F0)
 val DefaultBorderMedium = Color(0xFFCBD5E1)
 
-// Dynamic theme-aware tokens that automatically react to current theme & accent color
 val BrandBlue: Color
     @Composable
     @ReadOnlyComposable

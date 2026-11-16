@@ -103,7 +103,7 @@ class AutoReminderViewModel @Inject constructor(
         }
         .combine(_rules) { list, currentRules ->
             list.filter { customer ->
-                // Negative balance means customer owes money (You'll Get)
+
                 customer.balance < 0.0 && Math.abs(customer.balance) >= currentRules.minDueAmount
             }.sortedWith(
                 compareByDescending<CustomerEntity> { Math.abs(it.balance) }
@@ -139,7 +139,6 @@ class AutoReminderViewModel @Inject constructor(
             val userId = session.value.userId
             if (userId.isBlank()) return@launch
 
-            // Seed initial historical logs if none are stored yet
             if (_dispatchedLogs.value.isEmpty()) {
                 val seedList = generateInitialSeedLogs()
                 _dispatchedLogs.value = seedList
@@ -247,7 +246,7 @@ class AutoReminderViewModel @Inject constructor(
                     }
                     firebaseApi.patchUserProfile(userId, patch, idToken)
                 } catch (_: Exception) {
-                    // Fail gracefully offline
+
                 }
             }
         }

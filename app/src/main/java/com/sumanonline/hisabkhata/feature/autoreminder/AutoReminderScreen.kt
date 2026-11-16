@@ -214,7 +214,7 @@ fun AutoReminderScreen(
             contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 1. Automated Daily Dues Reminder Card
+
             item(key = "cron_status_card") {
                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                     AutomatedDailyDuesCard(
@@ -225,7 +225,6 @@ fun AutoReminderScreen(
                 }
             }
 
-            // 2. 4 Metrics Cards (2x2 Grid)
             item(key = "kpi_metrics_grid") {
                 Column(
                     modifier = Modifier
@@ -308,7 +307,6 @@ fun AutoReminderScreen(
                 }
             }
 
-            // 3. Segmented Tabs Switcher
             item(key = "tab_switcher") {
                 Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
                     SegmentedTabRow(
@@ -320,7 +318,6 @@ fun AutoReminderScreen(
                 }
             }
 
-            // 4. Tab Content: Awaiting Reminders
             if (selectedTab == AutoReminderTab.AWAITING_REMINDERS) {
                 item(key = "awaiting_header") {
                     Row(
@@ -424,7 +421,7 @@ fun AutoReminderScreen(
                     }
                 }
             } else {
-                // Tab Content: Mail Reports
+
                 item(key = "reports_header") {
                     Row(
                         modifier = Modifier
@@ -470,7 +467,6 @@ fun AutoReminderScreen(
         }
     }
 
-    // Edit Rules Bottom Sheet
     if (showEditRulesSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         var tempSchedule by remember(rules) { mutableStateOf(rules.dailyScheduleTime) }
@@ -675,7 +671,7 @@ private fun AutomatedDailyDuesCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Badges & Switch Row
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -685,7 +681,7 @@ private fun AutomatedDailyDuesCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Status Badge
+
                     val activeBg = if (rules.isCronActive) GotGreen.copy(alpha = if (isAppDark) 0.22f else 0.12f) else BorderLight.copy(alpha = 0.5f)
                     val activeColor = if (rules.isCronActive) GotGreen else TextSecondary
                     Box(
@@ -703,7 +699,6 @@ private fun AutomatedDailyDuesCard(
                         )
                     }
 
-                    // Schedule Badge
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
@@ -727,7 +722,6 @@ private fun AutomatedDailyDuesCard(
                     }
                 }
 
-                // Native Switch
                 Switch(
                     checked = rules.isCronActive,
                     onCheckedChange = onToggleCron,
@@ -764,7 +758,6 @@ private fun AutomatedDailyDuesCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Footer info & Edit Rules
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -865,7 +858,7 @@ private fun SegmentedTabRow(
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // Tab 1: Mail Reports
+
         val isTab1 = selectedTab == AutoReminderTab.MAIL_REPORTS
         Row(
             modifier = Modifier
@@ -901,7 +894,6 @@ private fun SegmentedTabRow(
             }
         }
 
-        // Tab 2: Awaiting Reminders
         val isTab2 = selectedTab == AutoReminderTab.AWAITING_REMINDERS
         Row(
             modifier = Modifier
@@ -957,7 +949,7 @@ private fun AwaitingCustomerCard(
                 .fillMaxWidth()
                 .padding(14.dp)
         ) {
-            // Header: Name, Due Badge & Amount Due
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1030,7 +1022,6 @@ private fun AwaitingCustomerCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Footer Actions: View Statement (left) and ✈ Remind (right)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

@@ -44,7 +44,7 @@ class ProfileViewModel @Inject constructor(
                 val token = sessionManager.getFreshToken(firebaseApi)
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
-                    // Check direct preference node (what Firebase Console and webview edit)
+
                     var directOtp: Boolean? = null
                     try {
                         val directOtpRes = firebaseApi.getEmailOtpLoginPreference(userId, token)
@@ -178,12 +178,11 @@ class ProfileViewModel @Inject constructor(
                 val token = sessionManager.getFreshToken(firebaseApi)
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
-                    // 1. Direct PUT to users/{userId}/preferences/emailOtpLogin.json (matches Firebase RTDB schema)
+
                     val putRes = try {
                         firebaseApi.putEmailOtpLoginPreference(userId, kotlinx.serialization.json.JsonPrimitive(enabled), token)
                     } catch (_: Exception) { null }
 
-                    // 2. Patch root updates
                     val rootUpdates = kotlinx.serialization.json.buildJsonObject {
                         put("emailOtpLogin", kotlinx.serialization.json.JsonPrimitive(enabled))
                         put("emailOtpVerification", kotlinx.serialization.json.JsonPrimitive(enabled))
@@ -214,7 +213,7 @@ class ProfileViewModel @Inject constructor(
                 val token = sessionManager.getFreshToken(firebaseApi)
                 val userId = sessionManager.getUserId()
                 if (token.isNotBlank() && userId.isNotBlank()) {
-                    // 1. Direct PUT to users/{userId}/preferences/twoFactorAuth.json
+
                     val putRes = try {
                         firebaseApi.putTwoFactorAuthPreference(userId, kotlinx.serialization.json.JsonPrimitive(enabled), token)
                     } catch (_: Exception) { null }

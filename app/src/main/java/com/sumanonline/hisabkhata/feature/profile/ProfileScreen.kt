@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
@@ -60,6 +62,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -75,6 +78,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -440,7 +444,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 1. Account Profile Setting
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -504,7 +507,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 2. Application Setting
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -568,7 +570,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 3. Preferences Setting
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -632,7 +633,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // About Project Tile
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -667,14 +667,14 @@ fun ProfileScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "About Project & System Info",
+                            text = "About HisabKhata Pro",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Version ${Constants.APP_VERSION} • Changelog & Architecture",
+                            text = "Version ${Constants.APP_VERSION} • Features, Updates & Support",
                             fontSize = 11.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -739,7 +739,7 @@ fun ProfileScreen(
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.FileDownload,
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                                 contentDescription = null,
                                 tint = Color(0xFF1D4ED8),
                                 modifier = Modifier.size(16.dp)
@@ -756,7 +756,7 @@ fun ProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Column(
                 modifier = Modifier
@@ -764,101 +764,123 @@ fun ProfileScreen(
                     .padding(vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    modifier = Modifier
+                        .size(62.dp)
+                        .clickable { onNavigateToAboutProject() },
+                    shape = CircleShape,
+                    color = Color.White,
+                    shadowElevation = 2.dp,
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo_round),
+                        contentDescription = "HisabKhata Logo",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(3.dp)
+                            .clip(CircleShape)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.clickable { onNavigateToAboutProject() }
+                ) {
+                    Text(
+                        text = "HisabKhata Pro",
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = Color(0xFFE2E8F0).copy(alpha = 0.8f)
+                    ) {
+                        Text(
+                            text = "v${Constants.APP_VERSION}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF475569),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
                     Text(
                         text = "Privacy Policy",
-                        fontSize = 12.sp,
-                        color = TextSecondary,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1e50a2),
                         modifier = Modifier.clickable {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://hisabkhata.sumanonline.com/privacy-policy"))
                             try { context.startActivity(intent) } catch (_: Exception) {}
                         }
                     )
                     Text(
-                        text = "   •   ",
-                        fontSize = 11.sp,
-                        color = TextTertiary
+                        text = "  |  ",
+                        fontSize = 13.sp,
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.Normal
                     )
                     Text(
-                        text = "Terms of Service",
-                        fontSize = 12.sp,
-                        color = TextSecondary,
+                        text = "Terms and Conditions",
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1e50a2),
                         modifier = Modifier.clickable {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://hisabkhata.sumanonline.com/terms-of-condition"))
                             try { context.startActivity(intent) } catch (_: Exception) {}
                         }
                     )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onNavigateToAboutProject() }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .background(GotGreen, CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "HisabKhata Pro",
+                        text = "  |  ",
                         fontSize = 13.sp,
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.Normal
+                    )
+                    Text(
+                        text = "Contact Us",
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "  •  ",
-                        fontSize = 12.sp,
-                        color = TextTertiary
-                    )
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .border(0.5.dp, BorderLight, RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "v${Constants.APP_VERSION}",
-                            fontSize = 10.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextSecondary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sumanonline.com"))
-                        try { context.startActivity(intent) } catch (_: Exception) {}
-                    }
-                ) {
-                    Text(
-                        text = "Maintained by ",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                    Text(
-                        text = "SumanOnline.Com ↗",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color(0xFF1e50a2),
+                        modifier = Modifier.clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sumanonline.com"))
+                            try { context.startActivity(intent) } catch (_: Exception) {}
+                        }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR) }
                 Text(
                     text = "© $currentYear SumanOnline Web Services.",
-                    fontSize = 11.5.sp,
-                    color = TextTertiary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF64748B),
                     textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Digital Ledger & Business Khata Companion",
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color(0xFF94A3B8),
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.2.sp
                 )
             }
 

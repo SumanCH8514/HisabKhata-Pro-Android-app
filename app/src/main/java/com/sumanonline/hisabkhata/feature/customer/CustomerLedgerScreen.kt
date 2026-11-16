@@ -46,8 +46,10 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.SwapVert
+import com.sumanonline.hisabkhata.feature.payments.ui.QrPaymentCollectionBottomSheet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -122,7 +124,6 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-// Column Weights for Ledger Table (58% note space, 21% gave, 21% got)
 private const val COL_WEIGHT_ENTRIES = 1.74f
 private const val COL_WEIGHT_GAVE = 0.63f
 private const val COL_WEIGHT_GOT = 0.63f
@@ -153,6 +154,7 @@ fun CustomerLedgerScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showReminderDialog by remember { mutableStateOf(false) }
+    var showQrPaymentSheet by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
     var savedScrollIndex by remember { mutableStateOf<Int?>(null) }
@@ -331,6 +333,20 @@ fun CustomerLedgerScreen(
                                 )
                             }
                         }
+
+                        IconButton(
+                            onClick = { showQrPaymentSheet = true },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.QrCodeScanner,
+                                contentDescription = "Collect Payment QR",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
 
                         IconButton(
                             onClick = {
@@ -728,7 +744,13 @@ fun CustomerLedgerScreen(
         )
     }
 
-
+    if (showQrPaymentSheet) {
+        QrPaymentCollectionBottomSheet(
+            customer = customer,
+            viewModel = viewModel,
+            onDismiss = { showQrPaymentSheet = false }
+        )
+    }
 
         fullScreenAttachmentList?.let { urls ->
             AttachmentPreviewViewer(
@@ -785,9 +807,6 @@ fun CustomerLedgerScreen(
     }
 }
 
-/**
- * 5 Quick Action circular buttons (Report, WhatsApp, SMS, Email, Copy Link)
- */
 @Composable
 private fun QuickActionButton(
     label: String,
@@ -836,10 +855,6 @@ private fun QuickActionButton(
     }
 }
 
-/**
- * Transaction Table Row matching the uploaded designs:
- * [ Left: Date & Time, Balance Pill, Note | Middle: YOU GAVE | Right: YOU GOT ]
- */
 @Composable
 private fun LedgerTableRowItem(
     tx: TransactionEntity,
@@ -923,7 +938,7 @@ private fun LedgerTableRowItem(
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary,
                             lineHeight = 18.sp,
-                            maxLines = 6,
+                            maxLines = 4,
                             overflow = TextOverflow.Ellipsis
                         )
                     }

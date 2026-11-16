@@ -194,7 +194,7 @@ fun AccountProfileSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Top Avatar & Profile Strength Section
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -202,7 +202,7 @@ fun AccountProfileSettingsScreen(
                     .padding(top = 22.dp, bottom = 14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Circular Avatar with Camera Badge
+
                 Box(
                     modifier = Modifier.size(108.dp),
                     contentAlignment = Alignment.BottomEnd
@@ -233,7 +233,6 @@ fun AccountProfileSettingsScreen(
                         )
                     }
 
-                    // Camera Icon Badge Overlay
                     Box(
                         modifier = Modifier
                             .size(34.dp)
@@ -254,7 +253,6 @@ fun AccountProfileSettingsScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // "Edit photo" link button
                 Text(
                     text = "Edit photo",
                     fontSize = 13.5.sp,
@@ -268,7 +266,6 @@ fun AccountProfileSettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Horizontal Green Progress Bar (right below Edit photo)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -280,7 +277,6 @@ fun AccountProfileSettingsScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Profile Strength Row (Below Progress Bar)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -311,7 +307,6 @@ fun AccountProfileSettingsScreen(
                 }
             }
 
-            // 1. Personal Info Section
             SectionHeader(title = "Personal Info")
 
             SettingsRow(
@@ -355,7 +350,6 @@ fun AccountProfileSettingsScreen(
                 }
             )
 
-            // 2. Business info Section
             SectionHeader(title = "Business info")
 
             SettingsRow(
@@ -426,7 +420,6 @@ fun AccountProfileSettingsScreen(
                 }
             )
 
-            // 3. Financial info Section
             SectionHeader(title = "Financial info")
 
             SettingsRow(
@@ -478,7 +471,6 @@ fun AccountProfileSettingsScreen(
                 }
             )
 
-            // 4. Staff info Section
             SectionHeader(title = "Staff info")
 
             SettingsRow(
@@ -496,7 +488,6 @@ fun AccountProfileSettingsScreen(
                 }
             )
 
-            // 5. Account & Security Section
             SectionHeader(title = "Account & Security")
 
             SettingsRow(
@@ -539,7 +530,6 @@ fun AccountProfileSettingsScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Sign Out Button (Matching image style)
             OutlinedButton(
                 onClick = { showLogoutConfirm = true },
                 colors = ButtonDefaults.outlinedButtonColors(
@@ -572,7 +562,6 @@ fun AccountProfileSettingsScreen(
         }
     }
 
-    // Modal Bottom Sheet for editing individual field
     if (activeEditField != null) {
         val spec = activeEditField!!
         ModalBottomSheet(
@@ -612,7 +601,6 @@ fun AccountProfileSettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Quick suggestions if present
                 if (spec.suggestions.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
@@ -700,7 +688,6 @@ fun AccountProfileSettingsScreen(
         }
     }
 
-    // Photo options dialog (Gallery, URL, Remove)
     if (showPhotoOptionsDialog) {
         AlertDialog(
             onDismissRequest = { showPhotoOptionsDialog = false },
@@ -742,7 +729,6 @@ fun AccountProfileSettingsScreen(
         )
     }
 
-    // Photo URL direct entry dialog
     if (showPhotoUrlDialog) {
         AlertDialog(
             onDismissRequest = { showPhotoUrlDialog = false },
@@ -787,7 +773,6 @@ fun AccountProfileSettingsScreen(
         )
     }
 
-    // Logout confirmation dialog
     if (showLogoutConfirm) {
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = false },
@@ -813,7 +798,6 @@ fun AccountProfileSettingsScreen(
         )
     }
 
-    // Password Reset Dialog
     if (showPasswordResetDialog) {
         val targetEmail = session.email.ifBlank { "your registered email" }
         AlertDialog(
@@ -887,7 +871,6 @@ fun AccountProfileSettingsScreen(
         )
     }
 
-    // Two-Factor Authentication Dialog with QR Code
     if (showTwoFactorDialog) {
         TwoFactorQrDialog(
             userEmail = session.email,
@@ -935,7 +918,7 @@ private fun SettingsRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Bare line icon
+
         Icon(
             imageVector = icon,
             contentDescription = null,
@@ -945,7 +928,6 @@ private fun SettingsRow(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Label and Value
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
@@ -964,7 +946,6 @@ private fun SettingsRow(
             )
         }
 
-        // Blue chevron only for clickable items
         if (isClickable) {
             Icon(
                 imageVector = Icons.Default.ChevronRight,

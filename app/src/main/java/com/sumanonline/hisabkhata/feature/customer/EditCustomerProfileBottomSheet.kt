@@ -168,7 +168,7 @@ fun EditCustomerProfileBottomSheet(
                 .navigationBarsPadding()
                 .imePadding()
         ) {
-            // Header Row
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -177,7 +177,7 @@ fun EditCustomerProfileBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Edit Icon Badge
+
                     Box(
                         modifier = Modifier
                             .size(38.dp)
@@ -230,7 +230,6 @@ fun EditCustomerProfileBottomSheet(
 
             HorizontalDivider(thickness = 0.8.dp, color = BorderLight)
 
-            // Scrollable Form Body
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -239,7 +238,7 @@ fun EditCustomerProfileBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 val primaryColor = MaterialTheme.colorScheme.primary
-                // Profile Photo Section with dashed blue circle border
+
                 Box(
                     modifier = Modifier
                         .size(96.dp)
@@ -276,7 +275,6 @@ fun EditCustomerProfileBottomSheet(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Field 1: Customer Name *
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "CUSTOMER NAME *",
@@ -333,7 +331,6 @@ fun EditCustomerProfileBottomSheet(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Field 2: Phone Number
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "PHONE NUMBER",
@@ -391,7 +388,6 @@ fun EditCustomerProfileBottomSheet(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Field 3: Email Address
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "EMAIL ADDRESS",
@@ -449,7 +445,6 @@ fun EditCustomerProfileBottomSheet(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Field 4: GSTIN Number
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "GSTIN NUMBER",
@@ -512,12 +507,11 @@ fun EditCustomerProfileBottomSheet(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Action Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Cancel
+
                     OutlinedButton(
                         onClick = {
                             coroutineScope.launch {
@@ -540,7 +534,6 @@ fun EditCustomerProfileBottomSheet(
                         )
                     }
 
-                    // Save Changes
                     Button(
                         onClick = {
                             if (name.isBlank()) {
@@ -589,7 +582,6 @@ fun EditCustomerProfileBottomSheet(
         }
     }
 
-    // Photo selection options dialog
     if (showPhotoOptionsDialog) {
         AlertDialog(
             onDismissRequest = { showPhotoOptionsDialog = false },
@@ -656,7 +648,6 @@ fun EditCustomerProfileBottomSheet(
         )
     }
 
-    // Paste Image URL Dialog
     if (showPasteUrlDialog) {
         AlertDialog(
             onDismissRequest = { showPasteUrlDialog = false },

@@ -103,7 +103,6 @@ class AuthViewModel @Inject constructor(
                 if (response.isSuccessful && response.body() != null) {
                     val authData = response.body()!!
 
-                    // 1. Direct query of users/{userId}/preferences/emailOtpLogin.json (infallible check)
                     val directPrefOtp: Boolean? = try {
                         val directOtpRes = firebaseApi.getEmailOtpLoginPreference(authData.localId, authData.idToken)
                         if (directOtpRes.isSuccessful && directOtpRes.body() != null) {
@@ -129,7 +128,6 @@ class AuthViewModel @Inject constructor(
                         null
                     }
 
-                    // Check if Login Email OTP Verification is enabled for this account (cloud authoritative, fallback local)
                     val isOtpVerificationEnabled = when {
                         directPrefOtp != null -> directPrefOtp
                         profile != null -> {
@@ -139,11 +137,10 @@ class AuthViewModel @Inject constructor(
                         else -> preferencesManager.preferences.value.emailOtpVerification
                     }
 
-                    // Synchronize local preference with authoritative cloud status
                     preferencesManager.setEmailOtpVerification(isOtpVerificationEnabled)
 
                     if (isOtpVerificationEnabled) {
-                        // Generate 6-digit OTP
+
                         val generatedOtp = String.format(java.util.Locale.US, "%06d", (100000..999999).random())
                         _pendingLoginVerification.value = PendingLoginVerification(
                             authData = authData,
@@ -153,7 +150,6 @@ class AuthViewModel @Inject constructor(
                             expiryTimestamp = System.currentTimeMillis() + 10 * 60 * 1000L
                         )
 
-                        // 1. Sync loginOtp to Firebase Realtime Database at users/{userId} for cross-platform compatibility
                         try {
                             val otpUpdate = buildJsonObject {
                                 put("loginOtp", buildJsonObject {
@@ -165,7 +161,6 @@ class AuthViewModel @Inject constructor(
                             firebaseApi.patchUserProfile(authData.localId, otpUpdate, authData.idToken)
                         } catch (_: Exception) {}
 
-                        // 2. Send OTP via Backend Email Service
                         val recipientName = profile?.name?.ifBlank { null }
                             ?: authData.email.substringBefore("@")
                         try {
@@ -181,13 +176,13 @@ class AuthViewModel @Inject constructor(
                                 )
                             )
                         } catch (_: Exception) {
-                            // If backend email fails, OTP is still set for fallback
+
                         }
 
                         _uiState.value = Resource.Success(Unit)
                         _eventFlow.emit(AuthEvent.OtpRequired(authData.email))
                     } else {
-                        // Complete login directly
+
                         completeUserLogin(authData, profile)
                     }
                 } else {
@@ -225,7 +220,6 @@ class AuthViewModel @Inject constructor(
             return
         }
 
-        // Clear loginOtp on Firebase Realtime Database
         viewModelScope.launch {
             try {
                 val clearOtp = buildJsonObject {
@@ -235,7 +229,6 @@ class AuthViewModel @Inject constructor(
             } catch (_: Exception) {}
         }
 
-        // OTP Verified successfully! Complete login
         completeUserLogin(pending.authData, pending.profile)
         _pendingLoginVerification.value = null
         onResult(true, "Verified successfully")
@@ -255,7 +248,6 @@ class AuthViewModel @Inject constructor(
                 expiryTimestamp = System.currentTimeMillis() + 10 * 60 * 1000L
             )
 
-            // Update Firebase Realtime Database loginOtp
             try {
                 val otpUpdate = buildJsonObject {
                     put("loginOtp", buildJsonObject {
@@ -473,7 +465,7 @@ class AuthViewModel @Inject constructor(
                         try {
                             firebaseApi.patchUserProfile(userId, updates, authData.idToken)
                         } catch (_: Exception) {
-                            // Non-fatal
+
                         }
                     }
 
@@ -497,7 +489,7 @@ class AuthViewModel @Inject constructor(
                         try {
                             syncEngine.synchronize()
                         } catch (_: Exception) {
-                            // Non-fatal background sync
+
                         }
                     }
                 } else {

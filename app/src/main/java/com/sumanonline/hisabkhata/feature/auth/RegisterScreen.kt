@@ -138,7 +138,7 @@ fun RegisterScreen(
             } catch (e: ApiException) {
                 when (e.statusCode) {
                     GoogleSignInStatusCodes.SIGN_IN_CANCELLED, 16 -> {
-                        // User dismissed or tapped outside/back; do nothing
+
                     }
                     10 -> {
                         val sha1 = CertificateUtils.getSigningSha1(context)
@@ -244,7 +244,7 @@ fun RegisterScreen(
             .fillMaxSize()
             .background(PageBackground)
     ) {
-        // Status bar area with instant brand color
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
