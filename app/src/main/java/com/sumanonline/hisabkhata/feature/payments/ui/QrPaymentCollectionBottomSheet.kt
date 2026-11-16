@@ -96,6 +96,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
@@ -1357,10 +1358,21 @@ fun FullScreenPaymentDetectedPreview(
     ) {
         val view = LocalView.current
         DisposableEffect(view) {
-            val window = (view.parent as? DialogWindowProvider)?.window
-                ?: (view as? DialogWindowProvider)?.window
-            if (window != null) {
-                WindowCompat.setDecorFitsSystemWindows(window, false)
+            var parent = view.parent
+            var dialogWindow: android.view.Window? = (view as? DialogWindowProvider)?.window
+            while (dialogWindow == null && parent != null) {
+                if (parent is DialogWindowProvider) {
+                    dialogWindow = parent.window
+                    break
+                }
+                parent = parent.parent
+            }
+            dialogWindow?.let { win ->
+                win.setLayout(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                WindowCompat.setDecorFitsSystemWindows(win, false)
             }
             onDispose {}
         }
@@ -1553,52 +1565,118 @@ fun FullScreenPaymentDetectedPreview(
                 }
 
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(22.dp),
                     color = SurfaceWhite,
                     border = BorderStroke(1.dp, BorderLight),
-                    shadowElevation = 8.dp
+                    shadowElevation = 10.dp
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .navigationBarsPadding()
-                            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(
+                        Button(
                             onClick = onReject,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.5.dp, GiveRed),
-                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFFEF2F2))
+                                .height(52.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.5.dp, Color(0xFFFCA5A5)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFFF1F2),
+                                contentColor = Color(0xFFDC2626)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 2.dp)
                         ) {
-                            Icon(Icons.Filled.Close, contentDescription = null, tint = GiveRed, modifier = Modifier.size(18.dp))
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Reject",
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(18.dp)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Reject", color = GiveRed, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "Reject",
+                                color = Color(0xFFDC2626),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.3.sp
+                            )
                         }
 
                         Button(
                             onClick = onApprove,
                             modifier = Modifier
-                                .weight(1.8f)
-                                .height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = GotGreen),
+                                .weight(1.6f)
+                                .height(52.dp)
+                                .shadow(8.dp, shape = RoundedCornerShape(16.dp), spotColor = GotGreen.copy(alpha = 0.5f)),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = Color.White
+                            ),
+                            contentPadding = PaddingValues(0.dp),
                             enabled = !isProcessing
                         ) {
-                            if (isProcessing) {
-                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Approve", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(Color(0xFF16A34A), Color(0xFF15803D))
+                                        ),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .border(1.dp, Color(0xFF4ADE80).copy(alpha = 0.35f), RoundedCornerShape(16.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isProcessing) {
+                                    CircularProgressIndicator(
+                                        color = Color.White,
+                                        modifier = Modifier.size(22.dp),
+                                        strokeWidth = 2.5.dp
+                                    )
+                                } else {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(26.dp)
+                                                .clip(CircleShape)
+                                                .background(Color.White.copy(alpha = 0.22f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Check,
+                                                contentDescription = "Approve",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Approve",
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.3.sp
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(14.dp))
             }
         }
     }
