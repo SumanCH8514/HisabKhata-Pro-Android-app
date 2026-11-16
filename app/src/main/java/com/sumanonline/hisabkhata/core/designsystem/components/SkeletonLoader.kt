@@ -13,16 +13,26 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -35,6 +45,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sumanonline.hisabkhata.core.designsystem.BorderLight
+import com.sumanonline.hisabkhata.core.designsystem.BrandBlue
+import com.sumanonline.hisabkhata.core.designsystem.PageBackground
 import com.sumanonline.hisabkhata.core.designsystem.SurfaceWhite
 
 @Composable
@@ -265,67 +277,170 @@ fun LedgerRowSkeleton(brush: Brush) {
 }
 
 @Composable
-fun LedgerScreenSkeleton(brush: Brush, rowCount: Int = 6) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-
-        Card(
+fun LedgerScreenSkeleton(
+    brush: Brush,
+    rowCount: Int = 10,
+    onNavigateBack: (() -> Unit)? = null
+) {
+    Scaffold(
+        topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(BrandBlue)
+                    .statusBarsPadding()
+            )
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(SurfaceWhite)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .navigationBarsPadding(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                SkeletonBox(
+                    brush = brush,
+                    height = 48.dp,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f)
+                )
+                SkeletonBox(
+                    brush = brush,
+                    height = 48.dp,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        },
+        containerColor = PageBackground
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 8.dp),
-            shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .background(BrandBlue)
             ) {
-                SkeletonBox(brush = brush, width = 100.dp, height = 12.dp)
-                Spacer(modifier = Modifier.height(8.dp))
-                SkeletonBox(brush = brush, width = 150.dp, height = 28.dp)
-                Spacer(modifier = Modifier.height(14.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 6.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    SkeletonBox(brush = brush, width = 90.dp, height = 18.dp)
-                    SkeletonBox(brush = brush, width = 90.dp, height = 18.dp)
+                    IconButton(
+                        onClick = { onNavigateBack?.invoke() },
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(2.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(brush)
+                    )
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        SkeletonBox(brush = brush, width = 120.dp, height = 16.dp, shape = RoundedCornerShape(4.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SkeletonBox(brush = brush, width = 70.dp, height = 11.dp, shape = RoundedCornerShape(3.dp))
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f))
+                    )
+                }
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 14.dp, end = 14.dp, top = 6.dp, bottom = 14.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SkeletonBox(brush = brush, width = 100.dp, height = 12.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SkeletonBox(brush = brush, width = 150.dp, height = 28.dp)
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            SkeletonBox(brush = brush, width = 90.dp, height = 18.dp)
+                            SkeletonBox(brush = brush, width = 90.dp, height = 18.dp)
+                        }
+                    }
                 }
             }
-        }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            repeat(5) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(brush))
-                    Spacer(modifier = Modifier.height(4.dp))
-                    SkeletonBox(brush = brush, width = 38.dp, height = 9.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                repeat(5) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(brush)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SkeletonBox(brush = brush, width = 38.dp, height = 9.dp)
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFF1F5F9))
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-        ) {
-            SkeletonBox(brush = brush, width = 80.dp, height = 12.dp, modifier = Modifier.weight(1.4f))
-            SkeletonBox(brush = brush, width = 50.dp, height = 12.dp, modifier = Modifier.weight(0.8f))
-            SkeletonBox(brush = brush, width = 50.dp, height = 12.dp, modifier = Modifier.weight(0.8f))
-        }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF1F5F9))
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                SkeletonBox(brush = brush, width = 80.dp, height = 12.dp, modifier = Modifier.weight(1.4f))
+                SkeletonBox(brush = brush, width = 50.dp, height = 12.dp, modifier = Modifier.weight(0.8f))
+                SkeletonBox(brush = brush, width = 50.dp, height = 12.dp, modifier = Modifier.weight(0.8f))
+            }
 
-        repeat(rowCount) {
-            LedgerRowSkeleton(brush)
+            repeat(rowCount) {
+                LedgerRowSkeleton(brush)
+            }
         }
     }
 }

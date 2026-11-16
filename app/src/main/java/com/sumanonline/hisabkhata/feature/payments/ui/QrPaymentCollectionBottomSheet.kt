@@ -76,6 +76,19 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetValue
+import androidx.compose.foundation.Canvas
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -88,6 +101,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -95,6 +109,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -1279,6 +1294,285 @@ private fun saveQrToGallery(context: Context, bitmap: Bitmap, customerName: Stri
     }
 }
 
+private data class ConfettiItem(
+    val xDp: Float,
+    val yDp: Float,
+    val widthDp: Float,
+    val heightDp: Float,
+    val color: Color,
+    val rotationDeg: Float,
+    val isCircle: Boolean = false
+)
+
+private val CONFETTI_PARTICLES = listOf(
+    ConfettiItem(-28f, -26f, 5.5f, 2.5f, Color(0xFF06B6D4), -25f),
+    ConfettiItem(-15f, -34f, 4.5f, 2.2f, Color(0xFFA855F7), 35f),
+    ConfettiItem(8f, -36f, 5.5f, 2.5f, Color(0xFFF43F5E), -15f),
+    ConfettiItem(22f, -32f, 4f, 4f, Color(0xFFF59E0B), 0f, isCircle = true),
+    ConfettiItem(32f, -25f, 5.5f, 2.5f, Color(0xFF10B981), 28f),
+    ConfettiItem(38f, -14f, 3.5f, 3.5f, Color(0xFFFB923C), 0f, isCircle = true),
+    ConfettiItem(42f, 3f, 5.5f, 2.2f, Color(0xFF06B6D4), -42f),
+    ConfettiItem(35f, 18f, 3.5f, 3.5f, Color(0xFFA855F7), 0f, isCircle = true),
+    ConfettiItem(26f, 32f, 5f, 2.5f, Color(0xFFF43F5E), 18f),
+    ConfettiItem(11f, 36f, 3.5f, 3.5f, Color(0xFF10B981), 0f, isCircle = true),
+    ConfettiItem(-8f, 35f, 5f, 2.2f, Color(0xFFF59E0B), -32f),
+    ConfettiItem(-24f, 30f, 5.5f, 2.5f, Color(0xFF06B6D4), 45f),
+    ConfettiItem(-36f, 16f, 3.5f, 3.5f, Color(0xFFF43F5E), 0f, isCircle = true),
+    ConfettiItem(-40f, -3f, 5.5f, 2.5f, Color(0xFF10B981), -22f),
+    ConfettiItem(-35f, -16f, 4.5f, 2.2f, Color(0xFFFB923C), 48f),
+    ConfettiItem(-18f, -22f, 3f, 3f, Color(0xFFA855F7), 0f, isCircle = true),
+    ConfettiItem(23f, -19f, 3.5f, 3.5f, Color(0xFF06B6D4), 0f, isCircle = true),
+    ConfettiItem(-30f, 5f, 4.5f, 2.2f, Color(0xFFF59E0B), 15f),
+    ConfettiItem(28f, 7f, 5f, 2.5f, Color(0xFFF43F5E), -28f),
+    ConfettiItem(-5f, -28f, 3f, 3f, Color(0xFF10B981), 0f, isCircle = true)
+)
+
+@Composable
+private fun UpiDualChevronIcon(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+
+        val pathTop = Path().apply {
+            moveTo(w * 0.18f, h * 0.46f)
+            lineTo(w * 0.58f, h * 0.08f)
+            lineTo(w * 0.88f, h * 0.46f)
+            lineTo(w * 0.68f, h * 0.46f)
+            lineTo(w * 0.58f, h * 0.32f)
+            lineTo(w * 0.38f, h * 0.46f)
+            close()
+        }
+        drawPath(pathTop, color = Color(0xFFF97316))
+
+        val pathBottom = Path().apply {
+            moveTo(w * 0.18f, h * 0.54f)
+            lineTo(w * 0.58f, h * 0.92f)
+            lineTo(w * 0.88f, h * 0.54f)
+            lineTo(w * 0.68f, h * 0.54f)
+            lineTo(w * 0.58f, h * 0.68f)
+            lineTo(w * 0.38f, h * 0.54f)
+            close()
+        }
+        drawPath(pathBottom, color = Color(0xFF16A34A))
+    }
+}
+
+@Composable
+private fun CelebrationBadgeWithConfetti(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "badgePulse")
+
+    val pulseScale1 by infiniteTransition.animateFloat(
+        initialValue = 0.98f,
+        targetValue = 1.38f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulse1"
+    )
+
+    val pulseAlpha1 by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "alpha1"
+    )
+
+    val pulseScale2 by infiniteTransition.animateFloat(
+        initialValue = 0.98f,
+        targetValue = 1.62f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2300, delayMillis = 350, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulse2"
+    )
+
+    val pulseAlpha2 by infiniteTransition.animateFloat(
+        initialValue = 0.38f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2300, delayMillis = 350, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "alpha2"
+    )
+
+    val orbitRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(6000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "orbit"
+    )
+
+    val shimmerOffset by infiniteTransition.animateFloat(
+        initialValue = -1.5f,
+        targetValue = 1.5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1300, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmer"
+    )
+
+    val checkScale = remember { Animatable(0.1f) }
+    val burstProgress = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        checkScale.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = 0.52f,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        burstProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = 0.58f,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+    }
+
+    Box(
+        modifier = modifier.size(132.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color(0xFFDCFCE7).copy(alpha = 0.8f),
+                            Color(0xFFE8F5E9).copy(alpha = 0.35f),
+                            Color.Transparent
+                        )
+                    ),
+                    shape = CircleShape
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .scale(pulseScale2)
+                .alpha(pulseAlpha2)
+                .clip(CircleShape)
+                .background(Color(0xFF22C55E).copy(alpha = 0.35f))
+        )
+
+        Box(
+            modifier = Modifier
+                .size(66.dp)
+                .scale(pulseScale1)
+                .alpha(pulseAlpha1)
+                .clip(CircleShape)
+                .background(Color(0xFF86EFAC).copy(alpha = 0.45f))
+        )
+
+        Canvas(
+            modifier = Modifier
+                .size(84.dp)
+                .scale(checkScale.value)
+                .rotate(orbitRotation)
+        ) {
+            drawArc(
+                color = Color(0xFF86EFAC),
+                startAngle = 0f,
+                sweepAngle = 110f,
+                useCenter = false,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.2.dp.toPx())
+            )
+            drawArc(
+                color = Color(0xFF86EFAC).copy(alpha = 0.85f),
+                startAngle = 145f,
+                sweepAngle = 85f,
+                useCenter = false,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.2.dp.toPx())
+            )
+            drawArc(
+                color = Color(0xFF86EFAC).copy(alpha = 0.7f),
+                startAngle = 260f,
+                sweepAngle = 65f,
+                useCenter = false,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.2.dp.toPx())
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .size(90.dp)
+                .scale(checkScale.value)
+                .border(1.2.dp, Color(0xFFBBF7D0).copy(alpha = 0.65f), CircleShape)
+        )
+
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .scale(checkScale.value)
+                .shadow(8.dp, CircleShape, spotColor = Color(0xFF16A34A).copy(alpha = 0.5f))
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        listOf(Color(0xFF22C55E), Color(0xFF16A34A))
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(36.dp)
+            )
+        }
+
+        val progress = burstProgress.value
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        Canvas(modifier = Modifier.size(132.dp)) {
+            val centerOffset = center
+            for ((idx, p) in CONFETTI_PARTICLES.withIndex()) {
+                val floatOffset = if (idx % 2 == 0) shimmerOffset else -shimmerOffset
+                val currentX = centerOffset.x + with(density) { (p.xDp * 1.35f * progress).dp.toPx() } + floatOffset
+                val currentY = centerOffset.y + with(density) { (p.yDp * 1.35f * progress).dp.toPx() } + (floatOffset * 0.5f)
+                val pWidth = with(density) { (p.widthDp * 1.25f).dp.toPx() }
+                val pHeight = with(density) { (p.heightDp * 1.25f).dp.toPx() }
+
+                if (p.isCircle) {
+                    drawCircle(
+                        color = p.color.copy(alpha = (progress * 1.5f).coerceIn(0f, 1f)),
+                        radius = pWidth / 2f,
+                        center = Offset(currentX, currentY)
+                    )
+                } else {
+                    rotate(
+                        degrees = (p.rotationDeg * progress) + floatOffset * 3f,
+                        pivot = Offset(currentX, currentY)
+                    ) {
+                        drawRoundRect(
+                            color = p.color.copy(alpha = (progress * 1.5f).coerceIn(0f, 1f)),
+                            topLeft = Offset(currentX - pWidth / 2f, currentY - pHeight / 2f),
+                            size = Size(pWidth, pHeight),
+                            cornerRadius = CornerRadius(2.5f, 2.5f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun FullScreenPaymentDetectedPreview(
     customer: CustomerEntity,
@@ -1318,37 +1612,6 @@ fun FullScreenPaymentDetectedPreview(
         SimpleDateFormat("dd-MMM-yyyy, hh:mm a", Locale.ENGLISH).format(Date(ts))
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse_anim")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.35f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulse_scale"
-    )
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulse_alpha"
-    )
-
-    val checkScale = remember { Animatable(0.2f) }
-    LaunchedEffect(Unit) {
-        checkScale.animateTo(
-            targetValue = 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
-            )
-        )
-    }
-
     Dialog(
         onDismissRequest = { },
         properties = DialogProperties(
@@ -1379,31 +1642,51 @@ fun FullScreenPaymentDetectedPreview(
 
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = PageBackground
+            color = Color(0xFFF8FAFC)
         ) {
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.End,
+                        .padding(horizontal = 14.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
                         onClick = onReject,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF1E293B),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Row(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(BorderLight.copy(alpha = 0.5f))
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onReject() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Close",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color(0xFF1E293B),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Close",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF1E293B)
                         )
                     }
                 }
@@ -1411,67 +1694,32 @@ fun FullScreenPaymentDetectedPreview(
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 2.dp),
+                        .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    Box(
-                        modifier = Modifier.size(92.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(92.dp)
-                                .scale(pulseScale)
-                                .alpha(pulseAlpha)
-                                .clip(CircleShape)
-                                .background(GotGreen.copy(alpha = 0.35f))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(78.dp)
-                                .clip(CircleShape)
-                                .background(GotGreen.copy(alpha = 0.15f))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .scale(checkScale.value)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(GotGreen, Color(0xFF15803D))
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(36.dp)
-                            )
-                        }
-                    }
+                    CelebrationBadgeWithConfetti()
 
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
                         text = "Payment Successfully Detected",
-                        fontSize = 20.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary,
-                        textAlign = TextAlign.Center
+                        color = Color(0xFF0F172A),
+                        textAlign = TextAlign.Center,
+                        letterSpacing = (-0.4).sp
                     )
 
-                    Spacer(modifier = Modifier.height(3.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
                         text = "Incoming UPI payment matched to customer request",
-                        fontSize = 12.sp,
-                        color = TextSecondary,
+                        fontSize = 12.5.sp,
+                        color = Color(0xFF64748B),
                         textAlign = TextAlign.Center
                     )
 
@@ -1480,56 +1728,157 @@ fun FullScreenPaymentDetectedPreview(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                        border = BorderStroke(1.dp, BorderLight),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp)
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Amount",
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF334155)
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = CurrencyFormatter.formatInr(amount),
-                                    fontSize = 30.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = GotGreen
-                                )
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Amount",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF64748B)
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "₹${String.format(Locale.US, "%.2f", amount)}",
+                                        fontSize = 28.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFF16A34A),
+                                        letterSpacing = (-0.5).sp
+                                    )
+                                }
+
+                                Surface(
+                                    modifier = Modifier.align(Alignment.TopEnd),
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = Color(0xFFDCFCE7),
+                                    border = BorderStroke(1.dp, Color(0xFF86EFAC).copy(alpha = 0.7f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = Color(0xFF16A34A),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Text(
+                                            text = "Detected",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF15803D)
+                                        )
+                                    }
+                                }
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.dp)
-                                    .background(BorderLight)
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 10.dp),
+                                color = Color(0xFFF1F5F9),
+                                thickness = 1.dp
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
 
-                            PaymentDetailRow(label = "Amount:", value = "₹${String.format(Locale.US, "%.2f", amount)}")
-                            Spacer(modifier = Modifier.height(8.dp))
-                            PaymentDetailRow(label = "Source:", value = source)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            PaymentDetailRow(label = "Ref / UTR:", value = utr)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            PaymentDetailRow(label = "Bank:", value = bankDisplay)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            PaymentDetailRow(label = "UPI ID:", value = upiIdDisplay)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            PaymentDetailRow(label = "Sender Name:", value = senderNameDisplay)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            PaymentDetailRow(label = "Date & Time:", value = timeFormatted)
+                            PaymentDetailRow(
+                                label = "Amount:",
+                                value = "₹${String.format(Locale.US, "%.2f", amount)}",
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Payments,
+                                        contentDescription = null,
+                                        tint = Color(0xFF16A34A),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            PaymentDetailRow(
+                                label = "Source:",
+                                value = source,
+                                icon = {
+                                    UpiDualChevronIcon(modifier = Modifier.size(16.dp))
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            PaymentDetailRow(
+                                label = "Ref / UTR:",
+                                value = utr,
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.ReceiptLong,
+                                        contentDescription = null,
+                                        tint = Color(0xFF8B5CF6),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            PaymentDetailRow(
+                                label = "Bank:",
+                                value = bankDisplay,
+                                icon = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF0284C7)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.AccountBalance,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(10.dp)
+                                        )
+                                    }
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            PaymentDetailRow(
+                                label = "UPI ID:",
+                                value = upiIdDisplay,
+                                icon = {
+                                    UpiDualChevronIcon(modifier = Modifier.size(16.dp))
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            PaymentDetailRow(
+                                label = "Sender Name:",
+                                value = senderNameDisplay,
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Person,
+                                        contentDescription = null,
+                                        tint = Color(0xFFF59E0B),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            PaymentDetailRow(
+                                label = "Date & Time:",
+                                value = timeFormatted,
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Schedule,
+                                        contentDescription = null,
+                                        tint = Color(0xFF9333EA),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
                         }
                     }
 
@@ -1538,56 +1887,53 @@ fun FullScreenPaymentDetectedPreview(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFFFFBEB),
-                        border = BorderStroke(1.dp, WarningAmber.copy(alpha = 0.35f))
+                        color = Color(0xFFFEF3C7).copy(alpha = 0.85f),
+                        border = BorderStroke(1.dp, Color(0xFFFDE68A))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Info,
                                 contentDescription = null,
-                                tint = WarningAmber,
-                                modifier = Modifier.size(18.dp)
+                                tint = Color(0xFFD97706),
+                                modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Verify in your bank or UPI app that money is credited before approving into ledger.",
-                                fontSize = 11.5.sp,
+                                fontSize = 11.sp,
                                 color = Color(0xFF92400E),
-                                lineHeight = 15.sp
+                                lineHeight = 14.5.sp,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    shape = RoundedCornerShape(22.dp),
-                    color = SurfaceWhite,
-                    border = BorderStroke(1.dp, BorderLight),
-                    shadowElevation = 10.dp
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFF8FAFC)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 8.dp, bottom = 62.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Button(
                             onClick = onReject,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(52.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.5.dp, Color(0xFFFCA5A5)),
+                                .height(48.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0xFFFECDD3)),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFFFFF1F2),
                                 contentColor = Color(0xFFDC2626)
@@ -1595,10 +1941,10 @@ fun FullScreenPaymentDetectedPreview(
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 2.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Close,
+                                imageVector = Icons.Default.Close,
                                 contentDescription = "Reject",
                                 tint = Color(0xFFDC2626),
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
@@ -1606,77 +1952,48 @@ fun FullScreenPaymentDetectedPreview(
                                 color = Color(0xFFDC2626),
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.3.sp
+                                maxLines = 1
                             )
                         }
 
                         Button(
                             onClick = onApprove,
                             modifier = Modifier
-                                .weight(1.6f)
-                                .height(52.dp)
-                                .shadow(8.dp, shape = RoundedCornerShape(16.dp), spotColor = GotGreen.copy(alpha = 0.5f)),
-                            shape = RoundedCornerShape(16.dp),
+                                .weight(1f)
+                                .height(48.dp),
+                            enabled = !isProcessing,
+                            shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Transparent,
+                                containerColor = Color(0xFF16A34A),
                                 contentColor = Color.White
                             ),
-                            contentPadding = PaddingValues(0.dp),
-                            enabled = !isProcessing
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 4.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        Brush.horizontalGradient(
-                                            listOf(Color(0xFF16A34A), Color(0xFF15803D))
-                                        ),
-                                        shape = RoundedCornerShape(16.dp)
-                                    )
-                                    .border(1.dp, Color(0xFF4ADE80).copy(alpha = 0.35f), RoundedCornerShape(16.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isProcessing) {
-                                    CircularProgressIndicator(
-                                        color = Color.White,
-                                        modifier = Modifier.size(22.dp),
-                                        strokeWidth = 2.5.dp
-                                    )
-                                } else {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(26.dp)
-                                                .clip(CircleShape)
-                                                .background(Color.White.copy(alpha = 0.22f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Check,
-                                                contentDescription = "Approve",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "Approve",
-                                            color = Color.White,
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 0.3.sp
-                                        )
-                                    }
-                                }
+                            if (isProcessing) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Approve",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Approve",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
                             }
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(14.dp))
             }
         }
     }
@@ -1729,28 +2046,45 @@ private fun formatMaskedUpiId(rawUpi: String): String {
 }
 
 @Composable
-private fun PaymentDetailRow(label: String, value: String) {
+private fun PaymentDetailRow(
+    label: String,
+    value: String,
+    icon: @Composable () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            color = TextSecondary,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(modifier = Modifier.width(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f, fill = false)
+        ) {
+            Box(
+                modifier = Modifier.size(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                icon()
+            }
+            Spacer(modifier = Modifier.width(7.dp))
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = Color(0xFF475569),
+                fontWeight = FontWeight.Normal,
+                maxLines = 1
+            )
+        }
+        Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = value,
-            fontSize = 13.5.sp,
-            color = TextPrimary,
+            fontSize = 12.5.sp,
+            color = Color(0xFF0F172A),
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f, fill = false)
+            modifier = Modifier.weight(2.2f, fill = false)
         )
     }
 }

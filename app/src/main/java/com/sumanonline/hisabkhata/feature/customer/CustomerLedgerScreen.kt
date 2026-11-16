@@ -167,13 +167,11 @@ fun CustomerLedgerScreen(
     }
 
     if (customer == null) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(PageBackground)
-        ) {
-            LedgerScreenSkeleton(brush = shimmer)
-        }
+        LedgerScreenSkeleton(
+            brush = shimmer,
+            rowCount = 10,
+            onNavigateBack = onNavigateBack
+        )
         return
     }
 
